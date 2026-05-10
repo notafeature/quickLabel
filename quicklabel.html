@@ -1132,11 +1132,22 @@ function buildLabelData(seqOverride) {
   const species     = $('species').value;
   const cultivar    = $('cultivar').value.trim();
   const destination = CURRENT_WORKFLOW.destination;
-  const source      = $('source').value.trim();
+  const sourceRaw   = $('source').value.trim();
   const subCode     = $('sub-code').value.trim();
   const subShowDesc = $('grain-show-desc').checked;
   const notes       = $('notes').value.trim();
   const notation    = buildNotation();
+
+  // Append this thing's lineage notation to the source string on the label.
+  // The source field carries the source's identifier minus the lineage
+  // (e.g. "Agar 187"); the lineage follows the genetic line across the
+  // state change (T2 agar → T2 grain), so it can be appended automatically.
+  // If the user already typed a source ending with the same notation, skip
+  // the append so we don't double-stamp.
+  let source = sourceRaw;
+  if (sourceRaw && notation && !sourceRaw.endsWith(notation)) {
+    source = `${sourceRaw}.${notation}`;
+  }
 
   let sub = subCode;
   if (subShowDesc && subCode) {
