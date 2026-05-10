@@ -70,7 +70,7 @@ main { display: flex; flex: 1; overflow: hidden; }
 
 /* ── FORM PANEL ── */
 #form-panel {
-  width: 344px;
+  width: 360px;
   min-width: 280px;
   max-width: 720px;
   flex-shrink: 0;
@@ -99,7 +99,7 @@ main { display: flex; flex: 1; overflow: hidden; }
 /* ── INPUTS ── */
 .field { display: flex; flex-direction: column; gap: 3px; }
 .fl { font-size: 11px; color: var(--muted); }
-input[type=text], input[type=date], select {
+input[type=text], input[type=date], input[type=number], select {
   background: var(--surface2); color: var(--text);
   border: 1px solid var(--border); border-radius: 4px;
   padding: 6px 8px; font-size: 13px; font-family: inherit;
@@ -108,6 +108,9 @@ input[type=text], input[type=date], select {
 input:focus, select:focus { outline: none; border-color: var(--green); }
 input::placeholder { color: var(--muted); }
 select option { background: var(--surface2); }
+input[type=number] { -moz-appearance: textfield; }
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 .row { display: flex; gap: 8px; }
 .row .field { flex: 1; min-width: 0; }
@@ -115,6 +118,7 @@ select option { background: var(--surface2); }
 .row .field.w72 { flex: 0 0 72px; }
 .row .field.w80 { flex: 0 0 80px; }
 .row .field.w90 { flex: 0 0 90px; }
+.row .field.w110 { flex: 0 0 110px; }
 
 /* ── CATEGORY TOGGLE ── */
 .cat-toggle {
@@ -136,18 +140,6 @@ select option { background: var(--surface2); }
   min-height: 18px; letter-spacing: .3px;
 }
 
-/* ── ADVANCED TOGGLE ── */
-.adv-toggle {
-  display: flex; align-items: center; gap: 7px;
-  cursor: pointer; color: var(--muted); font-size: 11px;
-  user-select: none; padding: 2px 0;
-}
-.adv-toggle:hover { color: var(--text); }
-.adv-arrow { font-size: 9px; transition: transform .18s; }
-.adv-arrow.open { transform: rotate(90deg); }
-#adv-section { display: none; flex-direction: column; gap: 10px; }
-#adv-section.open { display: flex; }
-
 /* ── LOT ID DISPLAY ── */
 .lot-display {
   font-family: 'SF Mono', Monaco, monospace;
@@ -156,16 +148,17 @@ select option { background: var(--surface2); }
   border-radius: 4px; padding: 6px 8px; letter-spacing: .5px;
   min-height: 32px; display: flex; align-items: center;
 }
+.lot-display .range { color: var(--muted); margin-left: 6px; font-size: 11px; }
 
 /* ── PRINT ROW ── */
-.print-row { display: flex; gap: 8px; }
-.print-row button.primary { flex: 1; padding: 10px; font-size: 14px; font-weight: 700; }
+.print-row-end { align-items: flex-end; }
+.print-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 700; }
 
 /* ── PREVIEW PANEL ── */
 #preview-panel {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 14px; padding: 24px;
+  gap: 14px; padding: 24px; overflow: auto;
 }
 .preview-label-hint {
   font-size: 10px; color: var(--muted);
@@ -173,55 +166,88 @@ select option { background: var(--surface2); }
 }
 .printer-row {
   display: flex; align-items: center; gap: 8px;
-  font-size: 11px; color: var(--muted);
+  font-size: 11px; color: var(--muted); text-align: center;
+  max-width: 480px;
 }
-.printer-row select { width: auto; font-size: 11px; padding: 4px 8px; }
 
-/* ── LABEL PREVIEW ── */
-/* 2.25 : 1.25 → 540 : 300 */
-#label-preview {
-  width: 540px; height: 300px;
+/* ── LABEL ──
+   Single source of truth for label sizes. Container queries scale
+   internal sizes proportionally, so screen preview and printed label
+   share the same styles — only the container's width differs.
+   Aspect ratio 2.25in / 1.25in = 1.8.
+*/
+.label {
+  container-type: inline-size;
+  width: 5.4in;       /* 2.4× the print size for screen preview */
+  aspect-ratio: 9 / 5;
   background: #fff; color: #000;
   border-radius: 8px;
   box-shadow: 0 6px 32px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.08);
-  padding: 12px 16px 10px;
+  padding: 4cqw 6cqw 3cqw;
   display: flex; flex-direction: column;
   font-family: Arial, Helvetica, sans-serif;
   overflow: hidden; position: relative;
 }
-.lp-top {
+.label-top {
   display: flex; justify-content: space-between;
   align-items: flex-start; flex-shrink: 0;
 }
-.lp-cultivar {
-  font-size: 23px; font-weight: 700; line-height: 1.1;
+.label-cultivar {
+  font-size: 11cqw; font-weight: 700; line-height: 1.05;
   letter-spacing: -.4px; flex: 1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.lp-chip {
-  font-size: 8px; font-weight: 700; letter-spacing: .9px;
-  text-transform: uppercase; padding: 2px 5px; border-radius: 3px;
-  flex-shrink: 0; margin-left: 8px; margin-top: 5px;
+.label-chip {
+  font-size: 3cqw; font-weight: 700; letter-spacing: .9px;
+  text-transform: uppercase; padding: 0.7cqw 1.6cqw; border-radius: 0.8cqw;
+  flex-shrink: 0; margin-left: 2.5cqw; margin-top: 1.5cqw;
+  white-space: nowrap;
 }
-.lp-chip.actives { background: #dcfce7; color: #14532d; }
-.lp-chip.gourmet  { background: #cffafe; color: #164e63; }
-
-.lp-species {
-  font-size: 13px; font-style: italic; color: #333;
-  flex-shrink: 0; margin-top: 1px;
+.label-chip.actives { background: #dcfce7; color: #14532d; }
+.label-chip.gourmet { background: #cffafe; color: #164e63; }
+.label-species {
+  font-size: 5.5cqw; font-style: italic; color: #333;
+  flex-shrink: 0; margin-top: 0.4cqw;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.lp-rule { height: 1px; background: #ddd; margin: 6px 0; flex-shrink: 0; }
-.lp-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
-.lp-line { font-size: 10px; color: #222; display: flex; align-items: baseline; gap: 0; flex-wrap: nowrap; }
-.lp-line .mono { font-family: 'SF Mono', Monaco, monospace; font-size: 10px; }
-.lp-line .sep  { color: #aaa; margin: 0 6px; }
-.lp-line .dim  { color: #888; font-size: 9px; }
-.lp-bottom {
+.label-rule { height: 0.3cqw; background: #ccc; margin: 1.5cqw 0; flex-shrink: 0; }
+.label-mid {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: center; gap: 1.2cqw; min-height: 0;
+}
+.label-line {
+  font-size: 4cqw; color: #222; display: flex;
+  align-items: baseline; gap: 0; flex-wrap: nowrap;
+  white-space: nowrap; overflow: hidden;
+}
+.label-line .mono { font-family: 'SF Mono', Monaco, 'Menlo', monospace; }
+.label-line .sep  { color: #aaa; padding: 0 1.5cqw; }
+.label-line .dim  { color: #777; font-size: 3.4cqw; padding-right: 0.6cqw; }
+.label-bottom {
   display: flex; justify-content: space-between; align-items: flex-end;
-  flex-shrink: 0; margin-top: 4px;
+  flex-shrink: 0; margin-top: 1cqw; gap: 2cqw;
 }
-.lp-date  { font-family: 'SF Mono', Monaco, monospace; font-size: 9px; color: #777; }
-.lp-notes { font-size: 9px; color: #777; font-style: italic; text-align: right; max-width: 55%; }
+.label-date {
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 3.4cqw; color: #444; white-space: nowrap;
+}
+.label-notes {
+  font-size: 3.4cqw; color: #444; font-style: italic;
+  text-align: right; max-width: 60%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── PRINT AREA ── */
+#print-area {
+  position: absolute; left: -10000px; top: 0;
+  visibility: hidden;
+}
+#print-area .label {
+  width: 2.25in;
+  aspect-ratio: 9 / 5;
+  border-radius: 0;
+  box-shadow: none;
+}
 
 /* ── SETTINGS PANEL ── */
 #settings-overlay {
@@ -230,7 +256,7 @@ select option { background: var(--surface2); }
 }
 #settings-overlay.open { display: block; }
 #settings-panel {
-  position: fixed; top: 0; right: 0; bottom: 0; width: 360px;
+  position: fixed; top: 0; right: 0; bottom: 0; width: 380px;
   background: var(--surface); border-left: 1px solid var(--border);
   z-index: 101; transform: translateX(100%);
   transition: transform .22s ease;
@@ -268,40 +294,43 @@ select option { background: var(--surface2); }
 }
 .sw input:checked ~ .sw-thumb { transform: translateX(16px); background: #000; }
 
-.sub-list { display: flex; flex-direction: column; gap: 4px; }
-.sub-item {
+.entry-list { display: flex; flex-direction: column; gap: 4px; }
+.entry-item {
   display: flex; align-items: center; gap: 6px;
-  padding: 4px 6px; background: var(--surface2);
+  padding: 5px 8px; background: var(--surface2);
   border-radius: 4px; border: 1px solid var(--border);
+  font-size: 12px;
 }
-.sub-item .code { font-family: monospace; font-size: 11px; color: var(--green); width: 64px; flex-shrink: 0; }
-.sub-item .desc { flex: 1; color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sub-item button.ghost { padding: 1px 5px; font-size: 11px; }
-.add-row { display: flex; gap: 6px; }
-.add-row input { font-size: 12px; padding: 5px 8px; }
-.add-row .code { width: 72px; font-family: monospace; flex-shrink: 0; }
-.add-row .desc { flex: 1; }
+.entry-item .code { font-family: monospace; color: var(--green); flex-shrink: 0; }
+.entry-item .desc { color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.entry-item .sub  { color: var(--muted); font-size: 11px; }
+.entry-item button.ghost { padding: 1px 5px; font-size: 11px; flex-shrink: 0; }
+
+.add-block { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
+.add-block .add-row { display: flex; gap: 6px; }
+.add-block input { font-size: 12px; padding: 5px 8px; }
+.add-block .code-input { width: 80px; font-family: monospace; flex-shrink: 0; }
 
 @media print {
   @page { size: 2.25in 1.25in; margin: 0; }
-  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
-  * { visibility: hidden; }
-  #label-preview, #label-preview * { visibility: visible; }
-  #label-preview {
-    position: fixed !important;
-    top: 0 !important; left: 0 !important;
-    width: 2.25in !important; height: 1.25in !important;
-    box-shadow: none !important; border-radius: 0 !important;
-    padding: 5px 8px !important;
+  html, body {
+    height: auto !important; overflow: visible !important;
+    background: #fff !important; margin: 0 !important; padding: 0 !important;
+  }
+  /* Hide everything except print-area, including from layout. */
+  body > *:not(#print-area) { display: none !important; }
+  #print-area {
+    position: static !important; left: auto !important; top: auto !important;
+    visibility: visible !important; display: block !important;
+  }
+  #print-area .label {
+    page-break-after: always;
+    page-break-inside: avoid;
+    margin: 0; border-radius: 0;
+    box-shadow: none !important;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
-  #label-preview .lp-cultivar { font-size: 15pt !important; }
-  #label-preview .lp-chip     { font-size: 6pt !important; }
-  #label-preview .lp-species  { font-size: 8.5pt !important; }
-  #label-preview .lp-line     { font-size: 6.5pt !important; }
-  #label-preview * { color: #000 !important; }
-  #label-preview .lp-date,
-  #label-preview .lp-notes    { font-size: 5.5pt !important; }
+  #print-area .label:last-child { page-break-after: auto; }
 }
 </style>
 </head>
@@ -320,9 +349,16 @@ select option { background: var(--surface2); }
     <!-- ── FORM ── -->
     <div id="form-panel">
 
-      <!-- IDENTITY -->
+      <!-- GENETIC -->
       <div class="card">
-        <div class="card-label">Identity</div>
+        <div class="card-label">Genetic</div>
+
+        <div class="field">
+          <span class="fl">Genetic Code</span>
+          <input type="text" id="gen-code" placeholder="SL192" maxlength="10"
+                 oninput="onCodeChange()" onchange="onCodeChange()" list="code-dl">
+          <datalist id="code-dl"></datalist>
+        </div>
 
         <div class="field">
           <span class="fl">Category</span>
@@ -349,8 +385,7 @@ select option { background: var(--surface2); }
 
         <div class="field">
           <span class="fl">Cultivar</span>
-          <input type="text" id="cultivar" placeholder="e.g. Enigma" oninput="onCultivarInput()" list="cultivar-dl">
-          <datalist id="cultivar-dl"></datalist>
+          <input type="text" id="cultivar" placeholder="e.g. Enigma" oninput="updatePreview()">
         </div>
       </div>
 
@@ -378,105 +413,98 @@ select option { background: var(--surface2); }
         <div class="notation-preview" id="notation">—</div>
       </div>
 
-      <!-- CONTEXT -->
+      <!-- LOT -->
       <div class="card">
-        <div class="card-label">Context</div>
+        <div class="card-label">Lot</div>
+
         <div class="row">
           <div class="field">
-            <span class="fl">Media Type</span>
+            <span class="fl">Media</span>
             <select id="media" onchange="updatePreview()">
               <option value="Grain Spawn">Grain Spawn</option>
             </select>
           </div>
-          <div class="field w90">
+          <div class="field w110">
             <span class="fl">Date</span>
             <input type="date" id="date" onchange="onDateChange()">
           </div>
         </div>
+
+        <div class="field">
+          <span class="fl">Lot ID (next print)</span>
+          <div class="lot-display" id="lot-display">—</div>
+        </div>
       </div>
 
-      <!-- ADVANCED TOGGLE -->
-      <div class="adv-toggle" onclick="toggleAdv()">
-        <span class="adv-arrow" id="adv-arrow">▶</span>
-        <span>Advanced</span>
-      </div>
+      <!-- DETAILS -->
+      <div class="card">
+        <div class="card-label">Details</div>
 
-      <!-- ADVANCED -->
-      <div id="adv-section">
-        <div class="card">
-          <div class="card-label">Traceability</div>
+        <div class="field">
+          <span class="fl">Source</span>
+          <input type="text" id="source" placeholder="e.g. LC, Agar SL188.F1.T1" oninput="updatePreview()">
+        </div>
 
-          <div class="row">
-            <div class="field">
-              <span class="fl">Genetic Code</span>
-              <input type="text" id="gen-code" placeholder="SL192" maxlength="10" oninput="onCodeChange()">
-            </div>
-            <div class="field w56">
-              <span class="fl">Seq #</span>
-              <input type="text" id="lot-seq" placeholder="01" maxlength="2" oninput="rebuildLot()">
-            </div>
-          </div>
+        <div class="field">
+          <span class="fl">Grain Type</span>
+          <input type="text" id="sub-code" placeholder="e.g. Rye, Oats, Millet"
+                 oninput="updatePreview()" list="sub-dl">
+          <datalist id="sub-dl"></datalist>
+        </div>
 
-          <div class="field">
-            <span class="fl">Lot ID</span>
-            <div class="lot-display" id="lot-display">—</div>
-          </div>
-
-          <div class="field">
-            <span class="fl">Source</span>
-            <input type="text" id="source" placeholder="e.g. SL191.F1.C1.T7" oninput="updatePreview()">
-          </div>
-
-          <div class="field">
-            <span class="fl">Grain Type</span>
-            <input type="text" id="sub-code" placeholder="e.g. Rye, Oats" oninput="updatePreview()" list="sub-dl">
-            <datalist id="sub-dl"></datalist>
-          </div>
-
-          <div class="field">
-            <span class="fl">Notes</span>
-            <input type="text" id="notes" placeholder="Optional, ~40 chars" maxlength="45" oninput="updatePreview()">
-          </div>
+        <div class="field">
+          <span class="fl">Notes</span>
+          <input type="text" id="notes" placeholder="Optional, ~40 chars" maxlength="60" oninput="updatePreview()">
         </div>
       </div>
 
       <!-- PRINT -->
-      <div class="print-row">
-        <button class="primary" id="print-btn" onclick="printLabel()">Print Label</button>
-        <button class="icon" onclick="resetForm()" title="Clear form">↺</button>
+      <div class="card">
+        <div class="row print-row-end">
+          <div class="field w80">
+            <span class="fl">Quantity</span>
+            <input type="number" id="quantity" min="1" max="99" value="1" oninput="onQuantityChange()" onchange="onQuantityChange()">
+          </div>
+          <button class="primary print-btn" id="print-btn" onclick="printLabel()">Print</button>
+          <button class="icon" onclick="resetForm()" title="Clear form">↺</button>
+        </div>
       </div>
 
     </div><!-- /form-panel -->
 
     <!-- ── PREVIEW ── -->
     <div id="preview-panel">
-      <span class="preview-label-hint">Label Preview — 30334 · 2.25 × 1.25 in</span>
+      <span class="preview-label-hint">Label Preview — 2.25 × 1.25 in (preview shown 2.4×)</span>
 
-      <div id="label-preview">
-        <div class="lp-top">
-          <div class="lp-cultivar" id="lp-cultivar">—</div>
-          <div class="lp-chip actives" id="lp-chip">Active</div>
+      <div id="label-preview" class="label">
+        <div class="label-top">
+          <div class="label-cultivar" data-bind="cultivar">—</div>
+          <div class="label-chip actives" data-bind="chip">Active</div>
         </div>
-        <div class="lp-species" id="lp-species"></div>
-        <div class="lp-rule"></div>
-        <div class="lp-mid">
-          <div class="lp-line" id="lp-l1"></div>
-          <div class="lp-line" id="lp-l2"></div>
-          <div class="lp-line" id="lp-l3"></div>
+        <div class="label-species" data-bind="species"></div>
+        <div class="label-rule"></div>
+        <div class="label-mid">
+          <div class="label-line" data-bind="l1"></div>
+          <div class="label-line" data-bind="l2"></div>
+          <div class="label-line" data-bind="l3"></div>
         </div>
-        <div class="lp-bottom">
-          <div class="lp-date"  id="lp-date"></div>
-          <div class="lp-notes" id="lp-notes"></div>
+        <div class="label-bottom">
+          <div class="label-date"  data-bind="date"></div>
+          <div class="label-notes" data-bind="notes"></div>
         </div>
       </div>
 
       <div class="printer-row">
-        <span style="color:var(--muted);font-size:11px">Select <strong style="color:var(--text)">DYMO LabelWriter 450</strong> + paper size <strong style="color:var(--text)">30334</strong> in the print dialog</span>
+        Print uses the browser dialog. Select <strong style="color:var(--text)">DYMO LabelWriter</strong>
+        + paper <strong style="color:var(--text)">30334</strong>.
       </div>
     </div>
 
   </main>
 </div><!-- /app -->
+
+<!-- Hidden multi-label print container -->
+<div id="print-area"></div>
 
 <!-- ── SETTINGS ── -->
 <div id="settings-overlay" onclick="closeSettings()"></div>
@@ -490,7 +518,7 @@ select option { background: var(--surface2); }
     <div class="s-section">
       <h3>Lab</h3>
       <div class="row">
-        <div class="field w80">
+        <div class="field w90">
           <span class="fl">Lab Prefix</span>
           <input type="text" id="s-prefix" placeholder="SL" maxlength="5" oninput="saveSettings()">
         </div>
@@ -510,43 +538,52 @@ select option { background: var(--surface2); }
     </div>
 
     <div class="s-section">
-      <h3>Substrate Codes</h3>
-      <div class="sub-list" id="sub-list"></div>
-      <div class="add-row" style="margin-top:4px">
-        <input class="code" type="text" id="new-code" placeholder="CODE" maxlength="8">
-        <input class="desc" type="text" id="new-desc" placeholder="Description" onkeydown="if(event.key==='Enter')addSubstrate()">
-        <button onclick="addSubstrate()">Add</button>
+      <h3>Genetic Codes</h3>
+      <p style="font-size:11px;color:var(--muted);line-height:1.5">
+        Each entry maps a code to a genetic. Selecting a code on the form fills genus, species, cultivar.
+      </p>
+      <div class="entry-list" id="codes-list"></div>
+      <div class="add-block">
+        <div class="cat-toggle">
+          <button id="s-cv-actives" onclick="setCvCat('actives')">Actives</button>
+          <button id="s-cv-gourmet" onclick="setCvCat('gourmet')">Gourmet / Functional</button>
+        </div>
+        <div class="row">
+          <div class="field">
+            <span class="fl">Genus</span>
+            <select id="s-cv-genus" onchange="onCvGenus()">
+              <option value="">— genus —</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="fl">Species</span>
+            <select id="s-cv-species">
+              <option value="">— species —</option>
+            </select>
+          </div>
+        </div>
+        <div class="add-row">
+          <input class="code-input" type="text" id="cv-code" placeholder="SL192" maxlength="10">
+          <input type="text" id="cv-name" placeholder="Cultivar name" onkeydown="if(event.key==='Enter')addCode()">
+          <button onclick="addCode()">Add</button>
+        </div>
       </div>
     </div>
 
     <div class="s-section">
-      <h3>Cultivar Names</h3>
+      <h3>Grain Types</h3>
       <p style="font-size:11px;color:var(--muted);line-height:1.5">
-        Selecting a saved cultivar auto-fills category, genus, and species.
+        Grain preparations available on the Grain Type field.
       </p>
-      <div class="cat-toggle" style="margin-bottom:2px">
-        <button id="s-cv-actives" onclick="setCvCat('actives')">Actives</button>
-        <button id="s-cv-gourmet" onclick="setCvCat('gourmet')">Gourmet / Functional</button>
-      </div>
-      <div class="row">
-        <div class="field">
-          <span class="fl">Genus</span>
-          <select id="s-cv-genus" onchange="onCvGenus()">
-            <option value="">— genus —</option>
-          </select>
-        </div>
-        <div class="field">
-          <span class="fl">Species</span>
-          <select id="s-cv-species">
-            <option value="">— species —</option>
-          </select>
+      <div class="entry-list" id="grain-list"></div>
+      <div class="add-block">
+        <div class="add-row">
+          <input class="code-input" type="text" id="new-grain-code" placeholder="RYE" maxlength="12">
+          <input type="text" id="new-grain-desc" placeholder="Description (optional)"
+                 onkeydown="if(event.key==='Enter')addGrainType()">
+          <button onclick="addGrainType()">Add</button>
         </div>
       </div>
-      <div class="add-row">
-        <input class="desc" type="text" id="cv-name" placeholder="Cultivar name" onkeydown="if(event.key==='Enter')addCultivar()">
-        <button onclick="addCultivar()">Add</button>
-      </div>
-      <div id="cv-list" style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.7"></div>
     </div>
 
   </div>
@@ -573,10 +610,10 @@ const TAXA = {
   }
 };
 
-const DEFAULT_SUBS = [
-  { code:'COIR', desc:'Coir' },
-  { code:'CVG',  desc:'Coir / Vermiculite / Gypsum' },
-  { code:'CVG+', desc:'CVG + custom amendment' }
+const DEFAULT_GRAIN_TYPES = [
+  { code: 'RYE',    desc: 'Rye berries' },
+  { code: 'OATS',   desc: 'Whole oats' },
+  { code: 'MILLET', desc: 'Millet' }
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -585,13 +622,14 @@ let cat = 'actives';
 let initializing = true;
 
 let cfg = {
-  prefix:    'SL',
+  prefix:     'SL',
   showFilial: true,
-  substrates: [...DEFAULT_SUBS],
-  cultivars:  {}
+  codes:      [],   // [{ code, genus, species, cultivar }]
+  grainTypes: [...DEFAULT_GRAIN_TYPES],
+  substrates: []    // parked for future Batch state
 };
 
-let lotCounters = {}; // "CODE_YYMMDD" → last seq used
+let lotCounters = {}; // "CODE_YYMMDD" → highest seq used
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 
@@ -610,7 +648,26 @@ function toYYMMDD(iso) {
   return `${y.slice(2)}${m}${d}`;
 }
 
-// ─── STORAGE ──────────────────────────────────────────────────────────────────
+function categoryForGenus(genus) {
+  for (const c of Object.keys(TAXA)) {
+    if (genus in TAXA[c]) return c;
+  }
+  return 'actives';
+}
+
+function lotKey(code, date) {
+  return code && date ? `${code}_${toYYMMDD(date)}` : null;
+}
+
+function nextSeq(code, date) {
+  const key = lotKey(code, date);
+  if (!key) return 1;
+  return (lotCounters[key] || 0) + 1;
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+// ─── STORAGE / MIGRATION ──────────────────────────────────────────────────────
 
 function loadStorage() {
   try {
@@ -619,9 +676,38 @@ function loadStorage() {
     const l = localStorage.getItem('ql_lots');
     if (l) lotCounters = JSON.parse(l);
   } catch(_) {}
+  migrateCfg();
 }
 
-function persistCfg() { localStorage.setItem('ql_cfg', JSON.stringify(cfg)); }
+function migrateCfg() {
+  if (!Array.isArray(cfg.codes)) cfg.codes = [];
+  if (!Array.isArray(cfg.grainTypes) || !cfg.grainTypes.length) {
+    cfg.grainTypes = [...DEFAULT_GRAIN_TYPES];
+  }
+  if (!Array.isArray(cfg.substrates)) cfg.substrates = [];
+
+  // Migrate legacy cfg.cultivars { "Genus_species": ["Name", ...] }
+  // into cfg.codes records with empty `code`.
+  if (cfg.cultivars && typeof cfg.cultivars === 'object') {
+    for (const [key, names] of Object.entries(cfg.cultivars)) {
+      const [genus, ...rest] = key.split('_');
+      const species = rest.join('_');
+      if (!Array.isArray(names)) continue;
+      for (const cultivar of names) {
+        const exists = cfg.codes.some(r =>
+          (r.cultivar || '').toLowerCase() === (cultivar || '').toLowerCase() &&
+          (r.genus || '').toLowerCase() === (genus || '').toLowerCase()
+        );
+        if (!exists) {
+          cfg.codes.push({ code: '', genus, species, cultivar });
+        }
+      }
+    }
+    delete cfg.cultivars;
+  }
+}
+
+function persistCfg()  { localStorage.setItem('ql_cfg',  JSON.stringify(cfg)); }
 function persistLots() { localStorage.setItem('ql_lots', JSON.stringify(lotCounters)); }
 
 function saveFormState() {
@@ -637,7 +723,7 @@ function saveFormState() {
     transfer: $('transfer').value,
     media:    $('media').value,
     genCode:  $('gen-code').value,
-    lotSeq:   $('lot-seq').value,
+    quantity: $('quantity').value,
     source:   $('source').value,
     subCode:  $('sub-code').value,
     notes:    $('notes').value,
@@ -651,19 +737,19 @@ function restoreFormState() {
     if (!raw) return false;
     const s = JSON.parse(raw);
     setCategory(s.cat || 'actives');
-    if (s.genus) { $('genus').value = s.genus; onGenus(); }
-    if (s.species)  $('species').value  = s.species;
-    if (s.cultivar) $('cultivar').value = s.cultivar;
-    if (s.filial)   $('filial').value   = s.filial;
-    if (s.clone)    $('clone').value    = s.clone;
-    if (s.iso)      $('iso').value      = s.iso;
-    if (s.transfer) $('transfer').value = s.transfer;
-    if (s.media)    $('media').value    = s.media;
-    if (s.genCode)  $('gen-code').value = s.genCode;
-    if (s.lotSeq)   $('lot-seq').value  = s.lotSeq;
-    if (s.source)   $('source').value   = s.source;
-    if (s.subCode)  $('sub-code').value = s.subCode;
-    if (s.notes)    $('notes').value    = s.notes;
+    if (s.genus)    { $('genus').value = s.genus; onGenus(); }
+    if (s.species)    $('species').value  = s.species;
+    if (s.cultivar)   $('cultivar').value = s.cultivar;
+    if (s.filial)     $('filial').value   = s.filial;
+    if (s.clone)      $('clone').value    = s.clone;
+    if (s.iso)        $('iso').value      = s.iso;
+    if (s.transfer)   $('transfer').value = s.transfer;
+    if (s.media)      $('media').value    = s.media;
+    if (s.genCode)    $('gen-code').value = s.genCode;
+    if (s.quantity)   $('quantity').value = s.quantity;
+    if (s.source)     $('source').value   = s.source;
+    if (s.subCode)    $('sub-code').value = s.subCode;
+    if (s.notes)      $('notes').value    = s.notes;
     onLineage();
     rebuildLot();
     return true;
@@ -676,7 +762,8 @@ function openSettings()  {
   $('settings-overlay').classList.add('open');
   $('settings-panel').classList.add('open');
   setCvCat(cvCat);
-  renderCultivarList();
+  renderCodesList();
+  renderGrainList();
 }
 function closeSettings() {
   $('settings-overlay').classList.remove('open');
@@ -694,58 +781,22 @@ function applySettings() {
   $('s-prefix').value = cfg.prefix;
   $('s-filial').checked = cfg.showFilial;
   applyLineageDisplay();
-  renderSubList();
-  renderSubDl();
-  refreshCultivarDl();
+  refreshCodeDl();
+  renderGrainDl();
 }
 
 function applyLineageDisplay() {
-  const show = cfg.showFilial;
-  $('filial-field').style.display = show ? '' : 'none';
+  $('filial-field').style.display = cfg.showFilial ? '' : 'none';
   updatePreview();
 }
 
-// ── Substrates ──
-function renderSubList() {
-  $('sub-list').innerHTML = cfg.substrates.map((s,i) => `
-    <div class="sub-item">
-      <span class="code">${s.code}</span>
-      <span class="desc">${s.desc}</span>
-      <button class="ghost icon" onclick="removeSub(${i})">✕</button>
-    </div>`).join('');
-}
-
-function renderSubDl() {
-  $('sub-dl').innerHTML = cfg.substrates
-    .map(s => `<option value="${s.code}">${s.desc}</option>`).join('');
-}
-
-function addSubstrate() {
-  const code = $('new-code').value.trim().toUpperCase();
-  const desc = $('new-desc').value.trim();
-  if (!code) return;
-  cfg.substrates.push({ code, desc });
-  persistCfg();
-  $('new-code').value = '';
-  $('new-desc').value = '';
-  renderSubList();
-  renderSubDl();
-}
-
-function removeSub(i) {
-  cfg.substrates.splice(i,1);
-  persistCfg();
-  renderSubList();
-  renderSubDl();
-}
-
-// ── Cultivars ──
+// ── Genetic Codes ──
 let cvCat = 'actives';
 
 function setCvCat(c) {
   cvCat = c;
   $('s-cv-actives').className = c === 'actives' ? 'on-actives' : '';
-  $('s-cv-gourmet').className  = c === 'gourmet'  ? 'on-gourmet'  : '';
+  $('s-cv-gourmet').className = c === 'gourmet' ? 'on-gourmet' : '';
   $('s-cv-genus').innerHTML = '<option value="">— genus —</option>' +
     Object.keys(TAXA[c]).map(g => `<option value="${g}">${g}</option>`).join('');
   $('s-cv-species').innerHTML = '<option value="">— species —</option>';
@@ -757,78 +808,89 @@ function onCvGenus() {
     (TAXA[cvCat][g] || []).map(s => `<option value="${s}">${s}</option>`).join('');
 }
 
-function addCultivar() {
-  const genus   = $('s-cv-genus').value;
-  const species = $('s-cv-species').value;
-  const name    = $('cv-name').value.trim();
-  if (!genus || !species || !name) return;
-  const key = `${genus}_${species}`;
-  if (!cfg.cultivars[key]) cfg.cultivars[key] = [];
-  if (!cfg.cultivars[key].includes(name)) cfg.cultivars[key].push(name);
+function addCode() {
+  const code     = $('cv-code').value.trim().toUpperCase();
+  const genus    = $('s-cv-genus').value;
+  const species  = $('s-cv-species').value;
+  const cultivar = $('cv-name').value.trim();
+  if (!genus || !species || !cultivar) return;
+  cfg.codes.push({ code, genus, species, cultivar });
   persistCfg();
+  $('cv-code').value = '';
   $('cv-name').value = '';
-  renderCultivarList();
-  refreshCultivarDl();
+  renderCodesList();
+  refreshCodeDl();
 }
 
-function removeCultivar(key, idx) {
-  if (!cfg.cultivars[key]) return;
-  cfg.cultivars[key].splice(idx, 1);
-  if (!cfg.cultivars[key].length) delete cfg.cultivars[key];
+function removeCode(idx) {
+  cfg.codes.splice(idx, 1);
   persistCfg();
-  renderCultivarList();
-  refreshCultivarDl();
+  renderCodesList();
+  refreshCodeDl();
 }
 
-function renderCultivarList() {
-  const entries = Object.entries(cfg.cultivars)
-    .filter(([,v]) => v.length)
-    .map(([k,v]) => {
-      const names = v.map((n,i) =>
-        `<span style="white-space:nowrap">${n} <button class="ghost icon" style="font-size:10px;padding:0 3px" onclick="removeCultivar('${k}',${i})">✕</button></span>`
-      ).join(', ');
-      return `<div style="margin-bottom:4px"><strong style="color:var(--text)">${k.replace('_',' ')}</strong><br>${names}</div>`;
-    }).join('');
-  $('cv-list').innerHTML = entries || '<span>None saved yet.</span>';
+function renderCodesList() {
+  const items = cfg.codes.map((r, i) => {
+    const codeHtml = r.code
+      ? `<span class="code">${r.code}</span>`
+      : `<span class="code" style="color:var(--muted)">—</span>`;
+    return `
+      <div class="entry-item">
+        ${codeHtml}
+        <span class="desc"><strong>${r.cultivar}</strong></span>
+        <span class="sub">${r.genus} ${r.species}</span>
+        <button class="ghost" onclick="removeCode(${i})">✕</button>
+      </div>`;
+  }).join('');
+  $('codes-list').innerHTML = items || '<span style="font-size:11px;color:var(--muted)">No codes saved.</span>';
 }
 
-function refreshCultivarDl() {
-  const all = [];
-  for (const names of Object.values(cfg.cultivars)) {
-    for (const n of names) if (!all.includes(n)) all.push(n);
-  }
-  $('cultivar-dl').innerHTML = all.map(n => `<option value="${n}">`).join('');
+function refreshCodeDl() {
+  $('code-dl').innerHTML = cfg.codes
+    .filter(r => r.code)
+    .map(r => `<option value="${r.code}">${r.cultivar} — ${r.genus} ${r.species}</option>`)
+    .join('');
 }
 
-function getCultivarMeta(name) {
-  const lower = name.toLowerCase();
-  for (const [key, names] of Object.entries(cfg.cultivars)) {
-    if (names.some(n => n.toLowerCase() === lower)) {
-      const [rawGenus, ...rest] = key.split('_');
-      const rawSpecies = rest.join('_');
-      const category = Object.keys(TAXA).find(c =>
-        Object.keys(TAXA[c]).some(g => g.toLowerCase() === rawGenus.toLowerCase())
-      ) || 'actives';
-      const genus   = Object.keys(TAXA[category]).find(g => g.toLowerCase() === rawGenus.toLowerCase())   || rawGenus;
-      const species = (TAXA[category][genus] || []).find(s => s.toLowerCase() === rawSpecies.toLowerCase()) || rawSpecies;
-      return { category, genus, species };
-    }
-  }
-  return null;
+function findCode(code) {
+  if (!code) return null;
+  const upper = code.trim().toUpperCase();
+  return cfg.codes.find(r => (r.code || '').toUpperCase() === upper) || null;
 }
 
-function onCultivarInput() {
-  const val = $('cultivar').value.trim();
-  if (val) {
-    const meta = getCultivarMeta(val);
-    if (meta) {
-      setCategory(meta.category);
-      $('genus').value = meta.genus;
-      onGenus();
-      $('species').value = meta.species;
-    }
-  }
-  updatePreview();
+// ── Grain Types ──
+function addGrainType() {
+  const code = $('new-grain-code').value.trim().toUpperCase();
+  const desc = $('new-grain-desc').value.trim();
+  if (!code) return;
+  cfg.grainTypes.push({ code, desc });
+  persistCfg();
+  $('new-grain-code').value = '';
+  $('new-grain-desc').value = '';
+  renderGrainList();
+  renderGrainDl();
+}
+
+function removeGrainType(i) {
+  cfg.grainTypes.splice(i, 1);
+  persistCfg();
+  renderGrainList();
+  renderGrainDl();
+}
+
+function renderGrainList() {
+  $('grain-list').innerHTML = cfg.grainTypes.map((g, i) => `
+    <div class="entry-item">
+      <span class="code">${g.code}</span>
+      <span class="desc">${g.desc || ''}</span>
+      <button class="ghost" onclick="removeGrainType(${i})">✕</button>
+    </div>`).join('') ||
+    '<span style="font-size:11px;color:var(--muted)">No grain types saved.</span>';
+}
+
+function renderGrainDl() {
+  $('sub-dl').innerHTML = cfg.grainTypes
+    .map(g => `<option value="${g.code}">${g.desc || ''}</option>`).join('');
 }
 
 // ─── FORM ─────────────────────────────────────────────────────────────────────
@@ -836,14 +898,13 @@ function onCultivarInput() {
 function setCategory(c) {
   cat = c;
   $('btn-actives').className = c === 'actives' ? 'on-actives' : '';
-  $('btn-gourmet').className  = c === 'gourmet'  ? 'on-gourmet'  : '';
+  $('btn-gourmet').className = c === 'gourmet' ? 'on-gourmet' : '';
   fillGenus();
   updatePreview();
 }
 
 function fillGenus() {
-  const sel = $('genus');
-  sel.innerHTML = '<option value="">— genus —</option>' +
+  $('genus').innerHTML = '<option value="">— genus —</option>' +
     Object.keys(TAXA[cat]).map(g => `<option value="${g}">${g}</option>`).join('');
   $('species').innerHTML = '<option value="">— species —</option>';
 }
@@ -852,15 +913,7 @@ function onGenus() {
   const g = $('genus').value;
   $('species').innerHTML = '<option value="">— species —</option>' +
     (TAXA[cat][g] || []).map(s => `<option value="${s}">${s}</option>`).join('');
-  refreshCultivarDl();
   updatePreview();
-}
-
-function toggleAdv() {
-  const sec   = $('adv-section');
-  const arrow = $('adv-arrow');
-  const open  = sec.classList.toggle('open');
-  arrow.classList.toggle('open', open);
 }
 
 // ── Lineage ──
@@ -882,107 +935,156 @@ function buildNotation() {
 }
 
 function onLineage() {
-  const n = buildNotation();
-  $('notation').textContent = n || '—';
+  $('notation').textContent = buildNotation() || '—';
   updatePreview();
 }
 
-// ── Lot ID ──
+// ── Genetic Code → autopopulate ──
 function onCodeChange() {
   const code = $('gen-code').value.trim().toUpperCase();
-  const date = $('date').value;
-  if (code && date) {
-    const key = `${code}_${toYYMMDD(date)}`;
-    const next = String((lotCounters[key] || 0) + 1).padStart(2,'0');
-    $('lot-seq').value = next;
+  const rec  = findCode(code);
+  if (rec) {
+    const newCat = categoryForGenus(rec.genus);
+    if (newCat !== cat) setCategory(newCat);
+    $('genus').value = rec.genus;
+    onGenus();
+    $('species').value = rec.species;
+    $('cultivar').value = rec.cultivar;
   }
   rebuildLot();
 }
 
 function onDateChange() {
-  onCodeChange(); // recompute next seq for new date
-  updatePreview();
+  rebuildLot();
 }
 
+function onQuantityChange() {
+  rebuildLot();
+}
+
+// ── Lot ID display ──
 function rebuildLot() {
   const code = $('gen-code').value.trim().toUpperCase();
   const date = $('date').value;
-  const seq  = ($('lot-seq').value.trim() || '01').padStart(2,'0');
-  $('lot-display').textContent = (code && date)
-    ? `${code}-${toYYMMDD(date)}-${seq}`
-    : '—';
+  const qty  = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
+
+  if (!code || !date) {
+    $('lot-display').innerHTML = '—';
+    updatePreview();
+    return;
+  }
+
+  const start = nextSeq(code, date);
+  const end   = start + qty - 1;
+  const first = `${code}-${toYYMMDD(date)}-${pad2(start)}`;
+
+  $('lot-display').innerHTML = qty > 1
+    ? `${first}<span class="range">→ ${pad2(end)}  (×${qty})</span>`
+    : first;
+
   updatePreview();
 }
 
 function resetForm() {
   ['cultivar','filial','clone','iso','transfer',
    'gen-code','source','sub-code','notes'].forEach(id => $(id).value = '');
-  $('lot-seq').value = '01';
+  $('quantity').value = 1;
   $('date').value = todayISO();
-  $('lot-display').textContent = '—';
   $('notation').textContent = '—';
-  updatePreview();
+  rebuildLot();
 }
 
-// ─── PREVIEW ──────────────────────────────────────────────────────────────────
+// ─── PREVIEW / RENDER ─────────────────────────────────────────────────────────
 
-function updatePreview() { saveFormState();
-  const genus     = $('genus').value;
-  const species   = $('species').value;
-  const cultivar  = $('cultivar').value.trim();
-  const media     = $('media').value;
-  const date      = $('date').value;
-  const source    = $('source').value.trim();
-  const sub       = $('sub-code').value.trim();
-  const notes     = $('notes').value.trim();
-  const notation  = buildNotation();
-  const lotId     = $('lot-display').textContent;
+function buildLabelData(seqOverride) {
+  const code     = $('gen-code').value.trim().toUpperCase();
+  const date     = $('date').value;
+  const genus    = $('genus').value;
+  const species  = $('species').value;
+  const cultivar = $('cultivar').value.trim();
+  const media    = $('media').value;
+  const source   = $('source').value.trim();
+  const sub      = $('sub-code').value.trim();
+  const notes    = $('notes').value.trim();
+  const notation = buildNotation();
 
-  // top row
-  $('lp-cultivar').textContent = cultivar || '—';
-  const chip = $('lp-chip');
-  chip.textContent = cat === 'actives' ? 'Active' : 'Gourmet';
-  chip.className = `lp-chip ${cat === 'actives' ? 'actives' : 'gourmet'}`;
+  let lotId = '';
+  if (code && date) {
+    const seq = (seqOverride !== undefined) ? seqOverride : nextSeq(code, date);
+    lotId = `${code}-${toYYMMDD(date)}-${pad2(seq)}`;
+  }
 
-  // species line
-  $('lp-species').textContent = [genus, species].filter(Boolean).join(' ');
+  return { cat, genus, species, cultivar, media, date, source, sub, notes, notation, lotId };
+}
 
-  // middle lines
-  // L1: lot id · notation
-  const l1parts = [];
-  if (lotId && lotId !== '—') l1parts.push(`<span class="mono">${lotId}</span>`);
-  if (notation) l1parts.push(`<span class="mono">${notation}</span>`);
-  $('lp-l1').innerHTML = l1parts.join('<span class="sep">·</span>');
+function renderLabelInto(target, d) {
+  const chipText = d.cat === 'actives' ? 'Active' : 'Gourmet';
+  const chipCls  = d.cat === 'actives' ? 'actives' : 'gourmet';
 
-  // L2: media | src
-  const l2parts = [];
-  l2parts.push(`<span>${media}</span>`);
-  if (source) l2parts.push(`<span class="dim">Src:</span>&nbsp;<span class="mono">${source}</span>`);
-  $('lp-l2').innerHTML = l2parts.join('<span class="sep">|</span>');
+  const l1Parts = [];
+  if (d.lotId)    l1Parts.push(`<span class="mono">${d.lotId}</span>`);
+  if (d.notation) l1Parts.push(`<span class="mono">${d.notation}</span>`);
+  const l1 = l1Parts.join('<span class="sep">·</span>');
 
-  // L3: substrate
-  $('lp-l3').innerHTML = sub
-    ? `<span class="dim">Sub:</span>&nbsp;<span>${sub}</span>`
+  const l2Parts = [];
+  if (d.media)  l2Parts.push(`<span>${d.media}</span>`);
+  if (d.source) l2Parts.push(`<span class="dim">Src:</span><span class="mono">${d.source}</span>`);
+  const l2 = l2Parts.join('<span class="sep">|</span>');
+
+  const l3 = d.sub
+    ? `<span class="dim">Grain:</span><span>${d.sub}</span>`
     : '';
 
-  // bottom
-  $('lp-date').textContent  = fmtDate(date);
-  $('lp-notes').textContent = notes;
+  target.innerHTML = `
+    <div class="label-top">
+      <div class="label-cultivar">${d.cultivar || '—'}</div>
+      <div class="label-chip ${chipCls}">${chipText}</div>
+    </div>
+    <div class="label-species">${[d.genus, d.species].filter(Boolean).join(' ')}</div>
+    <div class="label-rule"></div>
+    <div class="label-mid">
+      <div class="label-line">${l1}</div>
+      <div class="label-line">${l2}</div>
+      <div class="label-line">${l3}</div>
+    </div>
+    <div class="label-bottom">
+      <div class="label-date">${fmtDate(d.date)}</div>
+      <div class="label-notes">${d.notes}</div>
+    </div>
+  `;
+}
+
+function updatePreview() {
+  saveFormState();
+  renderLabelInto($('label-preview'), buildLabelData());
 }
 
 // ─── PRINT ────────────────────────────────────────────────────────────────────
 
 function printLabel() {
-  // Advance lot counter
   const code = $('gen-code').value.trim().toUpperCase();
   const date = $('date').value;
-  if (code && date) {
-    const key = `${code}_${toYYMMDD(date)}`;
-    lotCounters[key] = parseInt($('lot-seq').value || '1', 10);
+  const qty  = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
+
+  const key   = lotKey(code, date);
+  const start = key ? nextSeq(code, date) : 1;
+
+  const printArea = $('print-area');
+  printArea.innerHTML = '';
+  for (let i = 0; i < qty; i++) {
+    const labelEl = document.createElement('div');
+    labelEl.className = 'label';
+    renderLabelInto(labelEl, buildLabelData(start + i));
+    printArea.appendChild(labelEl);
+  }
+
+  window.print();
+
+  if (key) {
+    lotCounters[key] = start + qty - 1;
     persistLots();
   }
-  // Print the preview directly — WYSIWYG
-  window.print();
+  rebuildLot();
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -997,7 +1099,7 @@ function init() {
   if (!restoreFormState()) setCategory('actives');
 
   initializing = false;
-  updatePreview();
+  rebuildLot();
 }
 
 init();
