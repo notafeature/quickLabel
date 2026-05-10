@@ -359,19 +359,19 @@ select option { background: var(--surface2); }
         <div class="row" id="lineage-row">
           <div class="field w56" id="filial-field">
             <span class="fl">Filial</span>
-            <input type="text" id="filial" placeholder="F1" maxlength="4" oninput="onLineage()">
+            <input type="text" id="filial" placeholder="F1" maxlength="4" oninput="onLineage()" onchange="onLineage()">
           </div>
           <div class="field w72">
             <span class="fl">Clone</span>
-            <input type="text" id="clone" placeholder="C1" maxlength="5" oninput="onLineage()">
+            <input type="text" id="clone" placeholder="C1" maxlength="5" oninput="onLineage()" onchange="onLineage()">
           </div>
           <div class="field w56">
             <span class="fl">Isolation</span>
-            <input type="text" id="iso" placeholder="A" maxlength="2" oninput="onLineage()">
+            <input type="text" id="iso" placeholder="A" maxlength="2" oninput="onLineage()" onchange="onLineage()">
           </div>
           <div class="field w72">
             <span class="fl">Transfer</span>
-            <input type="text" id="transfer" placeholder="T0" maxlength="4" oninput="onLineage()">
+            <input type="text" id="transfer" placeholder="T0" maxlength="4" oninput="onLineage()" onchange="onLineage()">
           </div>
         </div>
         <div class="notation-preview" id="notation">—</div>
@@ -918,10 +918,9 @@ function buildXml() {
   // layout: 3240 × 1800 twips (2.25" × 1.25")
   // usable: X=60, Y=60, W=3120, H=1680
   return `<?xml version="1.0" encoding="utf-8"?>
-<DieCutLabel Version="8.0" Units="twips" MediaType="Default">
+<DieCutLabel Version="8.0" Units="twips">
   <PaperOrientation>Landscape</PaperOrientation>
   <Id>Address</Id>
-  <IsOutlined>False</IsOutlined>
   <PaperName>30334 2-1/4 in x 1-1/4 in</PaperName>
   <DrawCommands>
     <RoundRectangle X="0" Y="0" Width="3240" Height="1800" Rx="270" Ry="270"/>
