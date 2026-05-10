@@ -225,10 +225,14 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
   white-space: nowrap; overflow: hidden;
   flex-shrink: 0;
 }
+.label-species-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 2cqw; flex-shrink: 0; margin-top: 0.3cqw;
+}
 .label-species {
   font-size: 5.2cqw; font-style: italic; color: #333;
-  flex-shrink: 0; margin-top: 0.3cqw;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1; min-width: 0;
 }
 .label-rule { height: 0.25cqw; background: #ccc; margin: 1.2cqw 0; flex-shrink: 0; }
 .label-mid {
@@ -245,16 +249,11 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 .label-line .dim  { color: #777; font-size: 3.4cqw; padding-right: 0.5cqw; }
 .label-line .grain-text {
   overflow: hidden; text-overflow: ellipsis;
-  /* hard space ensures gap from chip to the right */
   padding-right: 2cqw;
 }
 .label-bottom {
-  display: flex; justify-content: space-between; align-items: center;
-  flex-shrink: 0; margin-top: 0.8cqw; gap: 1.5cqw;
-}
-.label-bottom-left {
-  display: flex; align-items: baseline; gap: 1.5cqw;
-  flex: 1; min-width: 0;
+  display: flex; justify-content: space-between; align-items: baseline;
+  flex-shrink: 0; margin-top: 0.8cqw; gap: 2cqw;
 }
 .label-date {
   font-family: 'SF Mono', Monaco, monospace;
@@ -262,7 +261,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 }
 .label-notes {
   font-size: 3.2cqw; color: #555; font-style: italic;
-  flex: 1; min-width: 0;
+  flex: 1; min-width: 0; text-align: right;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .label-chip {
@@ -524,7 +523,10 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 
       <div id="label-preview" class="label">
         <div class="label-cultivar">—</div>
-        <div class="label-species"></div>
+        <div class="label-species-row">
+          <div class="label-species"></div>
+          <div class="label-chip actives">Active</div>
+        </div>
         <div class="label-rule"></div>
         <div class="label-mid">
           <div class="label-line"></div>
@@ -532,11 +534,8 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
           <div class="label-line"></div>
         </div>
         <div class="label-bottom">
-          <div class="label-bottom-left">
-            <div class="label-date"></div>
-            <div class="label-notes"></div>
-          </div>
-          <div class="label-chip actives">Active</div>
+          <div class="label-date"></div>
+          <div class="label-notes"></div>
         </div>
       </div>
 
@@ -1162,7 +1161,10 @@ function renderLabelInto(target, d) {
 
   target.innerHTML = `
     <div class="label-cultivar">${d.cultivar || '—'}</div>
-    <div class="label-species">${[d.genus, d.species].filter(Boolean).join(' ')}</div>
+    <div class="label-species-row">
+      <div class="label-species">${[d.genus, d.species].filter(Boolean).join(' ')}</div>
+      <div class="label-chip ${chipCls}">${chipText}</div>
+    </div>
     <div class="label-rule"></div>
     <div class="label-mid">
       <div class="label-line">${l1}</div>
@@ -1170,11 +1172,8 @@ function renderLabelInto(target, d) {
       <div class="label-line">${l3}</div>
     </div>
     <div class="label-bottom">
-      <div class="label-bottom-left">
-        <div class="label-date">${fmtDate(d.date)}</div>
-        <div class="label-notes">${d.notes || ''}</div>
-      </div>
-      <div class="label-chip ${chipCls}">${chipText}</div>
+      <div class="label-date">${fmtDate(d.date)}</div>
+      <div class="label-notes">${d.notes || ''}</div>
     </div>
   `;
 

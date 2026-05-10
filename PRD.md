@@ -226,7 +226,8 @@ Every grain-lot label carries:
 - **Cultivar** — full-width across the top of the label, dominant.
   Auto-shrinks if the name is too long to fit, down to a legible
   minimum. No truncation.
-- **Genus species** — italic, secondary, immediately below the cultivar.
+- **Genus species** — italic, secondary, on the species line.
+- **Category chip** — Actives / Gourmet, right side of the species line.
 - **Lot ID** — the lot ID for this label, in the format described in §6.
 - **Lineage** — combined notation (e.g. `F1.C1_A.T3`).
 - **State** — `Grain Spawn`, `Agar`, `Liquid Culture`, etc.
@@ -234,8 +235,7 @@ Every grain-lot label carries:
 - **Grain type** — the grain preparation used (e.g. `RYE`); optionally
   with description (`RYE — Rye berries`) per a form-level toggle.
 - **Date** — initiation date, bottom-left.
-- **Notes** — optional one-line free text, bottom area.
-- **Category chip** — Actives / Gourmet, bottom-right corner.
+- **Notes** — optional one-line free text, bottom-right.
 
 Field omissions are silent — empty fields render nothing, no placeholders.
 
@@ -250,12 +250,12 @@ Indicative zoning:
 ```
 ┌────────────────────────────────────────┐
 │  ENIGMA                                │  Cultivar full-width, auto-shrink
-│  Psilocybe cubensis                    │  Genus species italic
+│  Psilocybe cubensis           [ACTIVE] │  Genus species italic · chip
 │  ─────                                 │  Rule
 │  SL192-260510-03   F1.C1_A.T3          │  Lot ID · lineage
 │  Grain Spawn       Src: Agar SL188.F1  │  State · originating state
 │  Grain: RYE — Rye berries              │  Grain type (with desc, if on)
-│  05.10.26   notes (if any)    [ACTIVE] │  Date · notes · category chip
+│  05.10.26              notes if any    │  Date · notes
 └────────────────────────────────────────┘
 ```
 
