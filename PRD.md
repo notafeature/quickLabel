@@ -223,17 +223,19 @@ A print run produces N labels for one configuration of (code, date, lineage,
 
 Every grain-lot label carries:
 
-- **Cultivar** — large, dominant.
-- **Category chip** — Actives / Gourmet.
-- **Genus species** — italic, secondary.
+- **Cultivar** — full-width across the top of the label, dominant.
+  Auto-shrinks if the name is too long to fit, down to a legible
+  minimum. No truncation.
+- **Genus species** — italic, secondary, immediately below the cultivar.
 - **Lot ID** — the lot ID for this label, in the format described in §6.
 - **Lineage** — combined notation (e.g. `F1.C1_A.T3`).
 - **State** — `Grain Spawn`, `Agar`, `Liquid Culture`, etc.
 - **Source** — originating state, free text.
 - **Grain type** — the grain preparation used (e.g. `RYE`); optionally
   with description (`RYE — Rye berries`) per a form-level toggle.
-- **Date** — initiation date.
-- **Notes** — optional one-line free text.
+- **Date** — initiation date, bottom-left.
+- **Notes** — optional one-line free text, bottom area.
+- **Category chip** — Actives / Gourmet, bottom-right corner.
 
 Field omissions are silent — empty fields render nothing, no placeholders.
 
@@ -247,15 +249,14 @@ Indicative zoning:
 
 ```
 ┌────────────────────────────────────────┐
-│  ENIGMA                      [ACTIVE]  │  Cultivar dominant; category chip
+│  ENIGMA                                │  Cultivar full-width, auto-shrink
 │  Psilocybe cubensis                    │  Genus species italic
-├────────────────────────────────────────┤
+│  ─────                                 │  Rule
 │  SL192-260510-03   F1.C1_A.T3          │  Lot ID · lineage
-│  Grain             Src: Agar SL188.F1  │  State · originating state
-├────────────────────────────────────────┤
-│  Grain: Rye                 05.10.26   │  Grain type · date
+│  Grain Spawn       Src: Agar SL188.F1  │  State · originating state
+│  Grain: RYE — Rye berries              │  Grain type (with desc, if on)
+│  05.10.26   notes (if any)    [ACTIVE] │  Date · notes · category chip
 └────────────────────────────────────────┘
-  [Notes — smallest, only if present]
 ```
 
 Typography is calibrated to render identically on screen preview and on

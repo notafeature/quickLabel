@@ -214,37 +214,26 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
   background: #fff; color: #000;
   border-radius: 8px;
   box-shadow: 0 6px 32px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.08);
-  padding: 4cqw 6cqw 3cqw;
+  padding: 2.5cqw 3.5cqw 2cqw;
   display: flex; flex-direction: column;
   font-family: Arial, Helvetica, sans-serif;
   overflow: hidden; position: relative;
 }
-.label-top {
-  display: flex; justify-content: space-between;
-  align-items: flex-start; flex-shrink: 0;
-}
 .label-cultivar {
-  font-size: 11cqw; font-weight: 700; line-height: 1.05;
-  letter-spacing: -.4px; flex: 1;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 13cqw; font-weight: 700; line-height: 1.02;
+  letter-spacing: -.5px;
+  white-space: nowrap; overflow: hidden;
+  flex-shrink: 0;
 }
-.label-chip {
-  font-size: 3cqw; font-weight: 700; letter-spacing: .9px;
-  text-transform: uppercase; padding: 0.7cqw 1.6cqw; border-radius: 0.8cqw;
-  flex-shrink: 0; margin-left: 2.5cqw; margin-top: 1.5cqw;
-  white-space: nowrap;
-}
-.label-chip.actives { background: #dcfce7; color: #14532d; }
-.label-chip.gourmet { background: #cffafe; color: #164e63; }
 .label-species {
-  font-size: 5.5cqw; font-style: italic; color: #333;
-  flex-shrink: 0; margin-top: 0.4cqw;
+  font-size: 5.2cqw; font-style: italic; color: #333;
+  flex-shrink: 0; margin-top: 0.3cqw;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.label-rule { height: 0.3cqw; background: #ccc; margin: 1.5cqw 0; flex-shrink: 0; }
+.label-rule { height: 0.25cqw; background: #ccc; margin: 1.2cqw 0; flex-shrink: 0; }
 .label-mid {
   flex: 1; display: flex; flex-direction: column;
-  justify-content: center; gap: 1.2cqw; min-height: 0;
+  justify-content: center; gap: 0.9cqw; min-height: 0;
 }
 .label-line {
   font-size: 4cqw; color: #222; display: flex;
@@ -252,21 +241,37 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
   white-space: nowrap; overflow: hidden;
 }
 .label-line .mono { font-family: 'SF Mono', Monaco, 'Menlo', monospace; }
-.label-line .sep  { color: #aaa; padding: 0 1.5cqw; }
-.label-line .dim  { color: #777; font-size: 3.4cqw; padding-right: 0.6cqw; }
+.label-line .sep  { color: #aaa; padding: 0 1.2cqw; }
+.label-line .dim  { color: #777; font-size: 3.4cqw; padding-right: 0.5cqw; }
+.label-line .grain-text {
+  overflow: hidden; text-overflow: ellipsis;
+  /* hard space ensures gap from chip to the right */
+  padding-right: 2cqw;
+}
 .label-bottom {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  flex-shrink: 0; margin-top: 1cqw; gap: 2cqw;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0; margin-top: 0.8cqw; gap: 1.5cqw;
+}
+.label-bottom-left {
+  display: flex; align-items: baseline; gap: 1.5cqw;
+  flex: 1; min-width: 0;
 }
 .label-date {
   font-family: 'SF Mono', Monaco, monospace;
-  font-size: 3.4cqw; color: #444; white-space: nowrap;
+  font-size: 3.4cqw; color: #444; white-space: nowrap; flex-shrink: 0;
 }
 .label-notes {
-  font-size: 3.4cqw; color: #444; font-style: italic;
-  text-align: right; max-width: 60%;
+  font-size: 3.2cqw; color: #555; font-style: italic;
+  flex: 1; min-width: 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.label-chip {
+  font-size: 2.8cqw; font-weight: 700; letter-spacing: .9px;
+  text-transform: uppercase; padding: 0.6cqw 1.4cqw; border-radius: 0.7cqw;
+  flex-shrink: 0; white-space: nowrap;
+}
+.label-chip.actives { background: #dcfce7; color: #14532d; }
+.label-chip.gourmet { background: #cffafe; color: #164e63; }
 
 /* ── PRINT AREA ── */
 #print-area {
@@ -518,20 +523,20 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
       <span class="preview-label-hint">Label Preview — 2.25 × 1.25 in (preview shown 2.4×)</span>
 
       <div id="label-preview" class="label">
-        <div class="label-top">
-          <div class="label-cultivar" data-bind="cultivar">—</div>
-          <div class="label-chip actives" data-bind="chip">Active</div>
-        </div>
-        <div class="label-species" data-bind="species"></div>
+        <div class="label-cultivar">—</div>
+        <div class="label-species"></div>
         <div class="label-rule"></div>
         <div class="label-mid">
-          <div class="label-line" data-bind="l1"></div>
-          <div class="label-line" data-bind="l2"></div>
-          <div class="label-line" data-bind="l3"></div>
+          <div class="label-line"></div>
+          <div class="label-line"></div>
+          <div class="label-line"></div>
         </div>
         <div class="label-bottom">
-          <div class="label-date"  data-bind="date"></div>
-          <div class="label-notes" data-bind="notes"></div>
+          <div class="label-bottom-left">
+            <div class="label-date"></div>
+            <div class="label-notes"></div>
+          </div>
+          <div class="label-chip actives">Active</div>
         </div>
       </div>
 
@@ -1152,14 +1157,11 @@ function renderLabelInto(target, d) {
   const l2 = l2Parts.join('<span class="sep">|</span>');
 
   const l3 = d.sub
-    ? `<span class="dim">Grain:</span><span>${d.sub}</span>`
+    ? `<span class="dim">Grain:</span><span class="grain-text">${d.sub}</span>`
     : '';
 
   target.innerHTML = `
-    <div class="label-top">
-      <div class="label-cultivar">${d.cultivar || '—'}</div>
-      <div class="label-chip ${chipCls}">${chipText}</div>
-    </div>
+    <div class="label-cultivar">${d.cultivar || '—'}</div>
     <div class="label-species">${[d.genus, d.species].filter(Boolean).join(' ')}</div>
     <div class="label-rule"></div>
     <div class="label-mid">
@@ -1168,10 +1170,34 @@ function renderLabelInto(target, d) {
       <div class="label-line">${l3}</div>
     </div>
     <div class="label-bottom">
-      <div class="label-date">${fmtDate(d.date)}</div>
-      <div class="label-notes">${d.notes}</div>
+      <div class="label-bottom-left">
+        <div class="label-date">${fmtDate(d.date)}</div>
+        <div class="label-notes">${d.notes || ''}</div>
+      </div>
+      <div class="label-chip ${chipCls}">${chipText}</div>
     </div>
   `;
+
+  fitCultivar(target);
+}
+
+function fitCultivar(labelEl) {
+  const el = labelEl.querySelector('.label-cultivar');
+  if (!el) return;
+  const max = 13;     // cqw — default size
+  const min = 5.5;    // cqw — minimum legible size
+  let size = max;
+  el.style.fontSize = size + 'cqw';
+  // Iteratively shrink until it fits the container width.
+  // scrollWidth measures the rendered text width; clientWidth is the
+  // container's inner width (cultivar is a block, fills the label
+  // content width). 0.5 tolerance avoids subpixel jitter.
+  let guard = 0;
+  while (el.scrollWidth > el.clientWidth + 0.5 && size > min && guard < 20) {
+    size -= 0.5;
+    el.style.fontSize = size + 'cqw';
+    guard++;
+  }
 }
 
 function updatePreview() {
