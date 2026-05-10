@@ -368,7 +368,7 @@ select option { background: var(--surface2); }
 
         <div class="field">
           <span class="fl">Cultivar</span>
-          <input type="text" id="cultivar" placeholder="e.g. Enigma" oninput="updatePreview()" list="cultivar-dl">
+          <input type="text" id="cultivar" placeholder="e.g. Enigma" oninput="onCultivarInput()" list="cultivar-dl">
           <datalist id="cultivar-dl"></datalist>
         </div>
       </div>
@@ -548,12 +548,24 @@ select option { background: var(--surface2); }
     <div class="s-section">
       <h3>Cultivar Names</h3>
       <p style="font-size:11px;color:var(--muted);line-height:1.5">
-        Add cultivar names per species and they appear as suggestions in the Cultivar field.
+        Selecting a saved cultivar auto-fills category, genus, and species.
       </p>
+      <div class="cat-toggle" style="margin-bottom:2px">
+        <button id="s-cv-actives" onclick="setCvCat('actives')">Actives</button>
+        <button id="s-cv-gourmet" onclick="setCvCat('gourmet')">Gourmet / Functional</button>
+      </div>
       <div class="row">
         <div class="field">
-          <span class="fl">Genus / Species key</span>
-          <input type="text" id="cv-key" placeholder="Psilocybe_cubensis">
+          <span class="fl">Genus</span>
+          <select id="s-cv-genus" onchange="onCvGenus()">
+            <option value="">— genus —</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="fl">Species</span>
+          <select id="s-cv-species">
+            <option value="">— species —</option>
+          </select>
         </div>
       </div>
       <div class="add-row">
@@ -699,6 +711,7 @@ function restoreFormState() {
 function openSettings()  {
   $('settings-overlay').classList.add('open');
   $('settings-panel').classList.add('open');
+  setCvCat(cvCat);
   renderCultivarList();
 }
 function closeSettings() {
@@ -719,6 +732,7 @@ function applySettings() {
   applyLineageDisplay();
   renderSubList();
   renderSubDl();
+  refreshCultivarDl();
 }
 
 function applyLineageDisplay() {
@@ -762,10 +776,29 @@ function removeSub(i) {
 }
 
 // ── Cultivars ──
+let cvCat = 'actives';
+
+function setCvCat(c) {
+  cvCat = c;
+  $('s-cv-actives').className = c === 'actives' ? 'on-actives' : '';
+  $('s-cv-gourmet').className  = c === 'gourmet'  ? 'on-gourmet'  : '';
+  $('s-cv-genus').innerHTML = '<option value="">— genus —</option>' +
+    Object.keys(TAXA[c]).map(g => `<option value="${g}">${g}</option>`).join('');
+  $('s-cv-species').innerHTML = '<option value="">— species —</option>';
+}
+
+function onCvGenus() {
+  const g = $('s-cv-genus').value;
+  $('s-cv-species').innerHTML = '<option value="">— species —</option>' +
+    (TAXA[cvCat][g] || []).map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
 function addCultivar() {
-  const key  = $('cv-key').value.trim();
-  const name = $('cv-name').value.trim();
-  if (!key || !name) return;
+  const genus   = $('s-cv-genus').value;
+  const species = $('s-cv-species').value;
+  const name    = $('cv-name').value.trim();
+  if (!genus || !species || !name) return;
+  const key = `${genus}_${species}`;
   if (!cfg.cultivars[key]) cfg.cultivars[key] = [];
   if (!cfg.cultivars[key].includes(name)) cfg.cultivars[key].push(name);
   persistCfg();
@@ -774,20 +807,59 @@ function addCultivar() {
   refreshCultivarDl();
 }
 
+function removeCultivar(key, idx) {
+  if (!cfg.cultivars[key]) return;
+  cfg.cultivars[key].splice(idx, 1);
+  if (!cfg.cultivars[key].length) delete cfg.cultivars[key];
+  persistCfg();
+  renderCultivarList();
+  refreshCultivarDl();
+}
+
 function renderCultivarList() {
   const entries = Object.entries(cfg.cultivars)
     .filter(([,v]) => v.length)
-    .map(([k,v]) => `<div><strong>${k}:</strong> ${v.join(', ')}</div>`)
-    .join('');
+    .map(([k,v]) => {
+      const names = v.map((n,i) =>
+        `<span style="white-space:nowrap">${n} <button class="ghost icon" style="font-size:10px;padding:0 3px" onclick="removeCultivar('${k}',${i})">✕</button></span>`
+      ).join(', ');
+      return `<div style="margin-bottom:4px"><strong style="color:var(--text)">${k.replace('_',' ')}</strong><br>${names}</div>`;
+    }).join('');
   $('cv-list').innerHTML = entries || '<span>None saved yet.</span>';
 }
 
 function refreshCultivarDl() {
-  const g = $('genus').value;
-  const s = $('species').value;
-  const key = `${g}_${s}`;
-  $('cultivar-dl').innerHTML = (cfg.cultivars[key] || [])
-    .map(n => `<option value="${n}">`).join('');
+  const all = [];
+  for (const names of Object.values(cfg.cultivars)) {
+    for (const n of names) if (!all.includes(n)) all.push(n);
+  }
+  $('cultivar-dl').innerHTML = all.map(n => `<option value="${n}">`).join('');
+}
+
+function getCultivarMeta(name) {
+  const lower = name.toLowerCase();
+  for (const [key, names] of Object.entries(cfg.cultivars)) {
+    if (names.some(n => n.toLowerCase() === lower)) {
+      const [genus, species] = key.split('_');
+      const category = Object.keys(TAXA).find(c => TAXA[c][genus]) || 'actives';
+      return { category, genus, species };
+    }
+  }
+  return null;
+}
+
+function onCultivarInput() {
+  const val = $('cultivar').value.trim();
+  if (val) {
+    const meta = getCultivarMeta(val);
+    if (meta) {
+      setCategory(meta.category);
+      $('genus').value = meta.genus;
+      onGenus();
+      $('species').value = meta.species;
+    }
+  }
+  updatePreview();
 }
 
 // ─── FORM ─────────────────────────────────────────────────────────────────────
