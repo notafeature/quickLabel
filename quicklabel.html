@@ -76,12 +76,32 @@ main { display: flex; flex: 1; overflow: hidden; }
   flex-shrink: 0;
   overflow: auto;
   padding: 14px 14px 20px;
-  border-right: 1px solid var(--border);
   display: flex; flex-direction: column; gap: 10px;
-  resize: horizontal;
 }
 #form-panel::-webkit-scrollbar { width: 3px; }
 #form-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── SPLITTER ── */
+#splitter {
+  width: 5px;
+  background: var(--border);
+  cursor: col-resize;
+  flex-shrink: 0;
+  transition: background .15s;
+  position: relative;
+}
+#splitter::after {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1px; height: 30px;
+  background: var(--muted);
+  border-radius: 1px;
+  opacity: .6;
+}
+#splitter:hover, #splitter.dragging { background: var(--green); }
+#splitter:hover::after, #splitter.dragging::after { background: #000; opacity: 1; }
+body.splitter-dragging { cursor: col-resize !important; user-select: none; }
 
 .card {
   background: var(--surface);
@@ -132,6 +152,17 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 }
 .cat-toggle button.on-actives { background: #14532d; color: var(--green); }
 .cat-toggle button.on-gourmet  { background: #164e63; color: var(--teal); }
+
+/* ── INLINE TOGGLE ── */
+.inline-toggle {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--muted);
+  margin-top: 4px; cursor: pointer; user-select: none;
+}
+.inline-toggle input[type=checkbox] {
+  width: auto; margin: 0; cursor: pointer;
+  accent-color: var(--green);
+}
 
 /* ── LINEAGE NOTATION PREVIEW ── */
 .notation-preview {
@@ -411,28 +442,35 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
           </div>
         </div>
         <div class="notation-preview" id="notation">—</div>
+        <div class="field">
+          <span class="fl">Media Type</span>
+          <select id="media" onchange="updatePreview()">
+            <option value="Spore">Spore</option>
+            <option value="Spore Syringe">Spore Syringe</option>
+            <option value="Agar">Agar</option>
+            <option value="Liquid Culture">Liquid Culture</option>
+            <option value="Grain Spawn" selected>Grain Spawn</option>
+          </select>
+        </div>
       </div>
 
       <!-- LOT -->
       <div class="card">
         <div class="card-label">Lot</div>
 
-        <div class="row">
-          <div class="field">
-            <span class="fl">Media</span>
-            <select id="media" onchange="updatePreview()">
-              <option value="Grain Spawn">Grain Spawn</option>
-            </select>
-          </div>
-          <div class="field w110">
-            <span class="fl">Date</span>
-            <input type="date" id="date" onchange="onDateChange()">
-          </div>
+        <div class="field">
+          <span class="fl">Date</span>
+          <input type="date" id="date" onchange="onDateChange()">
         </div>
 
         <div class="field">
           <span class="fl">Lot ID (next print)</span>
           <div class="lot-display" id="lot-display">—</div>
+        </div>
+
+        <div class="field w80">
+          <span class="fl">Quantity</span>
+          <input type="number" id="quantity" min="1" max="99" value="1" oninput="onQuantityChange()" onchange="onQuantityChange()">
         </div>
       </div>
 
@@ -447,9 +485,13 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 
         <div class="field">
           <span class="fl">Grain Type</span>
-          <input type="text" id="sub-code" placeholder="e.g. Rye, Oats, Millet"
+          <input type="text" id="sub-code" placeholder="e.g. RYE, OATS, MILLET"
                  oninput="updatePreview()" list="sub-dl">
           <datalist id="sub-dl"></datalist>
+          <label class="inline-toggle">
+            <input type="checkbox" id="grain-show-desc" onchange="updatePreview()">
+            <span>Include description on label</span>
+          </label>
         </div>
 
         <div class="field">
@@ -461,16 +503,15 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
       <!-- PRINT -->
       <div class="card">
         <div class="row print-row-end">
-          <div class="field w80">
-            <span class="fl">Quantity</span>
-            <input type="number" id="quantity" min="1" max="99" value="1" oninput="onQuantityChange()" onchange="onQuantityChange()">
-          </div>
           <button class="primary print-btn" id="print-btn" onclick="printLabel()">Print</button>
           <button class="icon" onclick="resetForm()" title="Clear form">↺</button>
         </div>
       </div>
 
     </div><!-- /form-panel -->
+
+    <!-- splitter for resizing form panel -->
+    <div id="splitter" title="Drag to resize"></div>
 
     <!-- ── PREVIEW ── -->
     <div id="preview-panel">
@@ -526,23 +567,10 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
     </div>
 
     <div class="s-section">
-      <h3>Lineage Display</h3>
-      <div class="toggle-row">
-        <span>Show Filial (F#) field</span>
-        <label class="sw">
-          <input type="checkbox" id="s-filial" onchange="saveSettings(); applyLineageDisplay()">
-          <div class="sw-track"></div>
-          <div class="sw-thumb"></div>
-        </label>
-      </div>
-    </div>
-
-    <div class="s-section">
       <h3>Genetic Codes</h3>
       <p style="font-size:11px;color:var(--muted);line-height:1.5">
         Each entry maps a code to a genetic. Selecting a code on the form fills genus, species, cultivar.
       </p>
-      <div class="entry-list" id="codes-list"></div>
       <div class="add-block">
         <div class="cat-toggle">
           <button id="s-cv-actives" onclick="setCvCat('actives')">Actives</button>
@@ -564,10 +592,12 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
         </div>
         <div class="add-row">
           <input class="code-input" type="text" id="cv-code" placeholder="SL192" maxlength="10">
-          <input type="text" id="cv-name" placeholder="Cultivar name" onkeydown="if(event.key==='Enter')addCode()">
-          <button onclick="addCode()">Add</button>
+          <input type="text" id="cv-name" placeholder="Cultivar name" onkeydown="if(event.key==='Enter')saveCode()">
+          <button id="cv-save-btn" onclick="saveCode()">Add</button>
+          <button id="cv-cancel-btn" onclick="cancelEditCode()" style="display:none">Cancel</button>
         </div>
       </div>
+      <div class="entry-list" id="codes-list" style="margin-top:8px"></div>
     </div>
 
     <div class="s-section">
@@ -575,15 +605,16 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
       <p style="font-size:11px;color:var(--muted);line-height:1.5">
         Grain preparations available on the Grain Type field.
       </p>
-      <div class="entry-list" id="grain-list"></div>
       <div class="add-block">
         <div class="add-row">
           <input class="code-input" type="text" id="new-grain-code" placeholder="RYE" maxlength="12">
           <input type="text" id="new-grain-desc" placeholder="Description (optional)"
-                 onkeydown="if(event.key==='Enter')addGrainType()">
-          <button onclick="addGrainType()">Add</button>
+                 onkeydown="if(event.key==='Enter')saveGrainType()">
+          <button id="grain-save-btn" onclick="saveGrainType()">Add</button>
+          <button id="grain-cancel-btn" onclick="cancelEditGrainType()" style="display:none">Cancel</button>
         </div>
       </div>
+      <div class="entry-list" id="grain-list" style="margin-top:8px"></div>
     </div>
 
   </div>
@@ -623,13 +654,15 @@ let initializing = true;
 
 let cfg = {
   prefix:     'SL',
-  showFilial: true,
   codes:      [],   // [{ code, genus, species, cultivar }]
   grainTypes: [...DEFAULT_GRAIN_TYPES],
   substrates: []    // parked for future Batch state
 };
 
 let lotCounters = {}; // "CODE_YYMMDD" → highest seq used
+
+let editingCodeIdx  = -1;
+let editingGrainIdx = -1;
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 
@@ -714,19 +747,20 @@ function saveFormState() {
   if (initializing) return;
   const state = {
     cat,
-    genus:    $('genus').value,
-    species:  $('species').value,
-    cultivar: $('cultivar').value,
-    filial:   $('filial').value,
-    clone:    $('clone').value,
-    iso:      $('iso').value,
-    transfer: $('transfer').value,
-    media:    $('media').value,
-    genCode:  $('gen-code').value,
-    quantity: $('quantity').value,
-    source:   $('source').value,
-    subCode:  $('sub-code').value,
-    notes:    $('notes').value,
+    genus:        $('genus').value,
+    species:      $('species').value,
+    cultivar:     $('cultivar').value,
+    filial:       $('filial').value,
+    clone:        $('clone').value,
+    iso:          $('iso').value,
+    transfer:     $('transfer').value,
+    media:        $('media').value,
+    genCode:      $('gen-code').value,
+    quantity:     $('quantity').value,
+    source:       $('source').value,
+    subCode:      $('sub-code').value,
+    subShowDesc:  $('grain-show-desc').checked,
+    notes:        $('notes').value,
   };
   localStorage.setItem('ql_form', JSON.stringify(state));
 }
@@ -738,18 +772,19 @@ function restoreFormState() {
     const s = JSON.parse(raw);
     setCategory(s.cat || 'actives');
     if (s.genus)    { $('genus').value = s.genus; onGenus(); }
-    if (s.species)    $('species').value  = s.species;
-    if (s.cultivar)   $('cultivar').value = s.cultivar;
-    if (s.filial)     $('filial').value   = s.filial;
-    if (s.clone)      $('clone').value    = s.clone;
-    if (s.iso)        $('iso').value      = s.iso;
-    if (s.transfer)   $('transfer').value = s.transfer;
-    if (s.media)      $('media').value    = s.media;
-    if (s.genCode)    $('gen-code').value = s.genCode;
-    if (s.quantity)   $('quantity').value = s.quantity;
-    if (s.source)     $('source').value   = s.source;
-    if (s.subCode)    $('sub-code').value = s.subCode;
-    if (s.notes)      $('notes').value    = s.notes;
+    if (s.species)              $('species').value  = s.species;
+    if (s.cultivar)             $('cultivar').value = s.cultivar;
+    if (s.filial)               $('filial').value   = s.filial;
+    if (s.clone)                $('clone').value    = s.clone;
+    if (s.iso)                  $('iso').value      = s.iso;
+    if (s.transfer)             $('transfer').value = s.transfer;
+    if (s.media)                $('media').value    = s.media;
+    if (s.genCode)              $('gen-code').value = s.genCode;
+    if (s.quantity)             $('quantity').value = s.quantity;
+    if (s.source)               $('source').value   = s.source;
+    if (s.subCode)              $('sub-code').value = s.subCode;
+    $('grain-show-desc').checked = !!s.subShowDesc;
+    if (s.notes)                $('notes').value    = s.notes;
     onLineage();
     rebuildLot();
     return true;
@@ -761,6 +796,8 @@ function restoreFormState() {
 function openSettings()  {
   $('settings-overlay').classList.add('open');
   $('settings-panel').classList.add('open');
+  cancelEditCode();
+  cancelEditGrainType();
   setCvCat(cvCat);
   renderCodesList();
   renderGrainList();
@@ -771,22 +808,15 @@ function closeSettings() {
 }
 
 function saveSettings() {
-  cfg.prefix     = ($('s-prefix').value.trim().toUpperCase() || 'SL');
-  cfg.showFilial = $('s-filial').checked;
+  cfg.prefix = ($('s-prefix').value.trim().toUpperCase() || 'SL');
   persistCfg();
   rebuildLot();
 }
 
 function applySettings() {
   $('s-prefix').value = cfg.prefix;
-  $('s-filial').checked = cfg.showFilial;
-  applyLineageDisplay();
   refreshCodeDl();
   renderGrainDl();
-}
-
-function applyLineageDisplay() {
-  $('filial-field').style.display = cfg.showFilial ? '' : 'none';
   updatePreview();
 }
 
@@ -808,22 +838,59 @@ function onCvGenus() {
     (TAXA[cvCat][g] || []).map(s => `<option value="${s}">${s}</option>`).join('');
 }
 
-function addCode() {
+function saveCode() {
   const code     = $('cv-code').value.trim().toUpperCase();
   const genus    = $('s-cv-genus').value;
   const species  = $('s-cv-species').value;
   const cultivar = $('cv-name').value.trim();
   if (!genus || !species || !cultivar) return;
-  cfg.codes.push({ code, genus, species, cultivar });
+  const rec = { code, genus, species, cultivar };
+  if (editingCodeIdx >= 0) {
+    cfg.codes[editingCodeIdx] = rec;
+    editingCodeIdx = -1;
+  } else {
+    cfg.codes.push(rec);
+  }
   persistCfg();
   $('cv-code').value = '';
   $('cv-name').value = '';
+  updateCodeFormButtons();
   renderCodesList();
   refreshCodeDl();
 }
 
+function editCode(i) {
+  const r = cfg.codes[i];
+  if (!r) return;
+  editingCodeIdx = i;
+  setCvCat(categoryForGenus(r.genus));
+  $('s-cv-genus').value = r.genus;
+  onCvGenus();
+  $('s-cv-species').value = r.species;
+  $('cv-code').value = r.code || '';
+  $('cv-name').value = r.cultivar;
+  updateCodeFormButtons();
+  renderCodesList();
+}
+
+function cancelEditCode() {
+  editingCodeIdx = -1;
+  $('cv-code').value = '';
+  $('cv-name').value = '';
+  updateCodeFormButtons();
+  renderCodesList();
+}
+
+function updateCodeFormButtons() {
+  const editing = editingCodeIdx >= 0;
+  $('cv-save-btn').textContent = editing ? 'Save' : 'Add';
+  $('cv-cancel-btn').style.display = editing ? '' : 'none';
+}
+
 function removeCode(idx) {
   cfg.codes.splice(idx, 1);
+  if (editingCodeIdx === idx) cancelEditCode();
+  else if (editingCodeIdx > idx) editingCodeIdx--;
   persistCfg();
   renderCodesList();
   refreshCodeDl();
@@ -834,12 +901,14 @@ function renderCodesList() {
     const codeHtml = r.code
       ? `<span class="code">${r.code}</span>`
       : `<span class="code" style="color:var(--muted)">—</span>`;
+    const editingCls = editingCodeIdx === i ? ' editing' : '';
     return `
-      <div class="entry-item">
+      <div class="entry-item${editingCls}">
         ${codeHtml}
         <span class="desc"><strong>${r.cultivar}</strong></span>
         <span class="sub">${r.genus} ${r.species}</span>
-        <button class="ghost" onclick="removeCode(${i})">✕</button>
+        <button class="ghost" onclick="editCode(${i})" title="Edit">✏</button>
+        <button class="ghost" onclick="removeCode(${i})" title="Delete">✕</button>
       </div>`;
   }).join('');
   $('codes-list').innerHTML = items || '<span style="font-size:11px;color:var(--muted)">No codes saved.</span>';
@@ -859,32 +928,71 @@ function findCode(code) {
 }
 
 // ── Grain Types ──
-function addGrainType() {
+function saveGrainType() {
   const code = $('new-grain-code').value.trim().toUpperCase();
   const desc = $('new-grain-desc').value.trim();
   if (!code) return;
-  cfg.grainTypes.push({ code, desc });
+  const rec = { code, desc };
+  if (editingGrainIdx >= 0) {
+    cfg.grainTypes[editingGrainIdx] = rec;
+    editingGrainIdx = -1;
+  } else {
+    cfg.grainTypes.push(rec);
+  }
   persistCfg();
   $('new-grain-code').value = '';
   $('new-grain-desc').value = '';
+  updateGrainFormButtons();
   renderGrainList();
   renderGrainDl();
+  updatePreview();
+}
+
+function editGrainType(i) {
+  const g = cfg.grainTypes[i];
+  if (!g) return;
+  editingGrainIdx = i;
+  $('new-grain-code').value = g.code;
+  $('new-grain-desc').value = g.desc || '';
+  updateGrainFormButtons();
+  renderGrainList();
+}
+
+function cancelEditGrainType() {
+  editingGrainIdx = -1;
+  $('new-grain-code').value = '';
+  $('new-grain-desc').value = '';
+  updateGrainFormButtons();
+  renderGrainList();
+}
+
+function updateGrainFormButtons() {
+  const editing = editingGrainIdx >= 0;
+  $('grain-save-btn').textContent = editing ? 'Save' : 'Add';
+  $('grain-cancel-btn').style.display = editing ? '' : 'none';
 }
 
 function removeGrainType(i) {
   cfg.grainTypes.splice(i, 1);
+  if (editingGrainIdx === i) cancelEditGrainType();
+  else if (editingGrainIdx > i) editingGrainIdx--;
   persistCfg();
   renderGrainList();
   renderGrainDl();
+  updatePreview();
 }
 
 function renderGrainList() {
-  $('grain-list').innerHTML = cfg.grainTypes.map((g, i) => `
-    <div class="entry-item">
-      <span class="code">${g.code}</span>
-      <span class="desc">${g.desc || ''}</span>
-      <button class="ghost" onclick="removeGrainType(${i})">✕</button>
-    </div>`).join('') ||
+  $('grain-list').innerHTML = cfg.grainTypes.map((g, i) => {
+    const editingCls = editingGrainIdx === i ? ' editing' : '';
+    return `
+      <div class="entry-item${editingCls}">
+        <span class="code">${g.code}</span>
+        <span class="desc">${g.desc || ''}</span>
+        <button class="ghost" onclick="editGrainType(${i})" title="Edit">✏</button>
+        <button class="ghost" onclick="removeGrainType(${i})" title="Delete">✕</button>
+      </div>`;
+  }).join('') ||
     '<span style="font-size:11px;color:var(--muted)">No grain types saved.</span>';
 }
 
@@ -919,10 +1027,8 @@ function onGenus() {
 // ── Lineage ──
 function buildNotation() {
   const parts = [];
-  if (cfg.showFilial) {
-    let f = $('filial').value.trim().toUpperCase();
-    if (f) parts.push(f.startsWith('F') ? f : 'F' + f);
-  }
+  let f = $('filial').value.trim().toUpperCase();
+  if (f) parts.push(f.startsWith('F') ? f : 'F' + f);
   let c = $('clone').value.trim().toUpperCase();
   const iso = $('iso').value.trim().toUpperCase();
   if (c) {
@@ -932,6 +1038,13 @@ function buildNotation() {
   let t = $('transfer').value.trim().toUpperCase();
   if (t) parts.push(t.startsWith('T') ? t : 'T' + t);
   return parts.join('.');
+}
+
+function grainTypeDesc(code) {
+  if (!code) return '';
+  const upper = code.toUpperCase();
+  const g = cfg.grainTypes.find(x => (x.code || '').toUpperCase() === upper);
+  return g ? (g.desc || '') : '';
 }
 
 function onLineage() {
@@ -997,16 +1110,23 @@ function resetForm() {
 // ─── PREVIEW / RENDER ─────────────────────────────────────────────────────────
 
 function buildLabelData(seqOverride) {
-  const code     = $('gen-code').value.trim().toUpperCase();
-  const date     = $('date').value;
-  const genus    = $('genus').value;
-  const species  = $('species').value;
-  const cultivar = $('cultivar').value.trim();
-  const media    = $('media').value;
-  const source   = $('source').value.trim();
-  const sub      = $('sub-code').value.trim();
-  const notes    = $('notes').value.trim();
-  const notation = buildNotation();
+  const code        = $('gen-code').value.trim().toUpperCase();
+  const date        = $('date').value;
+  const genus       = $('genus').value;
+  const species     = $('species').value;
+  const cultivar    = $('cultivar').value.trim();
+  const media       = $('media').value;
+  const source      = $('source').value.trim();
+  const subCode     = $('sub-code').value.trim();
+  const subShowDesc = $('grain-show-desc').checked;
+  const notes       = $('notes').value.trim();
+  const notation    = buildNotation();
+
+  let sub = subCode;
+  if (subShowDesc && subCode) {
+    const desc = grainTypeDesc(subCode);
+    if (desc) sub = `${subCode.toUpperCase()} — ${desc}`;
+  }
 
   let lotId = '';
   if (code && date) {
@@ -1089,12 +1209,39 @@ function printLabel() {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
+function setupSplitter() {
+  const splitter = $('splitter');
+  const form     = $('form-panel');
+  if (!splitter || !form) return;
+  let dragging = false, startX = 0, startWidth = 0;
+  splitter.addEventListener('mousedown', e => {
+    dragging   = true;
+    startX     = e.clientX;
+    startWidth = form.offsetWidth;
+    splitter.classList.add('dragging');
+    document.body.classList.add('splitter-dragging');
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const next = Math.max(280, Math.min(720, startWidth + (e.clientX - startX)));
+    form.style.width = next + 'px';
+  });
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    splitter.classList.remove('dragging');
+    document.body.classList.remove('splitter-dragging');
+  });
+}
+
 function init() {
   loadStorage();
   applySettings();
 
   $('date').value = todayISO();
   $('settings-btn').onclick = openSettings;
+  setupSplitter();
 
   if (!restoreFormState()) setCategory('actives');
 
