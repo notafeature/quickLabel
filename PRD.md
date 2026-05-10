@@ -40,20 +40,38 @@ Every state-change label captures four things:
 Each state has its own lot-ID format. Today, only one state is in scope:
 **grain spawn**, producing **grain lots**.
 
-### Today's scope
+### Workflows
 
-This release labels things in any of the following states:
+A **workflow** is a named state change. Every label is one workflow event.
+The workflow fixes the destination state, the lot type, and the lot-ID
+format. The user picks a workflow, then fills in the rest.
 
-- **Spore** (deposit)
-- **Spore Syringe**
-- **Agar** (plate)
-- **Liquid Culture**
-- **Grain Spawn**
+Today's release implements one workflow:
 
-All in-scope states share a single lot-ID format today (see §6). State-
-specific lot-ID formats — and the structured tracking that comes with them
-— are future work. Batch (spawn-to-bulk), Harvest, and Homogenized remain
-parked.
+| Workflow | Destination | Lot type | In scope? |
+|----------|-------------|----------|-----------|
+| **Make Grain Spawn** | Grain Spawn | Grain Lot | Yes |
+| Spawn-to-Bulk | Bulk substrate | Batch | No |
+| Spore → Agar | Agar plate | Agar Lot | No |
+| LC → Agar | Agar plate | Agar Lot | No |
+| Agar → Agar (transfer) | Agar plate | Agar Lot | No |
+| Make Liquid Culture | Liquid Culture | LC Lot | No |
+| Harvest | Fruiting body | Harvest Lot | No |
+| Homogenize | Processed product | Homogenized Lot | No |
+
+The destination state is **not** user-selected on the form — it is implied
+by the workflow. The user picks the workflow and fills in source (where
+the thing came from), lineage, and label metadata. Future workflows expand
+this table without changing the model.
+
+### Source
+
+Source captures where a thing came from. It is **optional and secondary**
+to the workflow. Some workflows treat source as mandatory; this one does
+not. Source is currently a free-text field on the form (`Agar SL188.F1.T2`,
+`Liquid Culture (origin)`, etc.). Future iterations will let it pull from
+a consumables list, an asset list from a sibling tracking module (e.g. an
+agar tracker), or stay overridable as freeform.
 
 ---
 
@@ -135,7 +153,7 @@ chain. Components are independently optional.
 | Filial    | `F1`, `F2`, …      | Spore-derived generation. |
 | Clone     | `C1`, `C2`, …      | Tissue/fruit-body clone within a filial generation, or standalone. |
 | Isolation | `_A`, `_B`, …      | Suffixed onto the clone: `C1_A`. |
-| Transfer  | `T0`, `T1`, …      | Passage count on the **current** state. Resets at every state change. |
+| Transfer  | `T0`, `T1`, …      | Passage count on the genetic line. Carries across state changes (T2 agar → T2 grain → T2 bulk). Advances only on transfer within the same state (T2 agar → T3 agar). |
 
 Combined notation uses `.` as a separator. Examples:
 
@@ -153,24 +171,15 @@ components are simply omitted from the rendered notation.
 
 ## 6. Lot Identity
 
-Each state has its own lot-ID format. The label states the state explicitly
-so the ID is never ambiguous.
+**Lot type is workflow-derived.** Each workflow produces a specific lot
+type; the lot type determines the lot-ID format and gets its own counter
+namespace so types never collide (a Grain Lot `01` and a Batch `01` are
+always distinct).
 
-| State            | Lot type           | In scope today? |
-|------------------|--------------------|-----------------|
-| Spore            | Spore Deposit      | Yes (shared format) |
-| Spore Syringe    | Spore Syringe Lot  | Yes (shared format) |
-| Agar             | Agar Plate Lot     | Yes (shared format) |
-| Liquid Culture   | LC Lot             | Yes (shared format) |
-| Grain spawn      | **Grain Lot**      | Yes (shared format) |
-| Spawn-to-bulk    | Batch              | No |
-| Post-harvest     | Harvest Lot        | No |
-| Processing       | Homogenized Lot    | No |
-
-In this release, every in-scope state uses the **shared lot-ID format**
-described under "Grain Lot ID" below. State-specific formats (e.g. distinct
-sequence rules, parentage encoding) are future work — when they land, the
-lot-ID format on a label will depend on the state, not on the form.
+Today only the Grain Lot type is produced. Its format is described below.
+Future lot types (Batch, Agar Lot, LC Lot, Harvest Lot, Homogenized Lot)
+will have their own formats and rules — when they land, the lot-ID on a
+label will depend on the workflow, not on the form.
 
 ### Grain Lot ID
 
@@ -228,10 +237,14 @@ Every grain-lot label carries:
   minimum. No truncation.
 - **Genus species** — italic, secondary, on the species line.
 - **Category chip** — Actives / Gourmet, right side of the species line.
-- **Lot ID** — the lot ID for this label, in the format described in §6.
-- **Lineage** — combined notation (e.g. `F1.C1_A.T3`).
-- **State** — `Grain Spawn`, `Agar`, `Liquid Culture`, etc.
-- **Source** — originating state, free text.
+- **Lot ID** — the lot ID for this label, on its own line below the
+  rule, slightly emphasized. This is the core identifier of the labeled
+  thing. Format per the lot type, described in §6.
+- **Lineage** — combined notation (e.g. `F1.C1_A.T3`), on its own line.
+- **Destination | Source** — destination state (workflow-derived) on the
+  left, source descriptor on the right after `Src:`. If source is empty,
+  only the destination shows. Examples: `Grain Spawn  |  Src: Agar
+  SL188.F1.T2`, `Grain Spawn  |  Src: Liquid Culture (origin)`.
 - **Grain type** — the grain preparation used (e.g. `RYE`); optionally
   with description (`RYE — Rye berries`) per a form-level toggle.
 - **Date** — initiation date, bottom-left.
@@ -252,9 +265,10 @@ Indicative zoning:
 │  ENIGMA                                │  Cultivar full-width, auto-shrink
 │  Psilocybe cubensis           [ACTIVE] │  Genus species italic · chip
 │  ─────                                 │  Rule
-│  SL192-260510-03   F1.C1_A.T3          │  Lot ID · lineage
-│  Grain Spawn       Src: Agar SL188.F1  │  State · originating state
-│  Grain: RYE — Rye berries              │  Grain type (with desc, if on)
+│  SL192-260510-03                       │  L1: Lot ID alone (core)
+│  F1.C1_A.T3                            │  L2: Lineage alone
+│  Grain Spawn  |  Src: Agar SL188.F1.T2 │  L3: Destination | Source
+│  Grain: RYE — Rye berries              │  L4: Grain type (with desc)
 │  05.10.26              notes if any    │  Date · notes
 └────────────────────────────────────────┘
 ```
@@ -297,16 +311,20 @@ for labeling.
 ## 12. Form Behavior
 
 - The form is flat. There is no "Advanced" section.
-- **Genetic code** is the first field. Picking or typing a saved code
+- The app header carries a **workflow tag** showing which workflow is
+  active (today: `Make Grain Spawn`). The tag is a placeholder for a
+  future workflow selector.
+- **Genetic code** is the first form field. Picking or typing a saved code
   populates genus, species, and cultivar. The auto-populated fields
   remain editable for one-off labels.
 - The form pane is user-resizable horizontally via a draggable splitter
   bar between the form and the preview.
 - The form sections, in order, are: **Genetic** (genetic code, category,
   genus, species, cultivar), **Lineage** (filial / clone / isolation /
-  transfer, plus media type), **Lot** (date, lot ID display, quantity),
+  transfer, notation preview), **Lot** (date, lot ID display, quantity),
   **Details** (source, grain type with optional description, notes), and
-  **Print** (print and reset actions).
+  **Print** (print and reset actions). No media-type field — destination
+  state is workflow-derived.
 - All fields are optional. Nothing is mandatory; nothing is validated.
   An empty field renders nothing on the label.
 - Form state persists across sessions, except **date**, which always
@@ -367,6 +385,11 @@ influence the current code.
   integrity.
 - Settings import/export across labs and users.
 - Vendor registry, substrate inventory, recipe builder.
+- **Source autocomplete from upstream sources**: the Source field on the
+  form pulls from a consumables list, from an asset list owned by a
+  sibling tracking module (e.g. an agar tracker), or stays overridable
+  as freeform. Resolving a source becomes a real foreign-key lookup
+  rather than a free-text string.
 
 ### Workflow
 
