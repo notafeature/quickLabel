@@ -1,369 +1,374 @@
 # QuickLabel — Product Requirements Document
 
-**Version:** 0.5
+**Version:** 1.0
 **Last updated:** 2026-05-10
-**Target:** Print a grain spawn or bulk spawn label today. Build the rest later.
+**Audience:** the author (single user, personal tool, closed environment).
 
 ---
 
 ## 1. Problem
 
-Labeling bags, bins, and substrate in a cultivation workflow is currently manual
-and inconsistent. Labels need to carry enough information to trace genetics,
-track propagation lineage, and eventually feed compliance workflows — without
-requiring the person printing to know any of that context upfront.
+Cultivation work moves a genetic line through a series of physical states.
+Each transition produces a new physical container — a bag, plate, jar, bin —
+that needs a label carrying enough information to identify the genetic, where
+in its lifecycle it sits, what its lineage is, and where it came from. Today
+that labeling is manual, inconsistent, and error-prone.
+
+QuickLabel produces those labels.
 
 ---
 
-## 2. Scope
+## 2. Conceptual Model
 
-### v1 (today)
-Single HTML file. Fill form, print label on Dymo LabelWriter 450 (30334,
-2.25" × 1.25"). Data lives in `localStorage`. No backend.
+### Things, states, transitions
 
-**Media types in scope:** Grain Spawn, Bulk (spawn-to-bulk)
+A **thing** is a physical container of mycelium or substrate. Every thing
+exists in a **state** — agar, liquid culture, grain spawn, batch (bulk),
+harvest, homogenized — and carries a **lot ID** that is unique within that
+state. A new state begins when a thing is moved to a new media: spores onto
+agar, agar into LC, LC into grain, grain into bulk, etc. Each transition is
+a **state change**.
 
-**Media types out of scope for v1:** Agar, LC, Spore Swab
+Every state-change label captures four things:
 
-### Future (separate genetics tracker repo, to be integrated)
-- Genetics catalog with genetic codes, lineage graph, progeny tracking
-- Vendor registry with codes
-- Substrate inventory: create substrate lots, pull from inventory when creating batch
-- Substrate recipe builder with custom codes
-- Cultivar names extracted from database
-- Source population from database
-- QR code scanning for substrate/lot lookup
-- Operator tracking
-- State change / compliance fields
-- Harvest lot, homogenized lot, and downstream tracking
+1. **What state** the new thing is in (grain spawn, batch, etc.).
+2. **What genetic** it carries.
+3. **What lineage** within that genetic (filial / clone / isolation / transfer).
+4. **Where it came from** — the originating state, and that state's ID if one
+   exists.
 
----
+Each state has its own lot-ID format. Today, only one state is in scope:
+**grain spawn**, producing **grain lots**.
 
-## 3. Taxonomy & Terminology
+### Today's scope
 
-- **No use of the word "strain"** anywhere in UI or code.
-- **Category** splits the genus/species picker:
-  - **Gourmet / Functional** — Pleurotus, Hericium, Ganoderma, Lentinula, etc.
-  - **Actives** — Psilocybe, Panaeolus
-
-### Seeded genus/species (v1 defaults — user-extensible in settings)
-
-**Actives — Psilocybe (abbrev: P.):**
-| Species |
-|---------|
-| azurescens |
-| caerulescens |
-| cubensis |
-| mexicana |
-| ochraceocentrata |
-| subaeruginosa |
-| subtropicalis |
-| tampanensis |
-| zapotecorum |
-
-**Actives — Panaeolus (abbrev: PAn.):**
-| Species |
-|---------|
-| cyanescens |
-
-Cultivar names are **not seeded** — user-defined in settings, future DB extraction.
+This release labels grain spawn lots only. All other states are parked.
+When new states are added, each gets its own lot-ID format and its own label
+content; the model above does not change.
 
 ---
 
-## 4. Genetic Lineage Notation
+## 3. Taxonomy
 
-### Clone definition
-A clone is a fruiting body or tissue clone. There is no mycelial clone type —
-clone = fruiting clone. One type only.
+- The word **strain** is not used anywhere in the product.
+- Genetics are organized as **Category → Genus → Species → Cultivar**.
+- **Category** is a UI grouping; it is derived from genus (it is not stored
+  on a genetic record).
+  - **Actives** — *Psilocybe*, *Panaeolus*
+  - **Gourmet / Functional** — *Pleurotus*, *Hericium*, *Ganoderma*,
+    *Lentinula*, *Cyclocybe*, *Flammulina*, etc.
+- Genus and species are seeded with sensible defaults; users may extend
+  them in their lab profile.
 
-### Fields
+### Seeded defaults
 
-Filial (F), Clone (C), Isolation, and Transfer (T) form one continuous notation
-chain. Each component is optional depending on lab settings.
+**Actives — Psilocybe:**
+azurescens, caerulescens, cubensis, mexicana, ochraceocentrata,
+subaeruginosa, subtropicalis, tampanensis, zapotecorum.
 
-| Field | Notation | Notes |
-|-------|----------|-------|
-| Filial generation | `F1`, `F2` … | Spore-derived generation. Optional — some labs only track C and T. |
-| Clone number | `C1`, `C2` … | Clone instance within a filial generation, or standalone. |
-| Isolation | `_A`, `_B`, `_C` … | Appended directly to clone: `C1_A`. Used when multiple isolations of the same clone are tracked. |
-| Transfer | `T0`, `T1` … | Passage count on current media type. Resets when media type changes. |
+**Actives — Panaeolus:**
+cyanescens.
 
-### Combined notation — separator is `.`
+**Gourmet / Functional:**
+*Pleurotus* (ostreatus, eryngii, citrinopileatus, djamor, pulmonarius),
+*Hericium* (erinaceus, coralloides, abietis),
+*Ganoderma* (lucidum, tsugae, oregonense),
+*Lentinula* (edodes),
+*Cyclocybe* (aegerita),
+*Flammulina* (velutipes).
 
-| Example | Meaning |
-|---------|---------|
-| `F1.C1.T2` | Filial gen 1, clone 1, transfer 2 |
-| `F2.C3` | Filial gen 2, clone 3 |
-| `F1.C1_A.T1` | Filial gen 1, clone 1, isolation A, transfer 1 |
-| `F1.C2_B.T4` | Filial gen 1, clone 2, isolation B, transfer 4 |
-| `C1.T3` | Clone 1, transfer 3 (filial not tracked) |
-| `T5` | Transfer 5 only (minimal tracking) |
-
-### Lab-level settings (future)
-- Show/hide Filial field
-- Show/hide Clone field
-- Isolation required vs. optional
+Cultivar names are not seeded. They live on genetic-code records.
 
 ---
 
-## 5. Lot / Batch Identity Model
+## 4. Genetic Code Registry
 
-### Lot types in the full lifecycle
+A **genetic code** is a lab-scoped pointer to a specific genetic line. It is
+the entity the user thinks in. Like a call number in a library: you remember
+the code, the code resolves to the rest.
 
-| Stage | Name | v1? |
-|-------|------|-----|
-| Grain spawn | Grain Lot | Yes |
-| Spawn-to-bulk | Batch | Yes |
-| Post-harvest | Harvest Lot | No |
-| Processing | Homogenized Lot | No |
+### Format
 
----
+`[LabPrefix][NNN]` — no separators, no embedded date or cultivar.
+Example: `SL192`. The lab prefix is set per user; the numeric portion is
+the user's own counter.
 
-### Genetic Code
+### Record shape
 
-**Format:** `[LabPrefix][NNN]` — no dashes, no embedded date or cultivar.
+A genetic-code record carries:
 
-Example: `SL192`
-- `SL` = lab identifier (user-defined in settings)
-- `192` = sequential genetic instance number (3 digits)
+- `code` — e.g. `SL192`
+- `genus` — e.g. `Psilocybe`
+- `species` — e.g. `cubensis`
+- `cultivar` — e.g. `Enigma`
 
-The code is an opaque key that resolves to the full genetic record in the
-database. Cultivar/genus/species appear separately on the label.
+Category is derived from genus. Lineage is **not** part of the record;
+lineage is a property of a specific lot, not the genetic line.
 
----
+### Behavior
 
-### Grain Lot ID (v1 — simplified)
-
-**Format:** `[GeneticCode]-[YYMMDD]-[NN]`
-
-Example: `SL192-260509-01`
-- `SL192` = genetic code
-- `260509` = lot initiation date
-- `01` = 2-digit daily sequence per genetic code
-
-The 2-digit sequence resets per day **per genetic code** — not globally.
-`SL192-260509-01` and `SL193-260509-01` are both `01` because they are
-different genetic codes. This counts "how many grain lots of this specific
-genetic did I start today," not "how many total lots did I start today."
-Allows up to 99 grain lot initiations per genetic code per day.
-
-**Expansion tracking (DEFERRED — not v1):**
-The sublot tree structure described below is preserved for future implementation.
-Each expansion of a grain lot creates sublots with a hierarchical path encoding
-the full propagation chain. Each expansion level gets its own date. The challenge
-of attaching a date to each expansion node (vs. one date on the lot root) needs
-design work before implementation.
-
-Deferred sublot design:
-- Original bags: `01`, `02` … (2 digits)
-- First expansion: `01.01`, `01.02` … (2 digits per level)
-- Second expansion: `01.03.01` … (2 digits)
-- Third expansion and beyond: 3-digit padding (`01.03.001`) to accommodate larger
-  counts at deeper levels
+- The code is the entry point on every label form. Choosing a code
+  populates genus, species, and cultivar.
+- Codes are user-managed in the lab profile.
+- Typing a new code with new genus/species/cultivar implicitly creates a
+  new record (deferred from this release; today, codes are added through
+  the profile).
 
 ---
 
-### Batch (Spawn-to-Bulk)
+## 5. Lineage Notation
 
-A batch is formed when grain spawn combines with substrate. All units in a batch
-share the same media type.
+Filial (F), Clone (C), Isolation, and Transfer (T) form a single notation
+chain. Components are independently optional.
 
-- One batch can draw from multiple grain lots
-- One grain lot can be split across multiple batches
-- Each container in a batch = a **batch unit**
-- Batch ID: TBD format
+| Field | Form | Notes |
+|-------|------|-------|
+| Filial    | `F1`, `F2`, …      | Spore-derived generation. |
+| Clone     | `C1`, `C2`, …      | Tissue/fruit-body clone within a filial generation, or standalone. |
+| Isolation | `_A`, `_B`, …      | Suffixed onto the clone: `C1_A`. |
+| Transfer  | `T0`, `T1`, …      | Passage count on the **current** state. Resets at every state change. |
 
-**v1:** Bulk bag label does not show grain lot origin. Future may require it.
+Combined notation uses `.` as a separator. Examples:
 
----
+| Combined        | Meaning |
+|-----------------|---------|
+| `F1.C1.T2`      | Filial 1, clone 1, transfer 2 |
+| `F1.C1_A.T3`    | Adds isolation A |
+| `C1.T3`         | Filial not tracked |
+| `T5`            | Transfer only |
 
-### Substrate Codes
-
-User-defined in profile settings. Each code maps to a recipe.
-
-**Suggested defaults (user renames or replaces freely):**
-- `COIR` — coir
-- `CVG` — coir/vermiculite/gypsum
-- `CVG+` — CVG plus custom amendment (user defines the `+`)
-
-A lab doing experimental work may have a large substrate code list. The `+`
-suffix convention lets users extend named bases without polluting the main list.
-
-**Future:** substrate inventory system, QR scan-to-lookup, recipe builder.
+Filial visibility is a per-lab display setting. Some labs only track clone
+and transfer.
 
 ---
 
-## 6. Label Fields
+## 6. Lot Identity
 
-### Always visible
+Each state has its own lot-ID format. The label states the state explicitly
+so the ID is never ambiguous.
 
-| Field | Input | Notes |
-|-------|-------|-------|
-| Category | Toggle | Gourmet/Functional \| Actives |
-| Genus | Dropdown | Filtered by category |
-| Species | Dropdown | Filtered by genus |
-| Cultivar | Text + datalist | Saved cultivars appear as suggestions |
-| Media Type | Dropdown | Grain Spawn \| Bulk (v1) |
-| Filial | Text | `F1`, `F2` … — hidden if lab setting off |
-| Clone | Text | `C1`, `C2` … |
-| Isolation | Text | `_A`, `_B` … — optional |
-| Transfer | Text | `T0`, `T1` … |
-| Date | Date picker | Defaults to today |
+| State            | Lot type        | In scope today? |
+|------------------|-----------------|-----------------|
+| Grain spawn      | **Grain Lot**   | Yes |
+| Spawn-to-bulk    | Batch           | No |
+| Post-harvest     | Harvest Lot     | No |
+| Processing       | Homogenized Lot | No |
 
-### Advanced (collapsed by default)
+### Grain Lot ID
 
-| Field | Input | Notes |
-|-------|-------|-------|
-| Genetic Code | Text | Manual v1; future: auto from DB |
-| Lot ID | Auto-built + editable | `SL192-260509-01` |
-| Source | Text | Free text v1; future: DB linked |
-| Substrate Code | Text/Dropdown | User-defined codes |
-| Notes | Text | ~40 chars, one line |
+`[GeneticCode]-[YYMMDD]-[NN]`
+
+- `[GeneticCode]` — e.g. `SL192`
+- `[YYMMDD]` — initiation date, two-digit year first
+- `[NN]` — two-digit sequence, scoped to (genetic code, date). Resets each day per code.
+  Allows up to 99 grain-lot initiations per code per day.
+
+Example: `SL192-260510-03`.
+
+### Originating state ("source")
+
+Captured as free text on the label. The user writes the originating state
+and that state's ID, if one exists.
+
+Examples:
+- `LC: SL188.F1.T2`
+- `Agar: SL188.F1.T1`
+- `Liquid Culture` (no ID known)
+
+In future iterations, these states will have first-class IDs and Source
+will be a structured pointer.
+
+### Expansion
+
+Splitting a parent grain lot into derived sublots produces hierarchical
+sub-IDs (`-01.01`, `-01.02`, …). **Out of scope for this release.**
 
 ---
 
-## 7. Label Layout (30334 — 2.25" × 1.25")
+## 7. Quantity / Print Runs
 
-Landscape. Minimal margin. Four zones — typography TBD from mockups.
+A print run produces N labels for one configuration of (code, date, lineage,
+…). Each label gets a successive sequence number.
+
+- The user specifies the **quantity** for the run, default 1.
+- The first label uses sequence `last+1` for that `(code, date)` pair.
+  Subsequent labels in the run increment sequentially.
+- After a successful print run, the highest-used sequence is persisted as
+  the new `last`.
+- A canceled print run is not detectable from the browser. Counter advance
+  is best-effort: a missed run causes a gap, not a duplicate. Reprint of an
+  exact lot ID is a manual workflow and does not advance the counter.
+
+---
+
+## 8. Label Content
+
+Every grain-lot label carries:
+
+- **Cultivar** — large, dominant.
+- **Category chip** — Actives / Gourmet — small, top-right.
+- **Genus species** — italic, secondary.
+- **Lot ID** — the grain lot ID for this label.
+- **Lineage** — combined notation (e.g. `F1.C1_A.T3`).
+- **State** — `Grain` / `Grain Spawn`.
+- **Source** — originating state, free text.
+- **Grain type** — the grain preparation used (rye, oats, millet, custom).
+- **Date** — initiation date.
+- **Notes** — optional one-line free text.
+
+Field omissions are silent — empty fields render nothing, no placeholders.
+
+---
+
+## 9. Label Layout
+
+Target media: 2.25" × 1.25", landscape, minimal margin.
+
+Indicative zoning:
 
 ```
 ┌────────────────────────────────────────┐
-│  ENIGMA                      [ACTIVE]  │  ← Cultivar bold/large, category chip
-│  Psilocybe cubensis                    │  ← Genus species italic
+│  ENIGMA                      [ACTIVE]  │  Cultivar dominant; category chip
+│  Psilocybe cubensis                    │  Genus species italic
 ├────────────────────────────────────────┤
-│  SL192-260509-01   F1.C1_A.T3         │  ← Lot ID, lineage
-│  Grain             Src: SL191.F1.C1.T7│  ← Media type, source
+│  SL192-260510-03   F1.C1_A.T3          │  Lot ID · lineage
+│  Grain             Src: Agar SL188.F1  │  State · originating state
 ├────────────────────────────────────────┤
-│  Sub: CVG+                 05.09.26    │  ← Substrate code, date
+│  Grain: Rye                 05.10.26   │  Grain type · date
 └────────────────────────────────────────┘
-  [Notes — smallest size, only if present]
+  [Notes — smallest, only if present]
 ```
 
----
-
-## 8. Printer Configuration
-
-- **Hardware:** Dymo LabelWriter 450, macOS, USB
-- **Label:** 30334 (2.25" × 1.25")
-- **Driver:** Dymo Connect (installed)
-- **Current print method:** `window.print()` with `@page { size: 2.25in 1.25in; margin: 0; }`
-  — browser print dialog, user must select DYMO LabelWriter 450 + paper size 30334
-- **Dymo Connect REST API (`https://localhost:41951`):** attempted, rejected label XML
-  with `Sch_UndeclaredElement` error. Root cause not diagnosed. Deferred.
-- **Goal:** Direct-to-printer via Dymo Connect API — no dialog, one click prints.
-  Not yet working.
+Typography is calibrated to render identically on screen preview and on
+the printed label. Preview is a literal scaled rendering of print output.
 
 ---
 
-## 9. Tech Stack — v1
+## 10. User Profile (Settings)
 
-| Concern | Approach |
-|---------|----------|
-| UI | Single `.html` file — HTML + vanilla JS + CSS |
-| Printing | `window.print()` — browser dialog required (Dymo API deferred) |
-| Storage | `localStorage` — `ql_cfg` (settings), `ql_lots` (counters), `ql_form` (form state) |
-| Build | None. Open file in browser or via GitHub Pages. |
-| Platform | macOS, Dymo Connect installed |
-| Hosting | GitHub Pages — `notafeature.github.io/quickLabel/quicklabel.html` |
+Editable by the user, persisted across sessions. Single source of truth
+for labeling.
 
----
-
-## 10. User Settings (localStorage `ql_cfg`)
-
-- Lab prefix (e.g. `SL`)
-- Custom substrate codes (code + description)
-- Custom cultivar names stored as `{ "Genus_species": ["Name1", "Name2"] }`
-- Show/hide Filial field toggle
-- (Future) Operator name, DB connection, vendor codes, substrate inventory
-
-### Cultivar settings UI (implemented 2026-05-10)
-Settings panel uses category toggle + genus dropdown + species dropdown to add
-cultivars — not a manual text key. Stored key format is `Genus_species`
-(e.g. `Psilocybe_cubensis`).
+- **Lab prefix** — the genetic-code prefix (e.g. `SL`).
+- **Genetic code registry** — list of `{code, genus, species, cultivar}`
+  records. The form's primary lookup.
+- **Grain type registry** — list of grain preparations (e.g. `RYE`,
+  `OATS`, `RYE+`). User-defined.
+- **Lineage display rules** — show/hide Filial.
+- **(Parked)** Substrate code registry — for when Batch state returns.
 
 ---
 
-## 11. Out of Scope — v1
+## 11. Printer Support
 
-- Genetics / cultivation tracker database
-- Agar, LC, spore swab label types
-- QR codes / barcode scanning
-- Grain lot expansion / sublot tree tracking
-- Substrate inventory management
-- Batch unit label (Bulk label is basic — no grain lot backlink)
-- Operator tracking
-- Compliance / state change
-- Print history / audit log
-- Harvest Lot, Homogenized Lot
-- Green bag weight tracking
-- Vendor registry
+- The product must always provide a way to print. Browser print
+  (system print dialog) is the always-available baseline.
+- Direct-to-printer (Dymo Connect REST or equivalent) is desired but not
+  required. If direct printing fails or is unavailable, the user falls
+  back to the browser dialog without losing the in-progress label.
+- Today's hardware target is the Dymo LabelWriter family with media
+  30334 (2.25" × 1.25"). The product does not assume Dymo long-term;
+  printer support is meant to broaden over time.
 
 ---
 
-## 12. Open Questions
+## 12. Form Behavior
 
-- [ ] **Batch label structure** — when Media Type = Bulk, which fields change?
-- [ ] **Dymo Connect API** — `Sch_UndeclaredElement` error unresolved. XML schema
-      mismatch with Dymo Connect version installed. Needs diagnosis against live printer.
-- [ ] **Print WYSIWYG fidelity** — screen preview is displayed at 2.4× scale for
-      readability; print renders at actual label size. Font sizes are overridden in
-      print CSS to compensate. Actual physical output not yet confirmed correct.
+- The form is flat. There is no "Advanced" section.
+- **Genetic code** is the first field. Picking or typing a saved code
+  populates genus, species, and cultivar. The auto-populated fields
+  remain editable for one-off labels.
+- The form pane is user-resizable horizontally. The user adjusts width
+  to fit their screen and content density.
+- All fields are optional. Nothing is mandatory; nothing is validated.
+  An empty field renders nothing on the label.
+- Form state persists across sessions, except **date**, which always
+  defaults to today on load.
 
 ---
 
-## 13. Implementation Status (2026-05-10)
+## 13. Out of Scope (this release)
 
-### Implemented — code exists in `main`, not all items verified by user
+- States other than grain spawn (agar, LC, batch, harvest, homogenized).
+- Lot expansion / sublot tree.
+- Field validation, mandatory fields, format enforcement.
+- Multi-user / multi-lab / hosted backend.
+- Direct-to-printer integration (parked, browser print is the path).
+- Multi-printer routing, room/printer selection, network printers.
+- Print history, audit log, reprint workflows.
+- Compliance fields, operator tracking, vendor registry.
+- Substrate inventory, recipe builder, QR/barcodes.
+- Print-to-WIP pipeline.
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Form UI — all fields | Implemented | Category, genus, species, cultivar, lineage, media, date, advanced section |
-| Lineage notation preview | Implemented | `F1.C1_A.T3` format built live as fields are filled |
-| Lot ID auto-build | Implemented | `[GeneticCode]-[YYMMDD]-[NN]`, sequence per genetic code per day |
-| Settings panel | Implemented | Lab prefix, filial toggle, substrate codes, cultivar names |
-| Substrate code datalist | Implemented | Populated from saved substrate codes |
-| Dark theme UI | Implemented | Two-column layout, form left, preview right |
-| Browser print | Implemented | `window.print()`, `@page { size: 2.25in 1.25in; margin: 0 }` |
-| Print targets preview div | Implemented | `visibility:hidden` on all other elements at print time |
-| Print text forced black | Implemented (2026-05-10) | `color: #000 !important` on all label elements in print CSS |
-| Form state persistence | Implemented (2026-05-10) | All fields saved to `ql_form` on every change, restored on load. Re-fixed on `claude/review-prd-fixes-HeNtO` — see "Re-diagnosed" section below. |
-| Cultivar datalist shows all cultivars | Implemented (2026-05-10) | Previously only showed cultivars for current genus/species |
-| Cultivar auto-populate | Implemented (2026-05-10) | Selecting a saved cultivar fills category, genus, species. Was depending on form-state restore working — see "Re-diagnosed" section. |
-| Cultivar settings dropdowns | Implemented (2026-05-10) | Replaced manual text key with category/genus/species pickers |
+---
 
-### Requested — not yet implemented
+## 14. Open Questions
 
-| Request | Notes |
-|---------|-------|
-| Direct print to Dymo (no dialog) | Dymo Connect API attempted, failed with XML schema error, deferred |
-| Print quality confirmed correct | Physical label output not verified by user |
+- **Bulk / Batch label content.** When the Batch state comes back, what
+  does its label carry? Grain-lot origin? Multiple? Volume? Recipe?
+- **State-change history capture.** Source is free text today. What should
+  the structured form look like once prior states have first-class IDs?
+- **Lab-scoped vs personal data.** When data eventually leaves
+  localStorage, which entities are personal (this user's choices) versus
+  lab-shared (everyone in the lab sees the same registry)?
+- **Implicit registry growth.** Should typing a new genetic code in the
+  form (with new genus/species/cultivar) implicitly create a registry
+  record? Or always require explicit add through the profile?
+- **Print fidelity verification.** What's the right physical-output check
+  to confirm preview matches printed label across firmware/OS combinations?
 
-### Re-diagnosed and re-fixed (branch `claude/review-prd-fixes-HeNtO`)
+---
 
-The previous session's diagnosis of the form-persistence bug was wrong. The
-actual root cause:
+## 15. Future / Blue Sky
 
-`init()` ran `applySettings()` → `applyLineageDisplay()` → `updatePreview()` →
-`saveFormState()` **before** `restoreFormState()` was called. So every page
-load, the saved form state in `localStorage.ql_form` was overwritten with the
-empty default DOM values *before* the restore step had a chance to read it.
-Returning `true` from `restoreFormState` (the previous fix) didn't help —
-there was nothing left to restore.
+Tracked aspirations. None of these are commitments and none should
+influence the current code.
 
-This also explained why "cultivar auto-populate" appeared broken: the
-auto-populate code path was correct, but on reload the saved cultivar text
-was wiped along with the rest of the form, so testing never persisted across
-reloads.
+### Product surface
 
-Fix: added an `initializing` flag, checked at the top of `saveFormState()`,
-cleared at the end of `init()` after `restoreFormState()` runs.
+- Hosted web app with identity persistence (closed environment, not real
+  auth). Eventually real auth via Synergy SSO.
+- Multi-tenant: Lab → Users → Rooms → Printers. Users print from any of
+  their lab's printers in any room.
+- Print-to-WIP: a printed label opens a tracked work-in-progress entry in
+  Synergy, eligible for state changes downstream.
 
-Also removed dead code from the abandoned DYMO Connect REST API attempt:
-- `xml()` helper (XML escaping for the dropped Dymo label XML)
-- `savePrinter()` (referenced a `#printer-sel` element that doesn't exist)
-- `#cert-notice` div + `.cert-notice` CSS (DYMO cert prompt — never shown)
-- "Connecting…" status pill text (replaced with "Ready" on init)
+### Data
 
-Print CSS now also forces `html, body { overflow: visible; height: auto }`
-in the `@media print` block so the body's `overflow: hidden; height: 100vh`
-can't clip the printed label.
+- Relational backend. Cultivars, genetic codes, grain types, substrates,
+  lots, batches, harvests, runs are first-class records with referential
+  integrity.
+- Settings import/export across labs and users.
+- Vendor registry, substrate inventory, recipe builder.
+
+### Workflow
+
+- Full state lifecycle: agar plate, LC, grain, batch, harvest, homogenized.
+  Each with its own ID format and label content. State changes tracked as
+  events, not just free text.
+- Lot expansion / sublot tree (deferred design lives below).
+- Operator tracking, compliance fields, audit log, print history,
+  reprints.
+- QR codes / barcode scanning for substrate and lot lookup.
+- Bulk-add of cultivars, codes, grain types from CSV / paste.
+
+### Hardware
+
+- Broad printer support across Dymo (LabelWriter family) and non-Dymo
+  thermal label printers. Multi-printer routing, network printers, per-
+  room defaults. Direct-to-printer always preferred, browser print as
+  fallback.
+
+### Sublot tree (deferred design)
+
+Each expansion of a grain lot creates sublots with a hierarchical path.
+Each expansion level may carry its own date.
+
+- Original bags: `01`, `02`, … (2 digits)
+- First expansion: `01.01`, `01.02`, … (2 digits per level)
+- Second expansion: `01.03.01` … (2 digits)
+- Third expansion and beyond: 3-digit padding (`01.03.001`) at deeper
+  levels.
+
+The challenge is whether each expansion node carries a date or only the
+root does. Needs design.
