@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickLabel</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1e1e1e;
+  --border: #2a2a2a;
+  --text: #e0e0e0;
+  --muted: #666;
+  --green: #4ade80;
+  --teal: #22d3ee;
+  --red: #f87171;
+  --amber: #fbbf24;
+  --r: 6px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ── HEADER ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 44px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.logo { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+.logo em { color: var(--green); font-style: normal; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.status-pill {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--muted);
+}
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--muted); transition: background 0.3s;
+}
+.dot.ok { background: var(--green); }
+.dot.err { background: var(--red); }
+
+/* ── BUTTONS ── */
+button {
+  background: var(--surface2); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 6px 12px; font-size: 12px; cursor: pointer;
+  transition: background .15s, border-color .15s;
+  font-family: inherit;
+}
+button:hover { background: #252525; border-color: #383838; }
+button.primary {
+  background: var(--green); color: #000;
+  border-color: var(--green); font-weight: 600;
+}
+button.primary:hover { background: #22c55e; border-color: #22c55e; }
+button.icon { padding: 5px 8px; line-height: 1; }
+button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+button.ghost:hover { color: var(--text); background: var(--surface2); border-color: var(--border); }
+
+/* ── MAIN LAYOUT ── */
+main { display: flex; flex: 1; overflow: hidden; }
+
+/* ── FORM PANEL ── */
+#form-panel {
+  width: 344px; flex-shrink: 0;
+  overflow-y: auto;
+  padding: 14px 14px 20px;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 10px;
+}
+#form-panel::-webkit-scrollbar { width: 3px; }
+#form-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 11px 12px;
+  display: flex; flex-direction: column; gap: 9px;
+}
+.card-label {
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .8px;
+  color: var(--muted);
+}
+
+/* ── INPUTS ── */
+.field { display: flex; flex-direction: column; gap: 3px; }
+.fl { font-size: 11px; color: var(--muted); }
+input[type=text], input[type=date], select {
+  background: var(--surface2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 8px; font-size: 13px; font-family: inherit;
+  width: 100%; transition: border-color .15s;
+}
+input:focus, select:focus { outline: none; border-color: var(--green); }
+input::placeholder { color: var(--muted); }
+select option { background: var(--surface2); }
+
+.row { display: flex; gap: 8px; }
+.row .field { flex: 1; min-width: 0; }
+.row .field.w56 { flex: 0 0 56px; }
+.row .field.w72 { flex: 0 0 72px; }
+.row .field.w80 { flex: 0 0 80px; }
+.row .field.w90 { flex: 0 0 90px; }
+
+/* ── CATEGORY TOGGLE ── */
+.cat-toggle {
+  display: flex; border: 1px solid var(--border);
+  border-radius: 4px; overflow: hidden;
+}
+.cat-toggle button {
+  flex: 1; border: none; border-radius: 0;
+  padding: 7px 6px; font-size: 12px; font-weight: 500;
+  background: transparent;
+}
+.cat-toggle button.on-actives { background: #14532d; color: var(--green); }
+.cat-toggle button.on-gourmet  { background: #164e63; color: var(--teal); }
+
+/* ── LINEAGE NOTATION PREVIEW ── */
+.notation-preview {
+  font-family: 'SF Mono', Monaco, 'Inconsolata', monospace;
+  font-size: 12px; color: var(--green);
+  min-height: 18px; letter-spacing: .3px;
+}
+
+/* ── ADVANCED TOGGLE ── */
+.adv-toggle {
+  display: flex; align-items: center; gap: 7px;
+  cursor: pointer; color: var(--muted); font-size: 11px;
+  user-select: none; padding: 2px 0;
+}
+.adv-toggle:hover { color: var(--text); }
+.adv-arrow { font-size: 9px; transition: transform .18s; }
+.adv-arrow.open { transform: rotate(90deg); }
+#adv-section { display: none; flex-direction: column; gap: 10px; }
+#adv-section.open { display: flex; }
+
+/* ── LOT ID DISPLAY ── */
+.lot-display {
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 12px; color: var(--green);
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 6px 8px; letter-spacing: .5px;
+  min-height: 32px; display: flex; align-items: center;
+}
+
+/* ── CERT NOTICE ── */
+.cert-notice {
+  display: none;
+  background: #1c1200; border: 1px solid #4a3000;
+  border-radius: var(--r); padding: 9px 11px;
+  font-size: 11px; color: var(--amber); gap: 4px;
+  flex-direction: column; line-height: 1.5;
+}
+.cert-notice.show { display: flex; }
+.cert-notice a { color: var(--amber); }
+
+/* ── PRINT ROW ── */
+.print-row { display: flex; gap: 8px; }
+.print-row button.primary { flex: 1; padding: 10px; font-size: 14px; font-weight: 700; }
+
+/* ── PREVIEW PANEL ── */
+#preview-panel {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px; padding: 24px;
+}
+.preview-label-hint {
+  font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .8px;
+}
+.printer-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; color: var(--muted);
+}
+.printer-row select { width: auto; font-size: 11px; padding: 4px 8px; }
+
+/* ── LABEL PREVIEW ── */
+/* 2.25 : 1.25 → 540 : 300 */
+#label-preview {
+  width: 540px; height: 300px;
+  background: #fff; color: #000;
+  border-radius: 8px;
+  box-shadow: 0 6px 32px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.08);
+  padding: 12px 16px 10px;
+  display: flex; flex-direction: column;
+  font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden; position: relative;
+}
+.lp-top {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; flex-shrink: 0;
+}
+.lp-cultivar {
+  font-size: 23px; font-weight: 700; line-height: 1.1;
+  letter-spacing: -.4px; flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lp-chip {
+  font-size: 8px; font-weight: 700; letter-spacing: .9px;
+  text-transform: uppercase; padding: 2px 5px; border-radius: 3px;
+  flex-shrink: 0; margin-left: 8px; margin-top: 5px;
+}
+.lp-chip.actives { background: #dcfce7; color: #14532d; }
+.lp-chip.gourmet  { background: #cffafe; color: #164e63; }
+
+.lp-species {
+  font-size: 13px; font-style: italic; color: #333;
+  flex-shrink: 0; margin-top: 1px;
+}
+.lp-rule { height: 1px; background: #ddd; margin: 6px 0; flex-shrink: 0; }
+.lp-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.lp-line { font-size: 10px; color: #222; display: flex; align-items: baseline; gap: 0; flex-wrap: nowrap; }
+.lp-line .mono { font-family: 'SF Mono', Monaco, monospace; font-size: 10px; }
+.lp-line .sep  { color: #aaa; margin: 0 6px; }
+.lp-line .dim  { color: #888; font-size: 9px; }
+.lp-bottom {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  flex-shrink: 0; margin-top: 4px;
+}
+.lp-date  { font-family: 'SF Mono', Monaco, monospace; font-size: 9px; color: #777; }
+.lp-notes { font-size: 9px; color: #777; font-style: italic; text-align: right; max-width: 55%; }
+
+/* ── SETTINGS PANEL ── */
+#settings-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.55); z-index: 100;
+}
+#settings-overlay.open { display: block; }
+#settings-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 360px;
+  background: var(--surface); border-left: 1px solid var(--border);
+  z-index: 101; transform: translateX(100%);
+  transition: transform .22s ease;
+  display: flex; flex-direction: column;
+}
+#settings-panel.open { transform: translateX(0); }
+.s-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.s-header h2 { font-size: 14px; font-weight: 600; }
+.s-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 18px; }
+.s-body::-webkit-scrollbar { width: 3px; }
+.s-body::-webkit-scrollbar-thumb { background: var(--border); }
+.s-section h3 {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--muted); margin-bottom: 9px;
+}
+.s-section { display: flex; flex-direction: column; gap: 7px; }
+
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 3px 0; }
+.toggle-row span { font-size: 12px; }
+.sw { position: relative; width: 36px; height: 20px; border: none; background: none; padding: 0; cursor: pointer; }
+.sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+.sw-track {
+  position: absolute; inset: 0;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; transition: background .2s;
+}
+.sw input:checked ~ .sw-track { background: var(--green); border-color: var(--green); }
+.sw-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 12px; height: 12px; background: #ccc;
+  border-radius: 50%; transition: transform .2s, background .2s; pointer-events: none;
+}
+.sw input:checked ~ .sw-thumb { transform: translateX(16px); background: #000; }
+
+.sub-list { display: flex; flex-direction: column; gap: 4px; }
+.sub-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 6px; background: var(--surface2);
+  border-radius: 4px; border: 1px solid var(--border);
+}
+.sub-item .code { font-family: monospace; font-size: 11px; color: var(--green); width: 64px; flex-shrink: 0; }
+.sub-item .desc { flex: 1; color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sub-item button.ghost { padding: 1px 5px; font-size: 11px; }
+.add-row { display: flex; gap: 6px; }
+.add-row input { font-size: 12px; padding: 5px 8px; }
+.add-row .code { width: 72px; font-family: monospace; flex-shrink: 0; }
+.add-row .desc { flex: 1; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="logo">Quick<em>Label</em></div>
+    <div class="header-right">
+      <div class="status-pill">
+        <div class="dot" id="dot"></div>
+        <span id="status-txt">Connecting…</span>
+      </div>
+      <button class="icon ghost" id="settings-btn" title="Settings">⚙</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── FORM ── -->
+    <div id="form-panel">
+
+      <!-- IDENTITY -->
+      <div class="card">
+        <div class="card-label">Identity</div>
+
+        <div class="field">
+          <span class="fl">Category</span>
+          <div class="cat-toggle">
+            <button id="btn-actives" onclick="setCategory('actives')">Actives</button>
+            <button id="btn-gourmet" onclick="setCategory('gourmet')">Gourmet / Functional</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <span class="fl">Genus</span>
+            <select id="genus" onchange="onGenus()">
+              <option value="">— genus —</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="fl">Species</span>
+            <select id="species" onchange="updatePreview()">
+              <option value="">— species —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="fl">Cultivar</span>
+          <input type="text" id="cultivar" placeholder="e.g. Enigma" oninput="updatePreview()" list="cultivar-dl">
+          <datalist id="cultivar-dl"></datalist>
+        </div>
+      </div>
+
+      <!-- LINEAGE -->
+      <div class="card">
+        <div class="card-label">Lineage</div>
+        <div class="row" id="lineage-row">
+          <div class="field w56" id="filial-field">
+            <span class="fl">Filial</span>
+            <input type="text" id="filial" placeholder="F1" maxlength="4" oninput="onLineage()">
+          </div>
+          <div class="field w72">
+            <span class="fl">Clone</span>
+            <input type="text" id="clone" placeholder="C1" maxlength="5" oninput="onLineage()">
+          </div>
+          <div class="field w56">
+            <span class="fl">Isolation</span>
+            <input type="text" id="iso" placeholder="A" maxlength="2" oninput="onLineage()">
+          </div>
+          <div class="field w72">
+            <span class="fl">Transfer</span>
+            <input type="text" id="transfer" placeholder="T0" maxlength="4" oninput="onLineage()">
+          </div>
+        </div>
+        <div class="notation-preview" id="notation">—</div>
+      </div>
+
+      <!-- CONTEXT -->
+      <div class="card">
+        <div class="card-label">Context</div>
+        <div class="row">
+          <div class="field">
+            <span class="fl">Media Type</span>
+            <select id="media" onchange="updatePreview()">
+              <option value="Grain Spawn">Grain Spawn</option>
+              <option value="Bulk">Bulk</option>
+            </select>
+          </div>
+          <div class="field w90">
+            <span class="fl">Date</span>
+            <input type="date" id="date" onchange="onDateChange()">
+          </div>
+        </div>
+      </div>
+
+      <!-- ADVANCED TOGGLE -->
+      <div class="adv-toggle" onclick="toggleAdv()">
+        <span class="adv-arrow" id="adv-arrow">▶</span>
+        <span>Advanced</span>
+      </div>
+
+      <!-- ADVANCED -->
+      <div id="adv-section">
+        <div class="card">
+          <div class="card-label">Traceability</div>
+
+          <div class="row">
+            <div class="field">
+              <span class="fl">Genetic Code</span>
+              <input type="text" id="gen-code" placeholder="SL192" maxlength="10" oninput="onCodeChange()">
+            </div>
+            <div class="field w56">
+              <span class="fl">Seq #</span>
+              <input type="text" id="lot-seq" placeholder="01" maxlength="2" oninput="rebuildLot()">
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="fl">Lot ID</span>
+            <div class="lot-display" id="lot-display">—</div>
+          </div>
+
+          <div class="field">
+            <span class="fl">Source</span>
+            <input type="text" id="source" placeholder="e.g. SL191.F1.C1.T7" oninput="updatePreview()">
+          </div>
+
+          <div class="field">
+            <span class="fl">Substrate Code</span>
+            <input type="text" id="sub-code" placeholder="e.g. CVG+" oninput="updatePreview()" list="sub-dl">
+            <datalist id="sub-dl"></datalist>
+          </div>
+
+          <div class="field">
+            <span class="fl">Notes</span>
+            <input type="text" id="notes" placeholder="Optional, ~40 chars" maxlength="45" oninput="updatePreview()">
+          </div>
+        </div>
+      </div>
+
+      <!-- CERT WARNING -->
+      <div class="cert-notice" id="cert-notice">
+        <strong>⚠ DYMO Connect not responding</strong>
+        <span>Open <a href="https://localhost:41951" target="_blank">https://localhost:41951</a> in a new tab, accept the certificate, then reload this page.</span>
+      </div>
+
+      <!-- PRINT -->
+      <div class="print-row">
+        <button class="primary" id="print-btn" onclick="printLabel()">Print Label</button>
+        <button class="icon" onclick="resetForm()" title="Clear form">↺</button>
+      </div>
+
+    </div><!-- /form-panel -->
+
+    <!-- ── PREVIEW ── -->
+    <div id="preview-panel">
+      <span class="preview-label-hint">Label Preview — 30334 · 2.25 × 1.25 in</span>
+
+      <div id="label-preview">
+        <div class="lp-top">
+          <div class="lp-cultivar" id="lp-cultivar">—</div>
+          <div class="lp-chip actives" id="lp-chip">Active</div>
+        </div>
+        <div class="lp-species" id="lp-species"></div>
+        <div class="lp-rule"></div>
+        <div class="lp-mid">
+          <div class="lp-line" id="lp-l1"></div>
+          <div class="lp-line" id="lp-l2"></div>
+          <div class="lp-line" id="lp-l3"></div>
+        </div>
+        <div class="lp-bottom">
+          <div class="lp-date"  id="lp-date"></div>
+          <div class="lp-notes" id="lp-notes"></div>
+        </div>
+      </div>
+
+      <div class="printer-row">
+        <span>Printer:</span>
+        <select id="printer-sel" onchange="savePrinter()">
+          <option value="">— searching —</option>
+        </select>
+      </div>
+    </div>
+
+  </main>
+</div><!-- /app -->
+
+<!-- ── SETTINGS ── -->
+<div id="settings-overlay" onclick="closeSettings()"></div>
+<div id="settings-panel">
+  <div class="s-header">
+    <h2>Settings</h2>
+    <button class="icon ghost" onclick="closeSettings()">✕</button>
+  </div>
+  <div class="s-body">
+
+    <div class="s-section">
+      <h3>Lab</h3>
+      <div class="row">
+        <div class="field w80">
+          <span class="fl">Lab Prefix</span>
+          <input type="text" id="s-prefix" placeholder="SL" maxlength="5" oninput="saveSettings()">
+        </div>
+      </div>
+    </div>
+
+    <div class="s-section">
+      <h3>Lineage Display</h3>
+      <div class="toggle-row">
+        <span>Show Filial (F#) field</span>
+        <label class="sw">
+          <input type="checkbox" id="s-filial" onchange="saveSettings(); applyLineageDisplay()">
+          <div class="sw-track"></div>
+          <div class="sw-thumb"></div>
+        </label>
+      </div>
+    </div>
+
+    <div class="s-section">
+      <h3>Substrate Codes</h3>
+      <div class="sub-list" id="sub-list"></div>
+      <div class="add-row" style="margin-top:4px">
+        <input class="code" type="text" id="new-code" placeholder="CODE" maxlength="8">
+        <input class="desc" type="text" id="new-desc" placeholder="Description" onkeydown="if(event.key==='Enter')addSubstrate()">
+        <button onclick="addSubstrate()">Add</button>
+      </div>
+    </div>
+
+    <div class="s-section">
+      <h3>Cultivar Names</h3>
+      <p style="font-size:11px;color:var(--muted);line-height:1.5">
+        Add cultivar names per species and they appear as suggestions in the Cultivar field.
+      </p>
+      <div class="row">
+        <div class="field">
+          <span class="fl">Genus / Species key</span>
+          <input type="text" id="cv-key" placeholder="Psilocybe_cubensis">
+        </div>
+      </div>
+      <div class="add-row">
+        <input class="desc" type="text" id="cv-name" placeholder="Cultivar name" onkeydown="if(event.key==='Enter')addCultivar()">
+        <button onclick="addCultivar()">Add</button>
+      </div>
+      <div id="cv-list" style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.7"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+
+const TAXA = {
+  actives: {
+    Psilocybe: [
+      'azurescens','caerulescens','cubensis','mexicana',
+      'ochraceocentrata','subaeruginosa','subtropicalis','tampanensis','zapotecorum'
+    ],
+    Panaeolus: ['cyanescens']
+  },
+  gourmet: {
+    Pleurotus:  ['ostreatus','eryngii','citrinopileatus','djamor','pulmonarius'],
+    Hericium:   ['erinaceus','coralloides','abietis'],
+    Ganoderma:  ['lucidum','tsugae','oregonense'],
+    Lentinula:  ['edodes'],
+    Cyclocybe:  ['aegerita'],
+    Flammulina: ['velutipes']
+  }
+};
+
+const DEFAULT_SUBS = [
+  { code:'COIR', desc:'Coir' },
+  { code:'CVG',  desc:'Coir / Vermiculite / Gypsum' },
+  { code:'CVG+', desc:'CVG + custom amendment' }
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+
+let cat = 'actives';
+
+let cfg = {
+  prefix:    'SL',
+  showFilial: true,
+  substrates: [...DEFAULT_SUBS],
+  cultivars:  {}
+};
+
+let lotCounters = {}; // "CODE_YYMMDD" → last seq used
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+
+const $ = id => document.getElementById(id);
+const todayISO = () => new Date().toISOString().split('T')[0];
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${m}.${d}.${y.slice(2)}`;
+}
+
+function toYYMMDD(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${y.slice(2)}${m}${d}`;
+}
+
+function xml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── STORAGE ──────────────────────────────────────────────────────────────────
+
+function loadStorage() {
+  try {
+    const c = localStorage.getItem('ql_cfg');
+    if (c) cfg = { ...cfg, ...JSON.parse(c) };
+    const l = localStorage.getItem('ql_lots');
+    if (l) lotCounters = JSON.parse(l);
+  } catch(_) {}
+}
+
+function persistCfg() { localStorage.setItem('ql_cfg', JSON.stringify(cfg)); }
+function persistLots() { localStorage.setItem('ql_lots', JSON.stringify(lotCounters)); }
+function savePrinter() { localStorage.setItem('ql_printer', $('printer-sel').value); }
+
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+
+function openSettings()  {
+  $('settings-overlay').classList.add('open');
+  $('settings-panel').classList.add('open');
+  renderCultivarList();
+}
+function closeSettings() {
+  $('settings-overlay').classList.remove('open');
+  $('settings-panel').classList.remove('open');
+}
+
+function saveSettings() {
+  cfg.prefix     = ($('s-prefix').value.trim().toUpperCase() || 'SL');
+  cfg.showFilial = $('s-filial').checked;
+  persistCfg();
+  rebuildLot();
+}
+
+function applySettings() {
+  $('s-prefix').value = cfg.prefix;
+  $('s-filial').checked = cfg.showFilial;
+  applyLineageDisplay();
+  renderSubList();
+  renderSubDl();
+}
+
+function applyLineageDisplay() {
+  const show = cfg.showFilial;
+  $('filial-field').style.display = show ? '' : 'none';
+  updatePreview();
+}
+
+// ── Substrates ──
+function renderSubList() {
+  $('sub-list').innerHTML = cfg.substrates.map((s,i) => `
+    <div class="sub-item">
+      <span class="code">${s.code}</span>
+      <span class="desc">${s.desc}</span>
+      <button class="ghost icon" onclick="removeSub(${i})">✕</button>
+    </div>`).join('');
+}
+
+function renderSubDl() {
+  $('sub-dl').innerHTML = cfg.substrates
+    .map(s => `<option value="${s.code}">${s.desc}</option>`).join('');
+}
+
+function addSubstrate() {
+  const code = $('new-code').value.trim().toUpperCase();
+  const desc = $('new-desc').value.trim();
+  if (!code) return;
+  cfg.substrates.push({ code, desc });
+  persistCfg();
+  $('new-code').value = '';
+  $('new-desc').value = '';
+  renderSubList();
+  renderSubDl();
+}
+
+function removeSub(i) {
+  cfg.substrates.splice(i,1);
+  persistCfg();
+  renderSubList();
+  renderSubDl();
+}
+
+// ── Cultivars ──
+function addCultivar() {
+  const key  = $('cv-key').value.trim();
+  const name = $('cv-name').value.trim();
+  if (!key || !name) return;
+  if (!cfg.cultivars[key]) cfg.cultivars[key] = [];
+  if (!cfg.cultivars[key].includes(name)) cfg.cultivars[key].push(name);
+  persistCfg();
+  $('cv-name').value = '';
+  renderCultivarList();
+  refreshCultivarDl();
+}
+
+function renderCultivarList() {
+  const entries = Object.entries(cfg.cultivars)
+    .filter(([,v]) => v.length)
+    .map(([k,v]) => `<div><strong>${k}:</strong> ${v.join(', ')}</div>`)
+    .join('');
+  $('cv-list').innerHTML = entries || '<span>None saved yet.</span>';
+}
+
+function refreshCultivarDl() {
+  const g = $('genus').value;
+  const s = $('species').value;
+  const key = `${g}_${s}`;
+  $('cultivar-dl').innerHTML = (cfg.cultivars[key] || [])
+    .map(n => `<option value="${n}">`).join('');
+}
+
+// ─── FORM ─────────────────────────────────────────────────────────────────────
+
+function setCategory(c) {
+  cat = c;
+  $('btn-actives').className = c === 'actives' ? 'on-actives' : '';
+  $('btn-gourmet').className  = c === 'gourmet'  ? 'on-gourmet'  : '';
+  fillGenus();
+  updatePreview();
+}
+
+function fillGenus() {
+  const sel = $('genus');
+  sel.innerHTML = '<option value="">— genus —</option>' +
+    Object.keys(TAXA[cat]).map(g => `<option value="${g}">${g}</option>`).join('');
+  $('species').innerHTML = '<option value="">— species —</option>';
+}
+
+function onGenus() {
+  const g = $('genus').value;
+  $('species').innerHTML = '<option value="">— species —</option>' +
+    (TAXA[cat][g] || []).map(s => `<option value="${s}">${s}</option>`).join('');
+  refreshCultivarDl();
+  updatePreview();
+}
+
+function toggleAdv() {
+  const sec   = $('adv-section');
+  const arrow = $('adv-arrow');
+  const open  = sec.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+}
+
+// ── Lineage ──
+function buildNotation() {
+  const parts = [];
+  if (cfg.showFilial) {
+    let f = $('filial').value.trim().toUpperCase();
+    if (f) parts.push(f.startsWith('F') ? f : 'F' + f);
+  }
+  let c = $('clone').value.trim().toUpperCase();
+  const iso = $('iso').value.trim().toUpperCase();
+  if (c) {
+    if (!c.startsWith('C')) c = 'C' + c;
+    parts.push(iso ? `${c}_${iso}` : c);
+  }
+  let t = $('transfer').value.trim().toUpperCase();
+  if (t) parts.push(t.startsWith('T') ? t : 'T' + t);
+  return parts.join('.');
+}
+
+function onLineage() {
+  const n = buildNotation();
+  $('notation').textContent = n || '—';
+  updatePreview();
+}
+
+// ── Lot ID ──
+function onCodeChange() {
+  const code = $('gen-code').value.trim().toUpperCase();
+  const date = $('date').value;
+  if (code && date) {
+    const key = `${code}_${toYYMMDD(date)}`;
+    const next = String((lotCounters[key] || 0) + 1).padStart(2,'0');
+    $('lot-seq').value = next;
+  }
+  rebuildLot();
+}
+
+function onDateChange() {
+  onCodeChange(); // recompute next seq for new date
+  updatePreview();
+}
+
+function rebuildLot() {
+  const code = $('gen-code').value.trim().toUpperCase();
+  const date = $('date').value;
+  const seq  = ($('lot-seq').value.trim() || '01').padStart(2,'0');
+  $('lot-display').textContent = (code && date)
+    ? `${code}-${toYYMMDD(date)}-${seq}`
+    : '—';
+  updatePreview();
+}
+
+function resetForm() {
+  ['cultivar','filial','clone','iso','transfer',
+   'gen-code','source','sub-code','notes'].forEach(id => $(id).value = '');
+  $('lot-seq').value = '01';
+  $('date').value = todayISO();
+  $('lot-display').textContent = '—';
+  $('notation').textContent = '—';
+  updatePreview();
+}
+
+// ─── PREVIEW ──────────────────────────────────────────────────────────────────
+
+function updatePreview() {
+  const genus     = $('genus').value;
+  const species   = $('species').value;
+  const cultivar  = $('cultivar').value.trim();
+  const media     = $('media').value;
+  const date      = $('date').value;
+  const source    = $('source').value.trim();
+  const sub       = $('sub-code').value.trim();
+  const notes     = $('notes').value.trim();
+  const notation  = buildNotation();
+  const lotId     = $('lot-display').textContent;
+
+  // top row
+  $('lp-cultivar').textContent = cultivar || '—';
+  const chip = $('lp-chip');
+  chip.textContent = cat === 'actives' ? 'Active' : 'Gourmet';
+  chip.className = `lp-chip ${cat === 'actives' ? 'actives' : 'gourmet'}`;
+
+  // species line
+  $('lp-species').textContent = [genus, species].filter(Boolean).join(' ');
+
+  // middle lines
+  // L1: lot id · notation
+  const l1parts = [];
+  if (lotId && lotId !== '—') l1parts.push(`<span class="mono">${lotId}</span>`);
+  if (notation) l1parts.push(`<span class="mono">${notation}</span>`);
+  $('lp-l1').innerHTML = l1parts.join('<span class="sep">·</span>');
+
+  // L2: media | src
+  const l2parts = [];
+  l2parts.push(`<span>${media}</span>`);
+  if (source) l2parts.push(`<span class="dim">Src:</span>&nbsp;<span class="mono">${source}</span>`);
+  $('lp-l2').innerHTML = l2parts.join('<span class="sep">|</span>');
+
+  // L3: substrate
+  $('lp-l3').innerHTML = sub
+    ? `<span class="dim">Sub:</span>&nbsp;<span>${sub}</span>`
+    : '';
+
+  // bottom
+  $('lp-date').textContent  = fmtDate(date);
+  $('lp-notes').textContent = notes;
+}
+
+// ─── DYMO XML ─────────────────────────────────────────────────────────────────
+
+function buildXml() {
+  const genus    = $('genus').value;
+  const species  = $('species').value;
+  const cultivar = $('cultivar').value.trim() || '—';
+  const media    = $('media').value;
+  const date     = $('date').value;
+  const source   = $('source').value.trim();
+  const sub      = $('sub-code').value.trim();
+  const notes    = $('notes').value.trim();
+  const notation = buildNotation();
+  const lotId    = $('lot-display').textContent;
+  const catLabel = cat === 'actives' ? 'ACTIVE' : 'GOURMET';
+  const speciesLine = [genus, species].filter(Boolean).join(' ');
+
+  const lotLine = [lotId !== '—' ? lotId : '', notation].filter(Boolean).join('   ');
+  const mediaLine = [media, source ? `Src: ${source}` : ''].filter(Boolean).join('   ');
+  const subLine = [sub ? `Sub: ${sub}` : '', fmtDate(date)].filter(Boolean).join('   ');
+
+  const obj = (name, x, y, w, h, text, bold, italic, size, align) => `
+  <ObjectInfo>
+    <TextObject>
+      <Name>${name}</Name>
+      <ForeColor Alpha="255" Red="0" Green="0" Blue="0"/>
+      <BackColor Alpha="0" Red="255" Green="255" Blue="255"/>
+      <LinkedObjectName></LinkedObjectName>
+      <Rotation>Rotation0</Rotation>
+      <IsMirrored>False</IsMirrored>
+      <IsVariable>False</IsVariable>
+      <HorizontalAlignment>${align}</HorizontalAlignment>
+      <VerticalAlignment>Middle</VerticalAlignment>
+      <TextFitMode>ShrinkToFit</TextFitMode>
+      <UseFullFontHeight>True</UseFullFontHeight>
+      <Verticalized>False</Verticalized>
+      <StyledText>
+        <Element>
+          <String>${xml(text)}</String>
+          <Attributes>
+            <Font Family="Arial" Size="${size}" Bold="${bold}" Italic="${italic}" Underline="False" StrikeOut="False"/>
+            <ForeColor Alpha="255" Red="0" Green="0" Blue="0"/>
+          </Attributes>
+        </Element>
+      </StyledText>
+    </TextObject>
+    <ObjectLayout>
+      <DashOffset>0</DashOffset><DashPattern><DashPattern/></DashPattern>
+      <HorizontalAlignment>Left</HorizontalAlignment>
+      <VerticalAlignment>Top</VerticalAlignment>
+      <X>${x}</X><Y>${y}</Y><Width>${w}</Width><Height>${h}</Height>
+    </ObjectLayout>
+  </ObjectInfo>`;
+
+  // layout: 3240 × 1800 twips (2.25" × 1.25")
+  // usable: X=60, Y=60, W=3120, H=1680
+  return `<?xml version="1.0" encoding="utf-8"?>
+<DieCutLabel Version="8.0" Units="twips" MediaType="Default">
+  <PaperOrientation>Landscape</PaperOrientation>
+  <Id>Address</Id>
+  <IsOutlined>False</IsOutlined>
+  <PaperName>30334 2-1/4 in x 1-1/4 in</PaperName>
+  <DrawCommands>
+    <RoundRectangle X="0" Y="0" Width="3240" Height="1800" Rx="270" Ry="270"/>
+  </DrawCommands>
+  ${obj('Cultivar',  60,   60, 2200, 390, cultivar,    'True',  'False', '16', 'Left')}
+  ${obj('Category', 2320,  60,  860, 390, catLabel,    'True',  'False',  '8', 'Right')}
+  ${obj('Species',   60,  470, 3120, 260, speciesLine, 'False', 'True',  '10', 'Left')}
+  ${obj('LotLine',   60,  750, 3120, 250, lotLine,     'False', 'False',  '8', 'Left')}
+  ${obj('MediaLine', 60, 1020, 3120, 250, mediaLine,   'False', 'False',  '8', 'Left')}
+  ${obj('SubDate',   60, 1290, 3120, 250, subLine,     'False', 'False',  '8', 'Left')}
+  ${notes ? obj('Notes', 60, 1550, 3120, 180, notes, 'False', 'True', '7', 'Left') : ''}
+</DieCutLabel>`;
+}
+
+// ─── DYMO API ─────────────────────────────────────────────────────────────────
+
+const BASE = 'https://localhost:41951';
+
+async function dymoGet(path) {
+  const r = await fetch(`${BASE}${path}`, { mode:'cors' });
+  if (!r.ok) throw new Error(r.status);
+  return r.text();
+}
+
+async function checkStatus() {
+  try {
+    const t = await dymoGet('/DYMO/DLS/Printing/StatusConnected');
+    if (t.includes('true')) {
+      setDot('ok', 'Connected');
+      $('cert-notice').classList.remove('show');
+      loadPrinters();
+    } else {
+      setDot('err', 'No printer');
+    }
+  } catch(_) {
+    setDot('err', 'Not connected');
+    $('cert-notice').classList.add('show');
+  }
+}
+
+async function loadPrinters() {
+  try {
+    const txt = await dymoGet('/DYMO/DLS/Printing/GetPrinters');
+    const names = [...txt.matchAll(/<LabelWriterPrinter>[\s\S]*?<Name>([^<]+)<\/Name>/g)]
+      .map(m => m[1]);
+    const saved = localStorage.getItem('ql_printer');
+    const sel = $('printer-sel');
+    if (names.length) {
+      sel.innerHTML = names
+        .map(n => `<option value="${n}"${n === saved ? ' selected' : ''}>${n}</option>`)
+        .join('');
+    } else {
+      sel.innerHTML = '<option value="">No printers found</option>';
+    }
+  } catch(_) {}
+}
+
+async function printLabel() {
+  const printer = $('printer-sel').value;
+  if (!printer) { alert('No printer selected.'); return; }
+
+  // Advance lot counter on print
+  const code = $('gen-code').value.trim().toUpperCase();
+  const date = $('date').value;
+  if (code && date) {
+    const key = `${code}_${toYYMMDD(date)}`;
+    lotCounters[key] = parseInt($('lot-seq').value || '1', 10);
+    persistLots();
+  }
+
+  const labelXml = buildXml();
+  const printParams = `<LabelWriterPrintParams><Copies>1</Copies><JobTitle>QuickLabel</JobTitle><PrintQuality>Auto</PrintQuality></LabelWriterPrintParams>`;
+
+  try {
+    const body = new URLSearchParams({
+      printerName:   printer,
+      labelXml:      labelXml,
+      labelSetXml:   '',
+      printParamsXml: printParams
+    });
+    const r = await fetch(`${BASE}/DYMO/DLS/Printing/PrintLabel`, {
+      method:'POST', body, mode:'cors'
+    });
+    if (!r.ok) throw new Error(await r.text());
+
+    const btn = $('print-btn');
+    btn.textContent = '✓ Sent to printer';
+    setTimeout(() => btn.textContent = 'Print Label', 2200);
+  } catch(e) {
+    alert(`Print failed:\n\n${e.message}\n\nCheck that DYMO Connect is running and the printer is connected.`);
+  }
+}
+
+function setDot(state, text) {
+  $('dot').className = `dot ${state}`;
+  $('status-txt').textContent = text;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+
+function init() {
+  loadStorage();
+  applySettings();
+
+  $('date').value = todayISO();
+  $('settings-btn').onclick = openSettings;
+
+  setCategory('actives');
+  updatePreview();
+  checkStatus();
+}
+
+init();
+</script>
+</body>
+</html>

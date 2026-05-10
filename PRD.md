@@ -140,8 +140,11 @@ Example: `SL192-260509-01`
 - `260509` = lot initiation date
 - `01` = 2-digit daily sequence per genetic code
 
-The 2-digit sequence resets per day per genetic code, allowing up to 99 grain
-lot starts per genetic per day.
+The 2-digit sequence resets per day **per genetic code** — not globally.
+`SL192-260509-01` and `SL193-260509-01` are both `01` because they are
+different genetic codes. This counts "how many grain lots of this specific
+genetic did I start today," not "how many total lots did I start today."
+Allows up to 99 grain lot initiations per genetic code per day.
 
 **Expansion tracking (DEFERRED — not v1):**
 The sublot tree structure described below is preserved for future implementation.
