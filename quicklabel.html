@@ -315,6 +315,7 @@ select option { background: var(--surface2); }
   #label-preview .lp-chip     { font-size: 6pt !important; }
   #label-preview .lp-species  { font-size: 8.5pt !important; }
   #label-preview .lp-line     { font-size: 6.5pt !important; }
+  #label-preview * { color: #000 !important; }
   #label-preview .lp-date,
   #label-preview .lp-notes    { font-size: 5.5pt !important; }
 }
@@ -680,15 +681,11 @@ function saveFormState() {
 function restoreFormState() {
   try {
     const raw = localStorage.getItem('ql_form');
-    if (!raw) return;
+    if (!raw) return false;
     const s = JSON.parse(raw);
     setCategory(s.cat || 'actives');
-    // genus/species need dropdowns populated first
-    if (s.genus) {
-      $('genus').value = s.genus;
-      onGenus();
-    }
-    if (s.species) $('species').value = s.species;
+    if (s.genus) { $('genus').value = s.genus; onGenus(); }
+    if (s.species)  $('species').value  = s.species;
     if (s.cultivar) $('cultivar').value = s.cultivar;
     if (s.filial)   $('filial').value   = s.filial;
     if (s.clone)    $('clone').value    = s.clone;
@@ -703,7 +700,8 @@ function restoreFormState() {
     if (s.notes)    $('notes').value    = s.notes;
     onLineage();
     rebuildLot();
-  } catch(_) {}
+    return true;
+  } catch(_) { return false; }
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
@@ -840,8 +838,13 @@ function getCultivarMeta(name) {
   const lower = name.toLowerCase();
   for (const [key, names] of Object.entries(cfg.cultivars)) {
     if (names.some(n => n.toLowerCase() === lower)) {
-      const [genus, species] = key.split('_');
-      const category = Object.keys(TAXA).find(c => TAXA[c][genus]) || 'actives';
+      const [rawGenus, ...rest] = key.split('_');
+      const rawSpecies = rest.join('_');
+      const category = Object.keys(TAXA).find(c =>
+        Object.keys(TAXA[c]).some(g => g.toLowerCase() === rawGenus.toLowerCase())
+      ) || 'actives';
+      const genus   = Object.keys(TAXA[category]).find(g => g.toLowerCase() === rawGenus.toLowerCase())   || rawGenus;
+      const species = (TAXA[category][genus] || []).find(s => s.toLowerCase() === rawSpecies.toLowerCase()) || rawSpecies;
       return { category, genus, species };
     }
   }
@@ -1030,7 +1033,7 @@ function init() {
   $('date').value = todayISO();
   $('settings-btn').onclick = openSettings;
 
-  restoreFormState() || setCategory('actives');
+  if (!restoreFormState()) setCategory('actives');
   updatePreview();
   setDot('ok', 'Ready');
 }
