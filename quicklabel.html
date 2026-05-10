@@ -1292,8 +1292,11 @@ function printLabel() {
   for (let i = 0; i < qty; i++) {
     const labelEl = document.createElement('div');
     labelEl.className = 'label';
-    renderLabelInto(labelEl, buildLabelData(start + i));
+    // Attach BEFORE rendering so fitCultivar can measure. A detached
+    // element reports clientWidth/scrollWidth as 0 and cqw can't resolve,
+    // which silently disables the auto-shrink for printed labels.
     printArea.appendChild(labelEl);
+    renderLabelInto(labelEl, buildLabelData(start + i));
   }
 
   window.print();
