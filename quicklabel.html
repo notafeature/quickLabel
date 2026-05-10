@@ -44,14 +44,17 @@ header {
   flex-shrink: 0;
 }
 .logo {
-  font-size: 15px; font-weight: 600; letter-spacing: -0.3px;
-  display: flex; align-items: baseline; gap: 10px;
+  font-size: 18px; font-weight: 600; letter-spacing: -0.3px;
+  display: flex; align-items: baseline; gap: 12px;
 }
 .logo em { color: var(--green); font-style: normal; }
 .workflow-tag {
   font-size: 10px; font-weight: 500; color: var(--muted);
   text-transform: uppercase; letter-spacing: .8px;
-  padding: 2px 7px; border: 1px solid var(--border); border-radius: 10px;
+  padding: 3px 9px; border: 1px solid var(--border); border-radius: 10px;
+}
+#settings-btn {
+  font-size: 20px; padding: 6px 10px; line-height: 1;
 }
 .header-right { display: flex; align-items: center; gap: 10px; }
 
@@ -138,6 +141,7 @@ input::placeholder { color: var(--muted); }
 select option { background: var(--surface2); }
 /* Native number spinner stays — user wants the up/down selector. */
 input[type=number] { padding-right: 4px; }
+#quantity { width: 64px; }
 
 .row { display: flex; gap: 8px; }
 .row .field { flex: 1; min-width: 0; }
@@ -189,8 +193,9 @@ input[type=number] { padding-right: 4px; }
 .lot-display .range { color: var(--muted); margin-left: 6px; font-size: 11px; }
 
 /* ── PRINT ROW ── */
-.print-row-end { align-items: flex-end; }
+.print-row-end { align-items: stretch; }
 .print-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 700; }
+.reset-btn { padding: 10px 14px; font-size: 18px; line-height: 1; }
 
 /* ── PREVIEW PANEL ── */
 #preview-panel {
@@ -509,7 +514,7 @@ input[type=number] { padding-right: 4px; }
       <div class="card">
         <div class="row print-row-end">
           <button class="primary print-btn" id="print-btn" onclick="printLabel()">Print</button>
-          <button class="icon" onclick="resetForm()" title="Clear form">↺</button>
+          <button class="reset-btn" onclick="resetForm()" title="Clear form">↺</button>
         </div>
       </div>
 
