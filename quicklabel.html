@@ -163,17 +163,6 @@ select option { background: var(--surface2); }
   min-height: 32px; display: flex; align-items: center;
 }
 
-/* ── CERT NOTICE ── */
-.cert-notice {
-  display: none;
-  background: #1c1200; border: 1px solid #4a3000;
-  border-radius: var(--r); padding: 9px 11px;
-  font-size: 11px; color: var(--amber); gap: 4px;
-  flex-direction: column; line-height: 1.5;
-}
-.cert-notice.show { display: flex; }
-.cert-notice a { color: var(--amber); }
-
 /* ── PRINT ROW ── */
 .print-row { display: flex; gap: 8px; }
 .print-row button.primary { flex: 1; padding: 10px; font-size: 14px; font-weight: 700; }
@@ -301,6 +290,7 @@ select option { background: var(--surface2); }
 
 @media print {
   @page { size: 2.25in 1.25in; margin: 0; }
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
   * { visibility: hidden; }
   #label-preview, #label-preview * { visibility: visible; }
   #label-preview {
@@ -328,8 +318,8 @@ select option { background: var(--surface2); }
     <div class="logo">Quick<em>Label</em></div>
     <div class="header-right">
       <div class="status-pill">
-        <div class="dot" id="dot"></div>
-        <span id="status-txt">Connecting…</span>
+        <div class="dot ok" id="dot"></div>
+        <span id="status-txt">Ready</span>
       </div>
       <button class="icon ghost" id="settings-btn" title="Settings">⚙</button>
     </div>
@@ -459,12 +449,6 @@ select option { background: var(--surface2); }
             <input type="text" id="notes" placeholder="Optional, ~40 chars" maxlength="45" oninput="updatePreview()">
           </div>
         </div>
-      </div>
-
-      <!-- CERT WARNING -->
-      <div class="cert-notice" id="cert-notice">
-        <strong>⚠ DYMO Connect not responding</strong>
-        <span>Open <a href="https://localhost:41951" target="_blank">https://localhost:41951</a> in a new tab, accept the certificate, then reload this page.</span>
       </div>
 
       <!-- PRINT -->
@@ -609,6 +593,7 @@ const DEFAULT_SUBS = [
 // ─── STATE ────────────────────────────────────────────────────────────────────
 
 let cat = 'actives';
+let initializing = true;
 
 let cfg = {
   prefix:    'SL',
@@ -636,12 +621,6 @@ function toYYMMDD(iso) {
   return `${y.slice(2)}${m}${d}`;
 }
 
-function xml(s) {
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
 // ─── STORAGE ──────────────────────────────────────────────────────────────────
 
 function loadStorage() {
@@ -655,9 +634,9 @@ function loadStorage() {
 
 function persistCfg() { localStorage.setItem('ql_cfg', JSON.stringify(cfg)); }
 function persistLots() { localStorage.setItem('ql_lots', JSON.stringify(lotCounters)); }
-function savePrinter() { localStorage.setItem('ql_printer', $('printer-sel').value); }
 
 function saveFormState() {
+  if (initializing) return;
   const state = {
     cat,
     genus:    $('genus').value,
@@ -1034,6 +1013,8 @@ function init() {
   $('settings-btn').onclick = openSettings;
 
   if (!restoreFormState()) setCategory('actives');
+
+  initializing = false;
   updatePreview();
   setDot('ok', 'Ready');
 }
