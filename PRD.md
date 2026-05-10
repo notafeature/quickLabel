@@ -320,11 +320,14 @@ for labeling.
 - The form pane is user-resizable horizontally via a draggable splitter
   bar between the form and the preview.
 - The form sections, in order, are: **Genetic** (genetic code, category,
-  genus, species, cultivar), **Lineage** (filial / clone / isolation /
-  transfer, notation preview), **Lot** (date, lot ID display, quantity),
-  **Details** (source, grain type with optional description, notes), and
-  **Print** (print and reset actions). No media-type field — destination
-  state is workflow-derived.
+  genus, species, cultivar), **Lineage** (source, then filial / clone /
+  isolation / transfer, then notation preview), **Lot** (date, lot ID
+  display, quantity), **Details** (grain type with optional description,
+  notes), and **Print** (print and reset actions). Source sits at the top
+  of Lineage because it describes the prior state from which this
+  thing's lineage continues; the filial / clone / transfer notation that
+  follows describes this thing. No media-type field — destination state
+  is workflow-derived.
 - All fields are optional. Nothing is mandatory; nothing is validated.
   An empty field renders nothing on the label.
 - Form state persists across sessions, except **date**, which always
