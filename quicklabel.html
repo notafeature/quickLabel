@@ -237,6 +237,8 @@ input[type=number] { padding-right: 4px; }
   letter-spacing: -.5px;
   white-space: nowrap; overflow: hidden;
   flex-shrink: 0;
+  min-width: 0;          /* flex item: don't grow to intrinsic content width */
+  align-self: stretch;   /* fill cross-axis (label's content width) */
 }
 .label-species-row {
   display: flex; align-items: baseline; justify-content: space-between;
@@ -1247,16 +1249,24 @@ function fitCultivar(labelEl) {
   const el = labelEl.querySelector('.label-cultivar');
   if (!el) return;
   const max = 13;     // cqw — default size
-  const min = 5.5;    // cqw — minimum legible size
+  const min = 5;      // cqw — minimum legible size
+
+  // Measure against the LABEL's content width (clientWidth minus left/right
+  // padding), not the cultivar's own clientWidth. In a flex column, a child
+  // with min-width: auto can size to its intrinsic content width and
+  // overflow the parent — in that case its clientWidth equals scrollWidth
+  // and the naive overflow check never trips. Using the parent's content
+  // width as the constraint is correct regardless of flex sizing.
+  const cs = getComputedStyle(labelEl);
+  const padL = parseFloat(cs.paddingLeft)  || 0;
+  const padR = parseFloat(cs.paddingRight) || 0;
+  const avail = labelEl.clientWidth - padL - padR;
+
   let size = max;
   el.style.fontSize = size + 'cqw';
-  // Iteratively shrink until it fits the container width.
-  // scrollWidth measures the rendered text width; clientWidth is the
-  // container's inner width (cultivar is a block, fills the label
-  // content width). 0.5 tolerance avoids subpixel jitter.
   let guard = 0;
-  while (el.scrollWidth > el.clientWidth + 0.5 && size > min && guard < 20) {
-    size -= 0.5;
+  while (el.scrollWidth > avail && size > min && guard < 30) {
+    size -= 0.25;
     el.style.fontSize = size + 'cqw';
     guard++;
   }
