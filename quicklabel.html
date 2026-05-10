@@ -136,9 +136,8 @@ input[type=text], input[type=date], input[type=number], select {
 input:focus, select:focus { outline: none; border-color: var(--green); }
 input::placeholder { color: var(--muted); }
 select option { background: var(--surface2); }
-input[type=number] { -moz-appearance: textfield; }
-input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+/* Native number spinner stays — user wants the up/down selector. */
+input[type=number] { padding-right: 4px; }
 
 .row { display: flex; gap: 8px; }
 .row .field { flex: 1; min-width: 0; }
@@ -438,6 +437,12 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
       <!-- LINEAGE -->
       <div class="card">
         <div class="card-label">Lineage</div>
+
+        <div class="field">
+          <span class="fl">Source <span style="color:var(--muted);font-weight:400">— optional</span></span>
+          <input type="text" id="source" placeholder="e.g. Agar SL188.F1.T2, Liquid Culture (Bas Eq), Spore (origin)" oninput="updatePreview()">
+        </div>
+
         <div class="row" id="lineage-row">
           <div class="field w56" id="filial-field">
             <span class="fl">Filial</span>
@@ -473,7 +478,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
           <div class="lot-display" id="lot-display">—</div>
         </div>
 
-        <div class="field w80">
+        <div class="field w72">
           <span class="fl">Quantity</span>
           <input type="number" id="quantity" min="1" max="99" value="1" oninput="onQuantityChange()" onchange="onQuantityChange()">
         </div>
@@ -482,11 +487,6 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
       <!-- DETAILS -->
       <div class="card">
         <div class="card-label">Details</div>
-
-        <div class="field">
-          <span class="fl">Source <span style="color:var(--muted);font-weight:400">— optional</span></span>
-          <input type="text" id="source" placeholder="e.g. Agar SL188.F1.T2, Liquid Culture (origin)" oninput="updatePreview()">
-        </div>
 
         <div class="field">
           <span class="fl">Grain Type</span>
