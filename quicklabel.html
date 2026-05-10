@@ -196,6 +196,7 @@ input[type=number] { padding-right: 4px; }
 .print-row-end { align-items: stretch; }
 .print-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 700; }
 .reset-btn { padding: 10px 14px; font-size: 18px; line-height: 1; }
+.reset-lot-btn { padding: 6px 12px; font-size: 11px; }
 
 /* ── PREVIEW PANEL ── */
 #preview-panel {
@@ -483,9 +484,12 @@ input[type=number] { padding-right: 4px; }
           <div class="lot-display" id="lot-display">—</div>
         </div>
 
-        <div class="field w72">
-          <span class="fl">Quantity</span>
-          <input type="number" id="quantity" min="1" max="99" value="1" oninput="onQuantityChange()" onchange="onQuantityChange()">
+        <div class="row" style="align-items:flex-end;gap:8px">
+          <div class="field" style="flex:0 0 auto">
+            <span class="fl">Quantity</span>
+            <input type="number" id="quantity" min="1" max="99" value="1" oninput="onQuantityChange()" onchange="onQuantityChange()">
+          </div>
+          <button class="reset-lot-btn" onclick="resetLotCounter()" type="button" title="Reset or set the next lot sequence">Reset Lot ID</button>
         </div>
       </div>
 
@@ -1097,6 +1101,31 @@ function onQuantityChange() {
 }
 
 // ── Lot ID display ──
+function resetLotCounter() {
+  const code = $('gen-code').value.trim().toUpperCase();
+  const date = $('date').value;
+  if (!code || !date) {
+    alert('Set Genetic Code and Date first.');
+    return;
+  }
+  const key = lotKey(code, date);
+  const input = prompt(
+    `Reset Lot ID counter for ${code} on ${toYYMMDD(date)}.\n` +
+    `Next print will use this number:`,
+    '1'
+  );
+  if (input === null) return;
+  const n = parseInt(input, 10);
+  if (isNaN(n) || n < 1 || n > 99) {
+    alert('Enter a number between 1 and 99.');
+    return;
+  }
+  // nextSeq returns lotCounters[key] + 1, so to make N the next, store N-1.
+  lotCounters[key] = n - 1;
+  persistLots();
+  rebuildLot();
+}
+
 function rebuildLot() {
   const code = $('gen-code').value.trim().toUpperCase();
   const date = $('date').value;

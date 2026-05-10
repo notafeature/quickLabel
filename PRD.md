@@ -225,6 +225,11 @@ A print run produces N labels for one configuration of (code, date, lineage,
 - A canceled print run is not detectable from the browser. Counter advance
   is best-effort: a missed run causes a gap, not a duplicate. Reprint of an
   exact lot ID is a manual workflow and does not advance the counter.
+- The counter for a `(code, date)` pair can be **reset or set to a custom
+  starting number** via a "Reset Lot ID" button next to Quantity. Useful
+  when iterating on tests for the same genetic without polluting the live
+  sequence — print four test labels, click Reset Lot ID, type `1`, the
+  next print uses `01` again.
 
 ---
 
