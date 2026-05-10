@@ -225,6 +225,11 @@ A print run produces N labels for one configuration of (code, date, lineage,
 - A canceled print run is not detectable from the browser. Counter advance
   is best-effort: a missed run causes a gap, not a duplicate. Reprint of an
   exact lot ID is a manual workflow and does not advance the counter.
+- The counter for a `(code, date)` pair can be **reset or set to a custom
+  starting number** via a "Reset Lot ID" button next to Quantity. Useful
+  when iterating on tests for the same genetic without polluting the live
+  sequence — print four test labels, click Reset Lot ID, type `1`, the
+  next print uses `01` again.
 
 ---
 
@@ -243,8 +248,13 @@ Every grain-lot label carries:
 - **Lineage** — combined notation (e.g. `F1.C1_A.T3`), on its own line.
 - **Destination | Source** — destination state (workflow-derived) on the
   left, source descriptor on the right after `Src:`. If source is empty,
-  only the destination shows. Examples: `Grain Spawn  |  Src: Agar
-  SL188.F1.T2`, `Grain Spawn  |  Src: Liquid Culture (origin)`.
+  only the destination shows. When this thing's lineage notation is
+  present, it is appended to the source on the label
+  (`Agar 187` + `F1.C2.T6` → `Agar 187.F1.C2.T6`), since lineage carries
+  across state changes. The append is suppressed if the typed source
+  already ends with that notation, so a user who types the full source
+  by hand doesn't double-stamp. Examples: `Grain Spawn  |  Src: Agar
+  187.F1.C2.T6`, `Grain Spawn  |  Src: Liquid Culture (Bas Eq)`.
 - **Grain type** — the grain preparation used (e.g. `RYE`); optionally
   with description (`RYE — Rye berries`) per a form-level toggle.
 - **Date** — initiation date, bottom-left.

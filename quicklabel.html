@@ -44,14 +44,17 @@ header {
   flex-shrink: 0;
 }
 .logo {
-  font-size: 15px; font-weight: 600; letter-spacing: -0.3px;
-  display: flex; align-items: baseline; gap: 10px;
+  font-size: 18px; font-weight: 600; letter-spacing: -0.3px;
+  display: flex; align-items: baseline; gap: 12px;
 }
 .logo em { color: var(--green); font-style: normal; }
 .workflow-tag {
   font-size: 10px; font-weight: 500; color: var(--muted);
   text-transform: uppercase; letter-spacing: .8px;
-  padding: 2px 7px; border: 1px solid var(--border); border-radius: 10px;
+  padding: 3px 9px; border: 1px solid var(--border); border-radius: 10px;
+}
+#settings-btn {
+  font-size: 20px; padding: 6px 10px; line-height: 1;
 }
 .header-right { display: flex; align-items: center; gap: 10px; }
 
@@ -138,6 +141,7 @@ input::placeholder { color: var(--muted); }
 select option { background: var(--surface2); }
 /* Native number spinner stays — user wants the up/down selector. */
 input[type=number] { padding-right: 4px; }
+#quantity { width: 64px; }
 
 .row { display: flex; gap: 8px; }
 .row .field { flex: 1; min-width: 0; }
@@ -189,8 +193,10 @@ input[type=number] { padding-right: 4px; }
 .lot-display .range { color: var(--muted); margin-left: 6px; font-size: 11px; }
 
 /* ── PRINT ROW ── */
-.print-row-end { align-items: flex-end; }
+.print-row-end { align-items: stretch; }
 .print-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 700; }
+.reset-btn { padding: 10px 14px; font-size: 18px; line-height: 1; }
+.reset-lot-btn { padding: 6px 12px; font-size: 11px; }
 
 /* ── PREVIEW PANEL ── */
 #preview-panel {
@@ -478,9 +484,12 @@ input[type=number] { padding-right: 4px; }
           <div class="lot-display" id="lot-display">—</div>
         </div>
 
-        <div class="field w72">
-          <span class="fl">Quantity</span>
-          <input type="number" id="quantity" min="1" max="99" value="1" oninput="onQuantityChange()" onchange="onQuantityChange()">
+        <div class="row" style="align-items:flex-end;gap:8px">
+          <div class="field" style="flex:0 0 auto">
+            <span class="fl">Quantity</span>
+            <input type="number" id="quantity" min="1" max="99" value="1" oninput="onQuantityChange()" onchange="onQuantityChange()">
+          </div>
+          <button class="reset-lot-btn" onclick="resetLotCounter()" type="button" title="Reset or set the next lot sequence">Reset Lot ID</button>
         </div>
       </div>
 
@@ -509,7 +518,7 @@ input[type=number] { padding-right: 4px; }
       <div class="card">
         <div class="row print-row-end">
           <button class="primary print-btn" id="print-btn" onclick="printLabel()">Print</button>
-          <button class="icon" onclick="resetForm()" title="Clear form">↺</button>
+          <button class="reset-btn" onclick="resetForm()" title="Clear form">↺</button>
         </div>
       </div>
 
@@ -1092,6 +1101,31 @@ function onQuantityChange() {
 }
 
 // ── Lot ID display ──
+function resetLotCounter() {
+  const code = $('gen-code').value.trim().toUpperCase();
+  const date = $('date').value;
+  if (!code || !date) {
+    alert('Set Genetic Code and Date first.');
+    return;
+  }
+  const key = lotKey(code, date);
+  const input = prompt(
+    `Reset Lot ID counter for ${code} on ${toYYMMDD(date)}.\n` +
+    `Next print will use this number:`,
+    '1'
+  );
+  if (input === null) return;
+  const n = parseInt(input, 10);
+  if (isNaN(n) || n < 1 || n > 99) {
+    alert('Enter a number between 1 and 99.');
+    return;
+  }
+  // nextSeq returns lotCounters[key] + 1, so to make N the next, store N-1.
+  lotCounters[key] = n - 1;
+  persistLots();
+  rebuildLot();
+}
+
 function rebuildLot() {
   const code = $('gen-code').value.trim().toUpperCase();
   const date = $('date').value;
@@ -1132,11 +1166,22 @@ function buildLabelData(seqOverride) {
   const species     = $('species').value;
   const cultivar    = $('cultivar').value.trim();
   const destination = CURRENT_WORKFLOW.destination;
-  const source      = $('source').value.trim();
+  const sourceRaw   = $('source').value.trim();
   const subCode     = $('sub-code').value.trim();
   const subShowDesc = $('grain-show-desc').checked;
   const notes       = $('notes').value.trim();
   const notation    = buildNotation();
+
+  // Append this thing's lineage notation to the source string on the label.
+  // The source field carries the source's identifier minus the lineage
+  // (e.g. "Agar 187"); the lineage follows the genetic line across the
+  // state change (T2 agar → T2 grain), so it can be appended automatically.
+  // If the user already typed a source ending with the same notation, skip
+  // the append so we don't double-stamp.
+  let source = sourceRaw;
+  if (sourceRaw && notation && !sourceRaw.endsWith(notation)) {
+    source = `${sourceRaw}.${notation}`;
+  }
 
   let sub = subCode;
   if (subShowDesc && subCode) {
