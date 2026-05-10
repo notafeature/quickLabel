@@ -531,7 +531,7 @@ input[type=number] { padding-right: 4px; }
 
     <!-- ── PREVIEW ── -->
     <div id="preview-panel">
-      <span class="preview-label-hint">Label Preview — 2.25 × 1.25 in (preview shown 2.4×)</span>
+      <span class="preview-label-hint">Label Preview — 2.25 × 1.25 in</span>
 
       <div id="label-preview" class="label">
         <div class="label-cultivar">—</div>
@@ -674,6 +674,20 @@ const WORKFLOWS = {
   }
 };
 const CURRENT_WORKFLOW = WORKFLOWS['grain-spawn'];
+
+// Cultivar fit-to-width config. Lives outside fitCultivar() so a future
+// label-template selector (multi-printer, multi-media) can swap the whole
+// block in one place. padHCqw must match the .label horizontal padding in
+// CSS — the two are coupled by definition. font must match the cultivar
+// CSS font-family/weight so canvas measureText reflects actual rendering.
+const CULTIVAR_FIT = {
+  padHCqw: 3.5,                                                // cqw, each side
+  maxCqw:  13,                                                 // default size
+  minCqw:  6,                                                  // floor (above species 5.2cqw → preserves hierarchy)
+  font:    'bold 100px Arial, Helvetica, sans-serif',          // 100px = reference for linear scaling
+  safety:  0.98,                                               // letter-spacing / canvas-vs-DOM kerning buffer
+  ctx:     document.createElement('canvas').getContext('2d'),  // single canvas, reused
+};
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 
@@ -1248,32 +1262,41 @@ function renderLabelInto(target, d) {
 function fitCultivar(labelEl) {
   const cultivar = labelEl.querySelector('.label-cultivar');
   if (!cultivar) return;
-  // Use the sibling rule's rendered width as the constraint. The rule has
-  // no content, so its offsetWidth is reliably the label's content width
-  // (it stretches across the flex column's cross-axis). Avoids two failure
-  // modes: cultivar.clientWidth equaling scrollWidth when flex min-width
-  // doesn't constrain it, and getComputedStyle padding parsing being
-  // inconsistent for cqw-resolved values across browsers.
-  const rule = labelEl.querySelector('.label-rule');
-  if (!rule) return;
 
-  const max = 13;     // cqw — default size
-  const min = 5.5;    // cqw — minimum legible size
-
-  // Quick path: try max first.
-  cultivar.style.fontSize = max + 'cqw';
-  if (cultivar.scrollWidth <= rule.offsetWidth) return;
-
-  // Binary-search the largest size in [min, max] that fits. ~10 iterations
-  // converges to ~0.007cqw precision — well below visual perception.
-  let lo = min, hi = max;
-  for (let i = 0; i < 10; i++) {
-    const mid = (lo + hi) / 2;
-    cultivar.style.fontSize = mid + 'cqw';
-    if (cultivar.scrollWidth <= rule.offsetWidth) lo = mid;
-    else hi = mid;
+  const text = (cultivar.textContent || '').trim();
+  if (!text) {                       // empty cultivar → fall back to CSS default
+    cultivar.style.fontSize = '';
+    return;
   }
-  cultivar.style.fontSize = lo + 'cqw';
+
+  // Reliable: .label has an explicit width (5.4in live, 2.25in print).
+  // offsetWidth returns CSS px regardless of DPR.
+  const labelW = labelEl.offsetWidth;
+  if (!labelW) return;
+
+  // Available content width = label width minus horizontal padding (both sides).
+  // Padding fraction is derived from CULTIVAR_FIT.padHCqw so it scales with
+  // any future label-template config.
+  const availPx = labelW * (1 - (CULTIVAR_FIT.padHCqw * 2) / 100);
+
+  // Canvas measureText gives natural text width independent of DOM rendering.
+  // We measure at a 100px reference and scale linearly to find the target px.
+  CULTIVAR_FIT.ctx.font = CULTIVAR_FIT.font;
+  const refW = CULTIVAR_FIT.ctx.measureText(text).width;
+  if (!refW) return;
+
+  // textWidth(fontPx) = refW × fontPx / 100, so to fit availPx:
+  //   fontPx = 100 × availPx / refW   (× safety for letter-spacing/kerning vs canvas)
+  // Note: dividing by labelW cancels — fontCqw is independent of label width.
+  // That's exactly what guarantees WYSIWYG between live preview and print.
+  let fontPx = (100 * availPx / refW) * CULTIVAR_FIT.safety;
+
+  // Clamp to [min, max] cqw bounds (converted to px against this label's width).
+  const cqwPx = labelW / 100;
+  fontPx = Math.max(CULTIVAR_FIT.minCqw * cqwPx,
+                    Math.min(CULTIVAR_FIT.maxCqw * cqwPx, fontPx));
+
+  cultivar.style.fontSize = fontPx + 'px';
 }
 
 function updatePreview() {
