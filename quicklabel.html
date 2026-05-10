@@ -299,39 +299,24 @@ select option { background: var(--surface2); }
 .add-row .code { width: 72px; font-family: monospace; flex-shrink: 0; }
 .add-row .desc { flex: 1; }
 
-/* ── PRINT AREA ── */
-#print-area {
-  display: none;
-  width: 2.25in; height: 1.25in;
-  font-family: Arial, Helvetica, sans-serif;
-  padding: 0.04in 0.07in 0.04in;
-  flex-direction: column;
-  justify-content: space-between;
-  overflow: hidden;
-  background: #fff; color: #000;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-.pa-top { display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
-.pa-cultivar { font-size: 17pt; font-weight: 700; line-height: 1.0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #000; }
-.pa-chip { font-size: 6pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 1.5pt 4pt; border-radius: 2pt; flex-shrink: 0; margin-left: 5pt; margin-top: 4pt; }
-.pa-species { font-size: 9pt; font-style: italic; color: #000; flex-shrink: 0; margin-top: 2pt; white-space: nowrap; }
-.pa-rule { height: .6pt; background: #000; margin: 3pt 0; flex-shrink: 0; }
-.pa-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2.5pt; }
-.pa-line { font-size: 7pt; color: #000; white-space: nowrap; overflow: hidden; font-family: 'Courier New', Courier, monospace; font-weight: 500; }
-.pa-bottom { display: flex; justify-content: space-between; align-items: flex-end; flex-shrink: 0; }
-.pa-date { font-size: 6pt; color: #000; font-family: 'Courier New', monospace; }
-.pa-notes { font-size: 6pt; color: #000; font-style: italic; max-width: 55%; text-align: right; }
-
 @media print {
   @page { size: 2.25in 1.25in; margin: 0; }
-  #app, #settings-overlay, #settings-panel { display: none !important; }
-  #print-area {
-    display: flex !important;
-    position: fixed; top: 0; left: 0;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  * { visibility: hidden; }
+  #label-preview, #label-preview * { visibility: visible; }
+  #label-preview {
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    width: 2.25in !important; height: 1.25in !important;
+    box-shadow: none !important; border-radius: 0 !important;
+    padding: 5px 8px !important;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
+  #label-preview .lp-cultivar { font-size: 15pt !important; }
+  #label-preview .lp-chip     { font-size: 6pt !important; }
+  #label-preview .lp-species  { font-size: 8.5pt !important; }
+  #label-preview .lp-line     { font-size: 6.5pt !important; }
+  #label-preview .lp-date,
+  #label-preview .lp-notes    { font-size: 5.5pt !important; }
 }
 </style>
 </head>
@@ -520,7 +505,6 @@ select option { background: var(--surface2); }
 </div><!-- /app -->
 
 <!-- ── SETTINGS ── -->
-<div id="print-area"></div>
 <div id="settings-overlay" onclick="closeSettings()"></div>
 <div id="settings-panel">
   <div class="s-header">
@@ -659,6 +643,56 @@ function loadStorage() {
 function persistCfg() { localStorage.setItem('ql_cfg', JSON.stringify(cfg)); }
 function persistLots() { localStorage.setItem('ql_lots', JSON.stringify(lotCounters)); }
 function savePrinter() { localStorage.setItem('ql_printer', $('printer-sel').value); }
+
+function saveFormState() {
+  const state = {
+    cat,
+    genus:    $('genus').value,
+    species:  $('species').value,
+    cultivar: $('cultivar').value,
+    filial:   $('filial').value,
+    clone:    $('clone').value,
+    iso:      $('iso').value,
+    transfer: $('transfer').value,
+    media:    $('media').value,
+    date:     $('date').value,
+    genCode:  $('gen-code').value,
+    lotSeq:   $('lot-seq').value,
+    source:   $('source').value,
+    subCode:  $('sub-code').value,
+    notes:    $('notes').value,
+  };
+  localStorage.setItem('ql_form', JSON.stringify(state));
+}
+
+function restoreFormState() {
+  try {
+    const raw = localStorage.getItem('ql_form');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    setCategory(s.cat || 'actives');
+    // genus/species need dropdowns populated first
+    if (s.genus) {
+      $('genus').value = s.genus;
+      onGenus();
+    }
+    if (s.species) $('species').value = s.species;
+    if (s.cultivar) $('cultivar').value = s.cultivar;
+    if (s.filial)   $('filial').value   = s.filial;
+    if (s.clone)    $('clone').value    = s.clone;
+    if (s.iso)      $('iso').value      = s.iso;
+    if (s.transfer) $('transfer').value = s.transfer;
+    if (s.media)    $('media').value    = s.media;
+    if (s.date)     $('date').value     = s.date;
+    if (s.genCode)  $('gen-code').value = s.genCode;
+    if (s.lotSeq)   $('lot-seq').value  = s.lotSeq;
+    if (s.source)   $('source').value   = s.source;
+    if (s.subCode)  $('sub-code').value = s.subCode;
+    if (s.notes)    $('notes').value    = s.notes;
+    onLineage();
+    rebuildLot();
+  } catch(_) {}
+}
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
 
@@ -851,7 +885,7 @@ function resetForm() {
 
 // ─── PREVIEW ──────────────────────────────────────────────────────────────────
 
-function updatePreview() {
+function updatePreview() { saveFormState();
   const genus     = $('genus').value;
   const species   = $('species').value;
   const cultivar  = $('cultivar').value.trim();
@@ -895,53 +929,18 @@ function updatePreview() {
   $('lp-notes').textContent = notes;
 }
 
-// ─── PRINT (browser → macOS print dialog → DYMO driver) ─────────────────────
+// ─── PRINT ────────────────────────────────────────────────────────────────────
 
 function printLabel() {
-  const cultivar    = $('cultivar').value.trim() || '—';
-  const genus       = $('genus').value;
-  const species     = $('species').value;
-  const speciesLine = [genus, species].filter(Boolean).join(' ');
-  const notation    = buildNotation();
-  const lotId       = $('lot-display').textContent;
-  const media       = $('media').value;
-  const source      = $('source').value.trim();
-  const sub         = $('sub-code').value.trim();
-  const date        = $('date').value;
-  const notes       = $('notes').value.trim();
-  const catLabel    = cat === 'actives' ? 'ACTIVE' : 'GOURMET';
-  const catBg       = cat === 'actives' ? '#dcfce7' : '#cffafe';
-  const catColor    = cat === 'actives' ? '#14532d' : '#164e63';
-
-  const lotLine   = [lotId !== '—' ? lotId : '', notation].filter(Boolean).join('   ');
-  const mediaLine = [media, source ? 'Src: ' + source : ''].filter(Boolean).join('   ');
-  const subLine   = [sub ? 'Sub: ' + sub : '', fmtDate(date)].filter(Boolean).join('   ');
-
-  $('print-area').innerHTML = `
-    <div class="pa-top">
-      <div class="pa-cultivar">${cultivar}</div>
-      <div class="pa-chip" style="background:${catBg};color:${catColor}">${catLabel}</div>
-    </div>
-    <div class="pa-species">${speciesLine}</div>
-    <div class="pa-rule"></div>
-    <div class="pa-mid">
-      ${lotLine   ? `<div class="pa-line">${lotLine}</div>`   : ''}
-      ${mediaLine ? `<div class="pa-line">${mediaLine}</div>` : ''}
-      ${subLine   ? `<div class="pa-line">${subLine}</div>`   : ''}
-    </div>
-    <div class="pa-bottom">
-      <span class="pa-date">${fmtDate(date)}</span>
-      ${notes ? `<span class="pa-notes">${notes}</span>` : ''}
-    </div>`;
-
   // Advance lot counter
   const code = $('gen-code').value.trim().toUpperCase();
+  const date = $('date').value;
   if (code && date) {
     const key = `${code}_${toYYMMDD(date)}`;
     lotCounters[key] = parseInt($('lot-seq').value || '1', 10);
     persistLots();
   }
-
+  // Print the preview directly — WYSIWYG
   window.print();
 }
 
@@ -959,7 +958,7 @@ function init() {
   $('date').value = todayISO();
   $('settings-btn').onclick = openSettings;
 
-  setCategory('actives');
+  restoreFormState() || setCategory('actives');
   updatePreview();
   setDot('ok', 'Ready');
 }
