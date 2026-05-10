@@ -1,7 +1,7 @@
 # QuickLabel — Product Requirements Document
 
-**Version:** 0.1 (pre-build)
-**Target:** Print a label today. Build the rest later.
+**Version:** 0.2
+**Target:** Print a grain spawn or bulk spawn label today. Build the rest later.
 
 ---
 
@@ -20,171 +20,239 @@ requiring the person printing to know any of that context upfront.
 Single HTML file. Fill form, print label on Dymo LabelWriter 450 (30334,
 2.25" × 1.25"). Data lives in `localStorage`. No backend.
 
+**Media types in scope:** Grain Spawn, Bulk (spawn-to-bulk bags/bins)
+
+**Media types out of scope for v1:** Agar, LC, Spore Swab (field structure
+designed to accept them later without throwaway work)
+
 ### Future (separate genetics tracker repo, to be integrated)
 - Genetics catalog with unique genetic codes and full lineage graph
 - Vendor registry with codes
-- Substrate type registry (user-defined)
+- Substrate type registry (user-defined in profile)
+- Cultivar names extracted from database
 - Source population from database
-- Agar / LC / spore swab label variants
 - Operator tracking
 - State change / compliance fields
 - QR codes linking to digital records
+- Harvest lot, homogenized lot, and downstream tracking
 
 ---
 
 ## 3. Taxonomy & Terminology
 
 - **No use of the word "strain"** anywhere in UI or code.
-- Categories split the genus/species picker into two tracks:
-  - **Gourmet / Functional** — e.g. Pleurotus, Hericium, Ganoderma, Lentinula
-  - **Actives** — e.g. Psilocybe, Panaeolus
+- **Category** splits the genus/species picker:
+  - **Gourmet / Functional** — Pleurotus, Hericium, Ganoderma, Lentinula, etc.
+  - **Actives** — Psilocybe, Panaeolus
 
-### Seeded genus/species (v1)
+### Seeded genus/species (v1 defaults — user-extensible in settings)
 
-**Actives — Psilocybe:**
-- cubensis
-- ochraceo-centrata
-- subtropicalis
-- tampanensis
-- zapaticorum
+**Actives — Psilocybe (abbrev: P.):**
+| Species | Notes |
+|---------|-------|
+| cubensis | Primary |
+| ochraceo-centrata | |
+| subtropicalis | |
+| tampanensis | |
+| zapaticorum | |
 
-More can be added through user profile settings (future).
+**Actives — Panaeolus (abbrev: PAn.):**
+| Species | Notes |
+|---------|-------|
+| cyanescens | Primary |
 
----
-
-## 4. Label Fields
-
-### Identity
-| Field | Notes |
-|-------|-------|
-| Category | Gourmet/Functional \| Actives — drives which genus/species list appears |
-| Genus | Dropdown, filtered by category |
-| Species | Dropdown, filtered by genus |
-| Cultivar | Free text. This is the common name (e.g. "Golden Teacher"). Not called "strain". |
-
-### Genetic Traceability
-| Field | Notes |
-|-------|-------|
-| Genetic Code | Short alphanumeric. In v1 this is manually entered. In future it auto-populates from the genetics catalog. Becomes the root of the lot ID. |
-| Generation | F1 / F2 / F3 … (user types or selects). "F" generations only — no P, G, etc. |
-| Transfer | T0 / T1 / T2 … numeric. Resets to T0 when genetics move into a new media type. |
-| Isolation | Optional: A / B / C / … Distinguishes unique isolations of the same genetic at the same generation/transfer. Used when plating out distinct sectors or points of mycelium. |
-
-**Combined notation on label:** `F2·T3·B` or `F1·T7` — compact, readable.
-
-**Lineage tracking note:** The agar plate that is F1·T7 becomes G (grain) T0 when
-transferred to grain — but the label for the grain inoculation should reference
-the agar source (F1·T7) as the Source Code so the chain is unbroken.
-
-### Propagation Context
-| Field | Notes |
-|-------|-------|
-| Media Type | Agar / LC / Spore Swab / Grain / Bulk. Determines which lot/batch concept applies. Today: Grain and Bulk. |
-| Substrate Type | Code-based. Codes defined in user profile. If substrate came from a vendor, ties to vendor code. |
-| Source Code | Where these genetics came from. Vendor code, in-house code, or genetic code of parent. Populates from database in future. Manual in v1. |
-| Date | Defaults to today. Editable. |
-
-### Lot / Batch Identity
-
-Naming depends on media type:
-
-- **Grain:** Grain Lot. ID format: `[GeneticCode]-[YYMMDD]-[NN]`
-  where NN is a 2-digit sequence for the day.
-  Example: `PSC001-260510-01`
-  Within a grain lot, each expansion transfer increments T (T0 → T1 → T2).
-
-- **Bulk:** Batch ID. Same format, `BCH` prefix or similar.
-
-- **Agar / LC / Spore Swab:** No lot ID in v1. Will be addressed when those
-  label types are built.
-
-The lot ID is the primary scannable/searchable identifier. It encodes the
-genetic code, date, and sequence without needing a separate lookup.
-
-### Free-form
-| Field | Notes |
-|-------|-------|
-| Notes | One line, ~40 chars max. Prints at smallest size. Optional. |
+Cultivar names are **not seeded** — user-defined in settings, future DB extraction.
 
 ---
 
-## 5. Label Layout (30334 — 2.25" × 1.25")
+## 4. Genetic Lineage Notation
 
-Landscape. Minimal margin. Three zones:
+### Generation types
+
+| Type | Notation | Description |
+|------|----------|-------------|
+| Filial | `F1`, `F2`, `F3` … | Spore-derived generations. Sub-designation (A/B/C) used rarely. |
+| Clone | `C1`, `C2` … | Clonal isolations. Each clone gets an A/B/C isolation designator. |
+| Fruiting Clone Transfer | `FCT` | Clone taken from fruiting body tissue. Sub-designated A/B/C per isolation. |
+
+**Open question — FCT:** Confirm: is FCT a distinct clone method (forced vs.
+non-forced fruiting clone), or is it the umbrella term for all fruiting clones
+with forced/non-forced as a sub-attribute?
+
+### Transfer number
+`T0`, `T1`, `T2` … — increments with each passage on the same media type.
+Resets to `T0` when material moves to a new media type (e.g. agar F1·T7 → grain
+becomes grain T0, but the label records the agar source so the chain is intact).
+
+### Combined notation examples
+- `F1·T7` — filial gen 1, 7th transfer on current media
+- `C2B·T3` — clone 2, isolation B, 3rd transfer
+- `FCT-A·T0` — fruiting clone transfer isolation A, first transfer (initial grain inoculation)
+
+### Source field
+Records the origin of material going into this label's container. In v1: free
+text (e.g. `F1·T7` from agar plate, or vendor code). Future: linked record in
+genetics DB.
+
+---
+
+## 5. Lot / Batch Identity Model
+
+### Lot types in the full lifecycle
+
+| Stage | Name | v1? |
+|-------|------|-----|
+| Grain spawn | Grain Lot | Yes |
+| Spawn-to-bulk | Batch | Yes |
+| Post-harvest | Harvest Lot | No |
+| Processing | Homogenized Lot | No |
+
+### Grain Lot
+
+**ID format:** `[GeneticCode]-[YYMMDD]`
+Example: `PSC-ENG-260509`
+(Psilocybe cubensis Enigma, grain lot initiated May 9, 2026)
+
+Date is the initiation date of the original inoculation event. The lot ID does
+not change as the lot expands — that's what sublot tracking is for.
+
+**Sublot notation — expansion rounds:**
+Each expansion of the lot adds a round number and a bag number within that round.
+
+| Designation | Meaning |
+|-------------|---------|
+| `0.1`, `0.2` | Initial inoculation bags (round 0) |
+| `1.01` … `1.10` | First expansion bags (round 1, bags 1–10) |
+| `2.01` … `2.20` | Second expansion bags (round 2) |
+
+Full individual bag ID: `PSC-ENG-260509 · 1.03`
+(same grain lot, first expansion, third bag)
+
+The lot record tracks total bag count per round. A single 2 lb bag typically
+yields 8–10 bags per expansion.
+
+**Green bag weight** — trackable future field, not v1.
+
+### Batch (Spawn-to-Bulk)
+
+Formed when grain lot(s) combine with a substrate lot.
+
+- One batch can draw from **multiple grain lots**
+- One grain lot can be **split across multiple batches**
+- Each container within a batch = a **batch unit**
+- Batch ID: TBD format (references substrate lot ID + sequence)
+- Batch unit ID: `[BatchID]-U[NNN]`
+
+**Substrate Lot ID** — user-defined codes, built in user profile settings.
+If substrate came from a vendor, substrate lot ties to vendor code.
+
+---
+
+## 6. Label Fields
+
+### Always visible
+
+| Field | Input | Notes |
+|-------|-------|-------|
+| Category | Toggle | Gourmet/Functional \| Actives |
+| Genus | Dropdown | Filtered by category |
+| Species | Dropdown | Filtered by genus |
+| Cultivar | Text | User-defined names, no seeded list |
+| Media Type | Dropdown | Grain Spawn \| Bulk (v1) |
+| Generation + Transfer | Combined | `F1`, `C2B`, `FCT-A` + `T0`–`T9+` |
+| Date | Date picker | Defaults to today |
+
+### Advanced (collapsed by default — "show advanced" toggle)
+
+| Field | Input | Notes |
+|-------|-------|-------|
+| Genetic Code | Text | Manual v1; future: auto from DB |
+| Lot ID | Auto + editable | Built from Genetic Code + Date |
+| Sublot | Text | `0.1`, `1.03`, `2.07`, etc. |
+| Source | Text | Free text v1; future: DB linked |
+| Substrate Code | Text/Dropdown | User-defined codes |
+| Notes | Text | ~40 chars, one line |
+
+---
+
+## 7. Label Layout (30334 — 2.25" × 1.25")
+
+Landscape. Minimal margin. Four zones, typography TBD from mockups.
 
 ```
 ┌────────────────────────────────────────┐
-│  GOLDEN TEACHER              [ACTIVE]  │  ← Cultivar large/bold, category chip
+│  ENIGMA                      [ACTIVE]  │  ← Cultivar bold/large, category chip
 │  Psilocybe cubensis                    │  ← Genus species italic
 ├────────────────────────────────────────┤
-│  PSC001-260510-01   F1·T7   Grain     │  ← Lot ID, generation/transfer, media
-│  Sub: HWS-01   Src: VND-FTF           │  ← Substrate code, source code
+│  PSC-ENG-260509  ·  1.03               │  ← Lot · sublot
+│  F1·T7     Grain    Src: FCT-A·T0      │  ← Gen/transfer, media, source
 ├────────────────────────────────────────┤
-│  05.10.2026        [Notes text here]  │  ← Date + notes (small)
+│  Sub: HWS-01           05.09.26        │  ← Substrate code, date
 └────────────────────────────────────────┘
+  [Notes line if present — smallest size]
 ```
 
-Exact typography and spacing: TBD from mockups.
+Exact typography and zone spacing: TBD from user mockups.
 
 ---
 
-## 6. Printer Configuration
+## 8. Printer Configuration
 
-- **Hardware:** Dymo LabelWriter 450
+- **Hardware:** Dymo LabelWriter 450, macOS, USB
 - **Label:** 30334 (2.25" × 1.25")
-- **Driver:** Dymo Connect (Mac, already installed)
+- **Driver:** Dymo Connect (installed)
 - **SDK:** Dymo Connect JavaScript Framework (`dymo.connect.framework.js`)
   — communicates with local service at `https://localhost:41951`
 - **Label file format:** Dymo Label XML (`.label`)
 
-User can configure which label sizes appear in the size selector. Default
-shows only sizes they've added to favorites — not the full 40+ size catalog.
+Size selector shows only user-saved sizes. Default: `30334`.
+Full Dymo catalog available to browse and add.
 
 ---
 
-## 7. Tech Stack — v1
+## 9. Tech Stack — v1
 
 | Concern | Approach |
 |---------|----------|
 | UI | Single `.html` file — HTML + vanilla JS + CSS |
 | Printing | Dymo Connect JS SDK → local service → USB |
-| Storage | `localStorage` for favorites, recent cultivars, substrate codes |
+| Storage | `localStorage` for settings, saved substrate codes, recent entries |
 | Build | None. Open file in browser. |
-| Platform | macOS, DYMO Connect installed |
-
-### Why not Option B (Python/Flask) today
-Option B gives more layout control and is the right call once a backend exists.
-For today, no server, no dependencies, no install. Just open the file.
+| Platform | macOS, Dymo Connect installed |
 
 ---
 
-## 8. User-Configurable Settings (localStorage, v1)
+## 10. User Settings (localStorage, v1)
 
-- Saved label sizes (default: `30334`)
-- Custom substrate type codes
+- Saved label sizes
+- Custom substrate type codes (code + description)
 - Custom cultivar names per genus/species
-- (Future) Operator name / initials
+- (Future) Vendor codes, operator name, DB connection
 
 ---
 
-## 9. Out of Scope — v1
+## 11. Out of Scope — v1
 
-- Genetics database
-- Agar / LC / spore swab label types
-- QR codes
-- Barcode scanning
+- Genetics / cultivation tracker database
+- Agar, LC, spore swab label types
+- QR codes / barcode scanning
 - Operator tracking
 - Multi-user / auth
-- State change / compliance
+- Compliance / state change
 - Print history / audit log
-- Vendor registry (vendor codes are manual text in v1)
+- Harvest Lot, Homogenized Lot
+- Green bag weight tracking
+- Vendor registry (vendor codes are free text in v1)
 
 ---
 
-## 10. Open Questions
+## 12. Open Questions (pre-build)
 
-- [ ] Mockup review — label zone sizing and typography
-- [ ] Isolation field: show by default or behind a toggle?
-- [ ] Lot ID sequence: per-day per-genetic-code, or global per-day?
-- [ ] Source Code: free text in v1, or a seeded short list?
-- [ ] What cultivar names to seed for Psilocybe cubensis?
+- [ ] **FCT definition** — forced vs. non-forced fruiting clone: is FCT the
+      umbrella, or does "forced" have a distinct meaning that needs its own
+      designator?
+- [ ] **Sublot on label** — always show, or only show advanced?
+- [ ] **Batch label layout** — when Media Type = Bulk, does the label swap Grain
+      Lot + Sublot for Batch ID + Unit? Or show both?
+- [ ] **Substrate codes** — seed any defaults, or start blank and let user build?
+- [ ] **Mockup review** — label zone sizing and typography
