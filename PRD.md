@@ -1,6 +1,7 @@
 # QuickLabel — Product Requirements Document
 
-**Version:** 0.4
+**Version:** 0.5
+**Last updated:** 2026-05-10
 **Target:** Print a grain spawn or bulk spawn label today. Build the rest later.
 
 ---
@@ -201,7 +202,7 @@ suffix convention lets users extend named bases without polluting the main list.
 | Category | Toggle | Gourmet/Functional \| Actives |
 | Genus | Dropdown | Filtered by category |
 | Species | Dropdown | Filtered by genus |
-| Cultivar | Text | User-defined names, not seeded |
+| Cultivar | Text + datalist | Saved cultivars appear as suggestions |
 | Media Type | Dropdown | Grain Spawn \| Bulk (v1) |
 | Filial | Text | `F1`, `F2` … — hidden if lab setting off |
 | Clone | Text | `C1`, `C2` … |
@@ -238,8 +239,6 @@ Landscape. Minimal margin. Four zones — typography TBD from mockups.
   [Notes — smallest size, only if present]
 ```
 
-Exact typography and zone spacing: pending mockups.
-
 ---
 
 ## 8. Printer Configuration
@@ -247,11 +246,12 @@ Exact typography and zone spacing: pending mockups.
 - **Hardware:** Dymo LabelWriter 450, macOS, USB
 - **Label:** 30334 (2.25" × 1.25")
 - **Driver:** Dymo Connect (installed)
-- **SDK:** Dymo Connect JavaScript Framework (`dymo.connect.framework.js`)
-  — communicates with local service at `https://localhost:41951`
-- **Label file format:** Dymo Label XML (`.label`)
-
-Size selector shows only user-saved sizes. Default: `30334`.
+- **Current print method:** `window.print()` with `@page { size: 2.25in 1.25in; margin: 0; }`
+  — browser print dialog, user must select DYMO LabelWriter 450 + paper size 30334
+- **Dymo Connect REST API (`https://localhost:41951`):** attempted, rejected label XML
+  with `Sch_UndeclaredElement` error. Root cause not diagnosed. Deferred.
+- **Goal:** Direct-to-printer via Dymo Connect API — no dialog, one click prints.
+  Not yet working.
 
 ---
 
@@ -260,21 +260,26 @@ Size selector shows only user-saved sizes. Default: `30334`.
 | Concern | Approach |
 |---------|----------|
 | UI | Single `.html` file — HTML + vanilla JS + CSS |
-| Printing | Dymo Connect JS SDK → local service → USB |
-| Storage | `localStorage` — settings, substrate codes, recent entries |
-| Build | None. Open file in browser. |
+| Printing | `window.print()` — browser dialog required (Dymo API deferred) |
+| Storage | `localStorage` — `ql_cfg` (settings), `ql_lots` (counters), `ql_form` (form state) |
+| Build | None. Open file in browser or via GitHub Pages. |
 | Platform | macOS, Dymo Connect installed |
+| Hosting | GitHub Pages — `notafeature.github.io/quickLabel/quicklabel.html` |
 
 ---
 
-## 10. User Settings (localStorage, v1)
+## 10. User Settings (localStorage `ql_cfg`)
 
 - Lab prefix (e.g. `SL`)
-- Saved label sizes (default: `30334`)
 - Custom substrate codes (code + description)
-- Custom cultivar names per genus/species
+- Custom cultivar names stored as `{ "Genus_species": ["Name1", "Name2"] }`
 - Show/hide Filial field toggle
 - (Future) Operator name, DB connection, vendor codes, substrate inventory
+
+### Cultivar settings UI (implemented 2026-05-10)
+Settings panel uses category toggle + genus dropdown + species dropdown to add
+cultivars — not a manual text key. Stored key format is `Genus_species`
+(e.g. `Psilocybe_cubensis`).
 
 ---
 
@@ -295,10 +300,48 @@ Size selector shows only user-saved sizes. Default: `30334`.
 
 ---
 
-## 12. Open Questions (pre-build)
+## 12. Open Questions
 
 - [ ] **Batch label structure** — when Media Type = Bulk, which fields change?
-      Same form with different lot ID logic, or structurally different?
-- [ ] **Mockup review** — label zone sizing, font hierarchy
-- [ ] **Lot ID sequence** — 2-digit counter: per-day per-genetic-code, or
-      global per-day across all genetics?
+- [ ] **Dymo Connect API** — `Sch_UndeclaredElement` error unresolved. XML schema
+      mismatch with Dymo Connect version installed. Needs diagnosis against live printer.
+- [ ] **Print WYSIWYG fidelity** — screen preview is displayed at 2.4× scale for
+      readability; print renders at actual label size. Font sizes are overridden in
+      print CSS to compensate. Actual physical output not yet confirmed correct.
+
+---
+
+## 13. Implementation Status (2026-05-10)
+
+### Implemented — code exists in `main`, not all items verified by user
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Form UI — all fields | Implemented | Category, genus, species, cultivar, lineage, media, date, advanced section |
+| Lineage notation preview | Implemented | `F1.C1_A.T3` format built live as fields are filled |
+| Lot ID auto-build | Implemented | `[GeneticCode]-[YYMMDD]-[NN]`, sequence per genetic code per day |
+| Settings panel | Implemented | Lab prefix, filial toggle, substrate codes, cultivar names |
+| Substrate code datalist | Implemented | Populated from saved substrate codes |
+| Dark theme UI | Implemented | Two-column layout, form left, preview right |
+| Browser print | Implemented | `window.print()`, `@page { size: 2.25in 1.25in; margin: 0 }` |
+| Print targets preview div | Implemented | `visibility:hidden` on all other elements at print time |
+| Print text forced black | Implemented (2026-05-10) | `color: #000 !important` on all label elements in print CSS — **not yet user-verified** |
+| Form state persistence | Implemented (2026-05-10) | All fields saved to `ql_form` on every change, restored on load — **not yet user-verified** |
+| Cultivar datalist shows all cultivars | Implemented (2026-05-10) | Previously only showed cultivars for current genus/species |
+| Cultivar auto-populate | Implemented (2026-05-10) | Selecting a saved cultivar fills category, genus, species — **not yet user-verified; screenshot shows may still be broken** |
+| Cultivar settings dropdowns | Implemented (2026-05-10) | Replaced manual text key with category/genus/species pickers |
+
+### Requested — not yet implemented
+
+| Request | Notes |
+|---------|-------|
+| Direct print to Dymo (no dialog) | Dymo Connect API attempted, failed with XML schema error, deferred |
+| Print quality confirmed correct | Physical label output not verified by user |
+
+### Known broken / unverified as of last session
+
+| Item | Detail |
+|------|--------|
+| Cultivar auto-populate | Screenshot 2026-05-10 shows "Chitwan" typed, datalist suggestion visible, but genus/species still empty. Fix pushed (PR #7, merged) but not confirmed working by user. |
+| Form state on reload | Fix pushed (PR #7). Root cause: `restoreFormState()` returned `undefined`, so `setCategory('actives')` always ran after restore and wiped genus/species. Fixed by returning `true` on success. Not yet confirmed by user. |
+| Print text color | Gray date/notes text in print. Fix pushed (PR #7). Not yet confirmed by user. |
