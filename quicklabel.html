@@ -43,8 +43,16 @@ header {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-.logo { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+.logo {
+  font-size: 15px; font-weight: 600; letter-spacing: -0.3px;
+  display: flex; align-items: baseline; gap: 10px;
+}
 .logo em { color: var(--green); font-style: normal; }
+.workflow-tag {
+  font-size: 10px; font-weight: 500; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .8px;
+  padding: 2px 7px; border: 1px solid var(--border); border-radius: 10px;
+}
 .header-right { display: flex; align-items: center; gap: 10px; }
 
 /* ── BUTTONS ── */
@@ -225,36 +233,38 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
   white-space: nowrap; overflow: hidden;
   flex-shrink: 0;
 }
+.label-species-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 2cqw; flex-shrink: 0; margin-top: 0.3cqw;
+}
 .label-species {
   font-size: 5.2cqw; font-style: italic; color: #333;
-  flex-shrink: 0; margin-top: 0.3cqw;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1; min-width: 0;
 }
-.label-rule { height: 0.25cqw; background: #ccc; margin: 1.2cqw 0; flex-shrink: 0; }
+.label-rule { height: 0.25cqw; background: #ccc; margin: 0.9cqw 0; flex-shrink: 0; }
 .label-mid {
   flex: 1; display: flex; flex-direction: column;
-  justify-content: center; gap: 0.9cqw; min-height: 0;
+  justify-content: center; gap: 0.4cqw; min-height: 0;
 }
 .label-line {
-  font-size: 4cqw; color: #222; display: flex;
+  font-size: 3.8cqw; color: #222; display: flex;
   align-items: baseline; gap: 0; flex-wrap: nowrap;
   white-space: nowrap; overflow: hidden;
 }
+.label-line.label-line-lot {
+  font-size: 4.6cqw; font-weight: 600; color: #000;
+}
 .label-line .mono { font-family: 'SF Mono', Monaco, 'Menlo', monospace; }
 .label-line .sep  { color: #aaa; padding: 0 1.2cqw; }
-.label-line .dim  { color: #777; font-size: 3.4cqw; padding-right: 0.5cqw; }
+.label-line .dim  { color: #777; font-size: 3.3cqw; padding-right: 0.5cqw; }
 .label-line .grain-text {
   overflow: hidden; text-overflow: ellipsis;
-  /* hard space ensures gap from chip to the right */
   padding-right: 2cqw;
 }
 .label-bottom {
-  display: flex; justify-content: space-between; align-items: center;
-  flex-shrink: 0; margin-top: 0.8cqw; gap: 1.5cqw;
-}
-.label-bottom-left {
-  display: flex; align-items: baseline; gap: 1.5cqw;
-  flex: 1; min-width: 0;
+  display: flex; justify-content: space-between; align-items: baseline;
+  flex-shrink: 0; margin-top: 0.8cqw; gap: 2cqw;
 }
 .label-date {
   font-family: 'SF Mono', Monaco, monospace;
@@ -262,7 +272,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 }
 .label-notes {
   font-size: 3.2cqw; color: #555; font-style: italic;
-  flex: 1; min-width: 0;
+  flex: 1; min-width: 0; text-align: right;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .label-chip {
@@ -374,7 +384,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 <div id="app">
 
   <header>
-    <div class="logo">Quick<em>Label</em></div>
+    <div class="logo">Quick<em>Label</em><span class="workflow-tag" id="workflow-tag">Make Grain Spawn</span></div>
     <div class="header-right">
       <button class="icon ghost" id="settings-btn" title="Settings">⚙</button>
     </div>
@@ -447,16 +457,6 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
           </div>
         </div>
         <div class="notation-preview" id="notation">—</div>
-        <div class="field">
-          <span class="fl">Media Type</span>
-          <select id="media" onchange="updatePreview()">
-            <option value="Spore">Spore</option>
-            <option value="Spore Syringe">Spore Syringe</option>
-            <option value="Agar">Agar</option>
-            <option value="Liquid Culture">Liquid Culture</option>
-            <option value="Grain Spawn" selected>Grain Spawn</option>
-          </select>
-        </div>
       </div>
 
       <!-- LOT -->
@@ -469,7 +469,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
         </div>
 
         <div class="field">
-          <span class="fl">Lot ID (next print)</span>
+          <span class="fl">Grain Lot ID (next print)</span>
           <div class="lot-display" id="lot-display">—</div>
         </div>
 
@@ -484,8 +484,8 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
         <div class="card-label">Details</div>
 
         <div class="field">
-          <span class="fl">Source</span>
-          <input type="text" id="source" placeholder="e.g. LC, Agar SL188.F1.T1" oninput="updatePreview()">
+          <span class="fl">Source <span style="color:var(--muted);font-weight:400">— optional</span></span>
+          <input type="text" id="source" placeholder="e.g. Agar SL188.F1.T2, Liquid Culture (origin)" oninput="updatePreview()">
         </div>
 
         <div class="field">
@@ -524,7 +524,10 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 
       <div id="label-preview" class="label">
         <div class="label-cultivar">—</div>
-        <div class="label-species"></div>
+        <div class="label-species-row">
+          <div class="label-species"></div>
+          <div class="label-chip actives">Active</div>
+        </div>
         <div class="label-rule"></div>
         <div class="label-mid">
           <div class="label-line"></div>
@@ -532,11 +535,8 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
           <div class="label-line"></div>
         </div>
         <div class="label-bottom">
-          <div class="label-bottom-left">
-            <div class="label-date"></div>
-            <div class="label-notes"></div>
-          </div>
-          <div class="label-chip actives">Active</div>
+          <div class="label-date"></div>
+          <div class="label-notes"></div>
         </div>
       </div>
 
@@ -652,6 +652,18 @@ const DEFAULT_GRAIN_TYPES = [
   { code: 'MILLET', desc: 'Millet' }
 ];
 
+// Workflow defines the state change being performed. A label = a workflow
+// event. Today only one workflow is wired; future workflows fix their own
+// destination state, lot type, and lot-ID format.
+const WORKFLOWS = {
+  'grain-spawn': {
+    label:       'Make Grain Spawn',
+    destination: 'Grain Spawn',
+    lotType:     'Grain Lot'
+  }
+};
+const CURRENT_WORKFLOW = WORKFLOWS['grain-spawn'];
+
 // ─── STATE ────────────────────────────────────────────────────────────────────
 
 let cat = 'actives';
@@ -759,7 +771,6 @@ function saveFormState() {
     clone:        $('clone').value,
     iso:          $('iso').value,
     transfer:     $('transfer').value,
-    media:        $('media').value,
     genCode:      $('gen-code').value,
     quantity:     $('quantity').value,
     source:       $('source').value,
@@ -783,13 +794,13 @@ function restoreFormState() {
     if (s.clone)                $('clone').value    = s.clone;
     if (s.iso)                  $('iso').value      = s.iso;
     if (s.transfer)             $('transfer').value = s.transfer;
-    if (s.media)                $('media').value    = s.media;
     if (s.genCode)              $('gen-code').value = s.genCode;
     if (s.quantity)             $('quantity').value = s.quantity;
     if (s.source)               $('source').value   = s.source;
     if (s.subCode)              $('sub-code').value = s.subCode;
     $('grain-show-desc').checked = !!s.subShowDesc;
     if (s.notes)                $('notes').value    = s.notes;
+    // s.media is legacy — destination is now workflow-derived; ignore it.
     onLineage();
     rebuildLot();
     return true;
@@ -1120,7 +1131,7 @@ function buildLabelData(seqOverride) {
   const genus       = $('genus').value;
   const species     = $('species').value;
   const cultivar    = $('cultivar').value.trim();
-  const media       = $('media').value;
+  const destination = CURRENT_WORKFLOW.destination;
   const source      = $('source').value.trim();
   const subCode     = $('sub-code').value.trim();
   const subShowDesc = $('grain-show-desc').checked;
@@ -1139,42 +1150,48 @@ function buildLabelData(seqOverride) {
     lotId = `${code}-${toYYMMDD(date)}-${pad2(seq)}`;
   }
 
-  return { cat, genus, species, cultivar, media, date, source, sub, notes, notation, lotId };
+  return { cat, genus, species, cultivar, destination, date, source, sub, notes, notation, lotId };
 }
 
 function renderLabelInto(target, d) {
   const chipText = d.cat === 'actives' ? 'Active' : 'Gourmet';
   const chipCls  = d.cat === 'actives' ? 'actives' : 'gourmet';
 
-  const l1Parts = [];
-  if (d.lotId)    l1Parts.push(`<span class="mono">${d.lotId}</span>`);
-  if (d.notation) l1Parts.push(`<span class="mono">${d.notation}</span>`);
-  const l1 = l1Parts.join('<span class="sep">·</span>');
+  // L1: lot ID alone (core identity of the labeled thing).
+  const l1 = d.lotId ? `<span class="mono">${d.lotId}</span>` : '';
 
-  const l2Parts = [];
-  if (d.media)  l2Parts.push(`<span>${d.media}</span>`);
-  if (d.source) l2Parts.push(`<span class="dim">Src:</span><span class="mono">${d.source}</span>`);
-  const l2 = l2Parts.join('<span class="sep">|</span>');
+  // L2: lineage notation alone.
+  const l2 = d.notation ? `<span class="mono">${d.notation}</span>` : '';
 
-  const l3 = d.sub
+  // L3: destination | source. Destination is workflow-derived. Source is
+  // optional; when empty, only the destination shows.
+  const l3Parts = [`<span>${d.destination}</span>`];
+  if (d.source) {
+    l3Parts.push(`<span class="dim">Src:</span><span class="mono">${d.source}</span>`);
+  }
+  const l3 = l3Parts.join('<span class="sep">|</span>');
+
+  // L4: grain type (with optional description).
+  const l4 = d.sub
     ? `<span class="dim">Grain:</span><span class="grain-text">${d.sub}</span>`
     : '';
 
   target.innerHTML = `
     <div class="label-cultivar">${d.cultivar || '—'}</div>
-    <div class="label-species">${[d.genus, d.species].filter(Boolean).join(' ')}</div>
+    <div class="label-species-row">
+      <div class="label-species">${[d.genus, d.species].filter(Boolean).join(' ')}</div>
+      <div class="label-chip ${chipCls}">${chipText}</div>
+    </div>
     <div class="label-rule"></div>
     <div class="label-mid">
-      <div class="label-line">${l1}</div>
+      <div class="label-line label-line-lot">${l1}</div>
       <div class="label-line">${l2}</div>
       <div class="label-line">${l3}</div>
+      <div class="label-line">${l4}</div>
     </div>
     <div class="label-bottom">
-      <div class="label-bottom-left">
-        <div class="label-date">${fmtDate(d.date)}</div>
-        <div class="label-notes">${d.notes || ''}</div>
-      </div>
-      <div class="label-chip ${chipCls}">${chipText}</div>
+      <div class="label-date">${fmtDate(d.date)}</div>
+      <div class="label-notes">${d.notes || ''}</div>
     </div>
   `;
 
