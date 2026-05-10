@@ -1246,30 +1246,34 @@ function renderLabelInto(target, d) {
 }
 
 function fitCultivar(labelEl) {
-  const el = labelEl.querySelector('.label-cultivar');
-  if (!el) return;
+  const cultivar = labelEl.querySelector('.label-cultivar');
+  if (!cultivar) return;
+  // Use the sibling rule's rendered width as the constraint. The rule has
+  // no content, so its offsetWidth is reliably the label's content width
+  // (it stretches across the flex column's cross-axis). Avoids two failure
+  // modes: cultivar.clientWidth equaling scrollWidth when flex min-width
+  // doesn't constrain it, and getComputedStyle padding parsing being
+  // inconsistent for cqw-resolved values across browsers.
+  const rule = labelEl.querySelector('.label-rule');
+  if (!rule) return;
+
   const max = 13;     // cqw — default size
-  const min = 5;      // cqw — minimum legible size
+  const min = 5.5;    // cqw — minimum legible size
 
-  // Measure against the LABEL's content width (clientWidth minus left/right
-  // padding), not the cultivar's own clientWidth. In a flex column, a child
-  // with min-width: auto can size to its intrinsic content width and
-  // overflow the parent — in that case its clientWidth equals scrollWidth
-  // and the naive overflow check never trips. Using the parent's content
-  // width as the constraint is correct regardless of flex sizing.
-  const cs = getComputedStyle(labelEl);
-  const padL = parseFloat(cs.paddingLeft)  || 0;
-  const padR = parseFloat(cs.paddingRight) || 0;
-  const avail = labelEl.clientWidth - padL - padR;
+  // Quick path: try max first.
+  cultivar.style.fontSize = max + 'cqw';
+  if (cultivar.scrollWidth <= rule.offsetWidth) return;
 
-  let size = max;
-  el.style.fontSize = size + 'cqw';
-  let guard = 0;
-  while (el.scrollWidth > avail && size > min && guard < 30) {
-    size -= 0.25;
-    el.style.fontSize = size + 'cqw';
-    guard++;
+  // Binary-search the largest size in [min, max] that fits. ~10 iterations
+  // converges to ~0.007cqw precision — well below visual perception.
+  let lo = min, hi = max;
+  for (let i = 0; i < 10; i++) {
+    const mid = (lo + hi) / 2;
+    cultivar.style.fontSize = mid + 'cqw';
+    if (cultivar.scrollWidth <= rule.offsetWidth) lo = mid;
+    else hi = mid;
   }
+  cultivar.style.fontSize = lo + 'cqw';
 }
 
 function updatePreview() {
@@ -1292,8 +1296,11 @@ function printLabel() {
   for (let i = 0; i < qty; i++) {
     const labelEl = document.createElement('div');
     labelEl.className = 'label';
-    renderLabelInto(labelEl, buildLabelData(start + i));
+    // Attach BEFORE rendering so fitCultivar can measure. A detached
+    // element reports clientWidth/scrollWidth as 0 and cqw can't resolve,
+    // which silently disables the auto-shrink for printed labels.
     printArea.appendChild(labelEl);
+    renderLabelInto(labelEl, buildLabelData(start + i));
   }
 
   window.print();
