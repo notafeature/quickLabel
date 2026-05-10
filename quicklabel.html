@@ -298,6 +298,33 @@ select option { background: var(--surface2); }
 .add-row input { font-size: 12px; padding: 5px 8px; }
 .add-row .code { width: 72px; font-family: monospace; flex-shrink: 0; }
 .add-row .desc { flex: 1; }
+
+/* ── PRINT AREA (hidden on screen, label-sized on print) ── */
+#print-area {
+  display: none;
+  width: 2.25in; height: 1.25in;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 0.05in 0.08in 0.04in;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff; color: #000;
+}
+.pa-top { display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
+.pa-cultivar { font-size: 14pt; font-weight: 700; line-height: 1.05; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pa-chip { font-size: 5pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 1pt 3pt; border-radius: 2pt; flex-shrink: 0; margin-left: 4pt; margin-top: 3pt; }
+.pa-species { font-size: 7.5pt; font-style: italic; color: #333; flex-shrink: 0; margin-top: 1pt; white-space: nowrap; }
+.pa-rule { height: .5pt; background: #bbb; margin: 2.5pt 0; flex-shrink: 0; }
+.pa-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2pt; }
+.pa-line { font-size: 5.5pt; color: #111; white-space: nowrap; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+.pa-bottom { display: flex; justify-content: space-between; align-items: flex-end; flex-shrink: 0; margin-top: 2pt; }
+.pa-date { font-size: 5pt; color: #666; font-family: 'Courier New', monospace; }
+.pa-notes { font-size: 5pt; color: #666; font-style: italic; max-width: 55%; text-align: right; }
+
+@media print {
+  @page { size: 2.25in 1.25in; margin: 0; }
+  #app, #settings-overlay, #settings-panel { display: none !important; }
+  #print-area { display: flex !important; position: fixed; top: 0; left: 0; }
+}
 </style>
 </head>
 <body>
@@ -477,10 +504,7 @@ select option { background: var(--surface2); }
       </div>
 
       <div class="printer-row">
-        <span>Printer:</span>
-        <select id="printer-sel" onchange="savePrinter()">
-          <option value="">— searching —</option>
-        </select>
+        <span style="color:var(--muted);font-size:11px">Select <strong style="color:var(--text)">DYMO LabelWriter 450</strong> + paper size <strong style="color:var(--text)">30334</strong> in the print dialog</span>
       </div>
     </div>
 
@@ -488,6 +512,7 @@ select option { background: var(--surface2); }
 </div><!-- /app -->
 
 <!-- ── SETTINGS ── -->
+<div id="print-area"></div>
 <div id="settings-overlay" onclick="closeSettings()"></div>
 <div id="settings-panel">
   <div class="s-header">
@@ -862,156 +887,54 @@ function updatePreview() {
   $('lp-notes').textContent = notes;
 }
 
-// ─── DYMO XML ─────────────────────────────────────────────────────────────────
+// ─── PRINT (browser → macOS print dialog → DYMO driver) ─────────────────────
 
-function buildXml() {
-  const genus    = $('genus').value;
-  const species  = $('species').value;
-  const cultivar = $('cultivar').value.trim() || '—';
-  const media    = $('media').value;
-  const date     = $('date').value;
-  const source   = $('source').value.trim();
-  const sub      = $('sub-code').value.trim();
-  const notes    = $('notes').value.trim();
-  const notation = buildNotation();
-  const lotId    = $('lot-display').textContent;
-  const catLabel = cat === 'actives' ? 'ACTIVE' : 'GOURMET';
+function printLabel() {
+  const cultivar    = $('cultivar').value.trim() || '—';
+  const genus       = $('genus').value;
+  const species     = $('species').value;
   const speciesLine = [genus, species].filter(Boolean).join(' ');
+  const notation    = buildNotation();
+  const lotId       = $('lot-display').textContent;
+  const media       = $('media').value;
+  const source      = $('source').value.trim();
+  const sub         = $('sub-code').value.trim();
+  const date        = $('date').value;
+  const notes       = $('notes').value.trim();
+  const catLabel    = cat === 'actives' ? 'ACTIVE' : 'GOURMET';
+  const catBg       = cat === 'actives' ? '#dcfce7' : '#cffafe';
+  const catColor    = cat === 'actives' ? '#14532d' : '#164e63';
 
-  const lotLine = [lotId !== '—' ? lotId : '', notation].filter(Boolean).join('   ');
-  const mediaLine = [media, source ? `Src: ${source}` : ''].filter(Boolean).join('   ');
-  const subLine = [sub ? `Sub: ${sub}` : '', fmtDate(date)].filter(Boolean).join('   ');
+  const lotLine   = [lotId !== '—' ? lotId : '', notation].filter(Boolean).join('   ');
+  const mediaLine = [media, source ? 'Src: ' + source : ''].filter(Boolean).join('   ');
+  const subLine   = [sub ? 'Sub: ' + sub : '', fmtDate(date)].filter(Boolean).join('   ');
 
-  const obj = (name, x, y, w, h, text, bold, italic, size, align) => `
-  <ObjectInfo>
-    <TextObject>
-      <Name>${name}</Name>
-      <ForeColor Alpha="255" Red="0" Green="0" Blue="0"/>
-      <BackColor Alpha="0" Red="255" Green="255" Blue="255"/>
-      <LinkedObjectName></LinkedObjectName>
-      <Rotation>Rotation0</Rotation>
-      <IsMirrored>False</IsMirrored>
-      <IsVariable>False</IsVariable>
-      <HorizontalAlignment>${align}</HorizontalAlignment>
-      <VerticalAlignment>Middle</VerticalAlignment>
-      <TextFitMode>ShrinkToFit</TextFitMode>
-      <UseFullFontHeight>True</UseFullFontHeight>
-      <Verticalized>False</Verticalized>
-      <StyledText>
-        <Element>
-          <String>${xml(text)}</String>
-          <Attributes>
-            <Font Family="Arial" Size="${size}" Bold="${bold}" Italic="${italic}" Underline="False" StrikeOut="False"/>
-            <ForeColor Alpha="255" Red="0" Green="0" Blue="0"/>
-          </Attributes>
-        </Element>
-      </StyledText>
-    </TextObject>
-    <ObjectLayout>
-      <DashOffset>0</DashOffset><DashPattern><DashPattern/></DashPattern>
-      <HorizontalAlignment>Left</HorizontalAlignment>
-      <VerticalAlignment>Top</VerticalAlignment>
-      <X>${x}</X><Y>${y}</Y><Width>${w}</Width><Height>${h}</Height>
-    </ObjectLayout>
-  </ObjectInfo>`;
+  $('print-area').innerHTML = `
+    <div class="pa-top">
+      <div class="pa-cultivar">${cultivar}</div>
+      <div class="pa-chip" style="background:${catBg};color:${catColor}">${catLabel}</div>
+    </div>
+    <div class="pa-species">${speciesLine}</div>
+    <div class="pa-rule"></div>
+    <div class="pa-mid">
+      ${lotLine   ? `<div class="pa-line">${lotLine}</div>`   : ''}
+      ${mediaLine ? `<div class="pa-line">${mediaLine}</div>` : ''}
+      ${subLine   ? `<div class="pa-line">${subLine}</div>`   : ''}
+    </div>
+    <div class="pa-bottom">
+      <span class="pa-date">${fmtDate(date)}</span>
+      ${notes ? `<span class="pa-notes">${notes}</span>` : ''}
+    </div>`;
 
-  // layout: 3240 × 1800 twips (2.25" × 1.25")
-  // usable: X=60, Y=60, W=3120, H=1680
-  return `<?xml version="1.0" encoding="utf-8"?>
-<DieCutLabel Version="8.0" Units="twips">
-  <PaperOrientation>Landscape</PaperOrientation>
-  <Id>Address</Id>
-  <PaperName>30334 2-1/4 in x 1-1/4 in</PaperName>
-  <DrawCommands>
-    <RoundRectangle X="0" Y="0" Width="3240" Height="1800" Rx="270" Ry="270"/>
-  </DrawCommands>
-  ${obj('Cultivar',  60,   60, 2200, 390, cultivar,    'True',  'False', '16', 'Left')}
-  ${obj('Category', 2320,  60,  860, 390, catLabel,    'True',  'False',  '8', 'Right')}
-  ${obj('Species',   60,  470, 3120, 260, speciesLine, 'False', 'True',  '10', 'Left')}
-  ${obj('LotLine',   60,  750, 3120, 250, lotLine,     'False', 'False',  '8', 'Left')}
-  ${obj('MediaLine', 60, 1020, 3120, 250, mediaLine,   'False', 'False',  '8', 'Left')}
-  ${obj('SubDate',   60, 1290, 3120, 250, subLine,     'False', 'False',  '8', 'Left')}
-  ${notes ? obj('Notes', 60, 1550, 3120, 180, notes, 'False', 'True', '7', 'Left') : ''}
-</DieCutLabel>`;
-}
-
-// ─── DYMO API ─────────────────────────────────────────────────────────────────
-
-const BASE = 'https://localhost:41951';
-
-async function dymoGet(path) {
-  const r = await fetch(`${BASE}${path}`, { mode:'cors' });
-  if (!r.ok) throw new Error(r.status);
-  return r.text();
-}
-
-async function checkStatus() {
-  try {
-    const t = await dymoGet('/DYMO/DLS/Printing/StatusConnected');
-    if (t.includes('true')) {
-      setDot('ok', 'Connected');
-      $('cert-notice').classList.remove('show');
-      loadPrinters();
-    } else {
-      setDot('err', 'No printer');
-    }
-  } catch(_) {
-    setDot('err', 'Not connected');
-    $('cert-notice').classList.add('show');
-  }
-}
-
-async function loadPrinters() {
-  try {
-    const txt = await dymoGet('/DYMO/DLS/Printing/GetPrinters');
-    const names = [...txt.matchAll(/<LabelWriterPrinter>[\s\S]*?<Name>([^<]+)<\/Name>/g)]
-      .map(m => m[1]);
-    const saved = localStorage.getItem('ql_printer');
-    const sel = $('printer-sel');
-    if (names.length) {
-      sel.innerHTML = names
-        .map(n => `<option value="${n}"${n === saved ? ' selected' : ''}>${n}</option>`)
-        .join('');
-    } else {
-      sel.innerHTML = '<option value="">No printers found</option>';
-    }
-  } catch(_) {}
-}
-
-async function printLabel() {
-  const printer = $('printer-sel').value;
-  if (!printer) { alert('No printer selected.'); return; }
-
-  // Advance lot counter on print
+  // Advance lot counter
   const code = $('gen-code').value.trim().toUpperCase();
-  const date = $('date').value;
   if (code && date) {
     const key = `${code}_${toYYMMDD(date)}`;
     lotCounters[key] = parseInt($('lot-seq').value || '1', 10);
     persistLots();
   }
 
-  const labelXml = buildXml();
-  const printParams = `<LabelWriterPrintParams><Copies>1</Copies><JobTitle>QuickLabel</JobTitle><PrintQuality>Auto</PrintQuality></LabelWriterPrintParams>`;
-
-  try {
-    const body = new URLSearchParams({
-      printerName:   printer,
-      labelXml:      labelXml,
-      labelSetXml:   '',
-      printParamsXml: printParams
-    });
-    const r = await fetch(`${BASE}/DYMO/DLS/Printing/PrintLabel`, {
-      method:'POST', body, mode:'cors'
-    });
-    if (!r.ok) throw new Error(await r.text());
-
-    const btn = $('print-btn');
-    btn.textContent = '✓ Sent to printer';
-    setTimeout(() => btn.textContent = 'Print Label', 2200);
-  } catch(e) {
-    alert(`Print failed:\n\n${e.message}\n\nCheck that DYMO Connect is running and the printer is connected.`);
-  }
+  window.print();
 }
 
 function setDot(state, text) {
@@ -1030,7 +953,7 @@ function init() {
 
   setCategory('actives');
   updatePreview();
-  checkStatus();
+  setDot('ok', 'Ready');
 }
 
 init();
