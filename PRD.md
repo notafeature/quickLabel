@@ -325,10 +325,10 @@ cultivars — not a manual text key. Stored key format is `Genus_species`
 | Dark theme UI | Implemented | Two-column layout, form left, preview right |
 | Browser print | Implemented | `window.print()`, `@page { size: 2.25in 1.25in; margin: 0 }` |
 | Print targets preview div | Implemented | `visibility:hidden` on all other elements at print time |
-| Print text forced black | Implemented (2026-05-10) | `color: #000 !important` on all label elements in print CSS — **not yet user-verified** |
-| Form state persistence | Implemented (2026-05-10) | All fields saved to `ql_form` on every change, restored on load — **not yet user-verified** |
+| Print text forced black | Implemented (2026-05-10) | `color: #000 !important` on all label elements in print CSS |
+| Form state persistence | Implemented (2026-05-10) | All fields saved to `ql_form` on every change, restored on load. Re-fixed on `claude/review-prd-fixes-HeNtO` — see "Re-diagnosed" section below. |
 | Cultivar datalist shows all cultivars | Implemented (2026-05-10) | Previously only showed cultivars for current genus/species |
-| Cultivar auto-populate | Implemented (2026-05-10) | Selecting a saved cultivar fills category, genus, species — **not yet user-verified; screenshot shows may still be broken** |
+| Cultivar auto-populate | Implemented (2026-05-10) | Selecting a saved cultivar fills category, genus, species. Was depending on form-state restore working — see "Re-diagnosed" section. |
 | Cultivar settings dropdowns | Implemented (2026-05-10) | Replaced manual text key with category/genus/species pickers |
 
 ### Requested — not yet implemented
@@ -338,10 +338,32 @@ cultivars — not a manual text key. Stored key format is `Genus_species`
 | Direct print to Dymo (no dialog) | Dymo Connect API attempted, failed with XML schema error, deferred |
 | Print quality confirmed correct | Physical label output not verified by user |
 
-### Known broken / unverified as of last session
+### Re-diagnosed and re-fixed (branch `claude/review-prd-fixes-HeNtO`)
 
-| Item | Detail |
-|------|--------|
-| Cultivar auto-populate | Screenshot 2026-05-10 shows "Chitwan" typed, datalist suggestion visible, but genus/species still empty. Fix pushed (PR #7, merged) but not confirmed working by user. |
-| Form state on reload | Fix pushed (PR #7). Root cause: `restoreFormState()` returned `undefined`, so `setCategory('actives')` always ran after restore and wiped genus/species. Fixed by returning `true` on success. Not yet confirmed by user. |
-| Print text color | Gray date/notes text in print. Fix pushed (PR #7). Not yet confirmed by user. |
+The previous session's diagnosis of the form-persistence bug was wrong. The
+actual root cause:
+
+`init()` ran `applySettings()` → `applyLineageDisplay()` → `updatePreview()` →
+`saveFormState()` **before** `restoreFormState()` was called. So every page
+load, the saved form state in `localStorage.ql_form` was overwritten with the
+empty default DOM values *before* the restore step had a chance to read it.
+Returning `true` from `restoreFormState` (the previous fix) didn't help —
+there was nothing left to restore.
+
+This also explained why "cultivar auto-populate" appeared broken: the
+auto-populate code path was correct, but on reload the saved cultivar text
+was wiped along with the rest of the form, so testing never persisted across
+reloads.
+
+Fix: added an `initializing` flag, checked at the top of `saveFormState()`,
+cleared at the end of `init()` after `restoreFormState()` runs.
+
+Also removed dead code from the abandoned DYMO Connect REST API attempt:
+- `xml()` helper (XML escaping for the dropped Dymo label XML)
+- `savePrinter()` (referenced a `#printer-sel` element that doesn't exist)
+- `#cert-notice` div + `.cert-notice` CSS (DYMO cert prompt — never shown)
+- "Connecting…" status pill text (replaced with "Ready" on init)
+
+Print CSS now also forces `html, body { overflow: visible; height: auto }`
+in the `@media print` block so the body's `overflow: hidden; height: 100vh`
+can't clip the printed label.
