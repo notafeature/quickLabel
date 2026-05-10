@@ -46,16 +46,6 @@ header {
 .logo { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
 .logo em { color: var(--green); font-style: normal; }
 .header-right { display: flex; align-items: center; gap: 10px; }
-.status-pill {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 11px; color: var(--muted);
-}
-.dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--muted); transition: background 0.3s;
-}
-.dot.ok { background: var(--green); }
-.dot.err { background: var(--red); }
 
 /* ── BUTTONS ── */
 button {
@@ -80,11 +70,15 @@ main { display: flex; flex: 1; overflow: hidden; }
 
 /* ── FORM PANEL ── */
 #form-panel {
-  width: 344px; flex-shrink: 0;
-  overflow-y: auto;
+  width: 344px;
+  min-width: 280px;
+  max-width: 720px;
+  flex-shrink: 0;
+  overflow: auto;
   padding: 14px 14px 20px;
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column; gap: 10px;
+  resize: horizontal;
 }
 #form-panel::-webkit-scrollbar { width: 3px; }
 #form-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -317,10 +311,6 @@ select option { background: var(--surface2); }
   <header>
     <div class="logo">Quick<em>Label</em></div>
     <div class="header-right">
-      <div class="status-pill">
-        <div class="dot ok" id="dot"></div>
-        <span id="status-txt">Ready</span>
-      </div>
       <button class="icon ghost" id="settings-btn" title="Settings">⚙</button>
     </div>
   </header>
@@ -396,7 +386,6 @@ select option { background: var(--surface2); }
             <span class="fl">Media Type</span>
             <select id="media" onchange="updatePreview()">
               <option value="Grain Spawn">Grain Spawn</option>
-              <option value="Bulk">Bulk</option>
             </select>
           </div>
           <div class="field w90">
@@ -439,8 +428,8 @@ select option { background: var(--surface2); }
           </div>
 
           <div class="field">
-            <span class="fl">Substrate Code</span>
-            <input type="text" id="sub-code" placeholder="e.g. CVG+" oninput="updatePreview()" list="sub-dl">
+            <span class="fl">Grain Type</span>
+            <input type="text" id="sub-code" placeholder="e.g. Rye, Oats" oninput="updatePreview()" list="sub-dl">
             <datalist id="sub-dl"></datalist>
           </div>
 
@@ -647,7 +636,6 @@ function saveFormState() {
     iso:      $('iso').value,
     transfer: $('transfer').value,
     media:    $('media').value,
-    date:     $('date').value,
     genCode:  $('gen-code').value,
     lotSeq:   $('lot-seq').value,
     source:   $('source').value,
@@ -671,7 +659,6 @@ function restoreFormState() {
     if (s.iso)      $('iso').value      = s.iso;
     if (s.transfer) $('transfer').value = s.transfer;
     if (s.media)    $('media').value    = s.media;
-    if (s.date)     $('date').value     = s.date;
     if (s.genCode)  $('gen-code').value = s.genCode;
     if (s.lotSeq)   $('lot-seq').value  = s.lotSeq;
     if (s.source)   $('source').value   = s.source;
@@ -998,11 +985,6 @@ function printLabel() {
   window.print();
 }
 
-function setDot(state, text) {
-  $('dot').className = `dot ${state}`;
-  $('status-txt').textContent = text;
-}
-
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
 function init() {
@@ -1016,7 +998,6 @@ function init() {
 
   initializing = false;
   updatePreview();
-  setDot('ok', 'Ready');
 }
 
 init();
