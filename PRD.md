@@ -42,9 +42,18 @@ Each state has its own lot-ID format. Today, only one state is in scope:
 
 ### Today's scope
 
-This release labels grain spawn lots only. All other states are parked.
-When new states are added, each gets its own lot-ID format and its own label
-content; the model above does not change.
+This release labels things in any of the following states:
+
+- **Spore** (deposit)
+- **Spore Syringe**
+- **Agar** (plate)
+- **Liquid Culture**
+- **Grain Spawn**
+
+All in-scope states share a single lot-ID format today (see §6). State-
+specific lot-ID formats — and the structured tracking that comes with them
+— are future work. Batch (spawn-to-bulk), Harvest, and Homogenized remain
+parked.
 
 ---
 
@@ -137,8 +146,8 @@ Combined notation uses `.` as a separator. Examples:
 | `C1.T3`         | Filial not tracked |
 | `T5`            | Transfer only |
 
-Filial visibility is a per-lab display setting. Some labs only track clone
-and transfer.
+All four lineage components are always available on the form. Empty
+components are simply omitted from the rendered notation.
 
 ---
 
@@ -147,12 +156,21 @@ and transfer.
 Each state has its own lot-ID format. The label states the state explicitly
 so the ID is never ambiguous.
 
-| State            | Lot type        | In scope today? |
-|------------------|-----------------|-----------------|
-| Grain spawn      | **Grain Lot**   | Yes |
-| Spawn-to-bulk    | Batch           | No |
-| Post-harvest     | Harvest Lot     | No |
-| Processing       | Homogenized Lot | No |
+| State            | Lot type           | In scope today? |
+|------------------|--------------------|-----------------|
+| Spore            | Spore Deposit      | Yes (shared format) |
+| Spore Syringe    | Spore Syringe Lot  | Yes (shared format) |
+| Agar             | Agar Plate Lot     | Yes (shared format) |
+| Liquid Culture   | LC Lot             | Yes (shared format) |
+| Grain spawn      | **Grain Lot**      | Yes (shared format) |
+| Spawn-to-bulk    | Batch              | No |
+| Post-harvest     | Harvest Lot        | No |
+| Processing       | Homogenized Lot    | No |
+
+In this release, every in-scope state uses the **shared lot-ID format**
+described under "Grain Lot ID" below. State-specific formats (e.g. distinct
+sequence rules, parentage encoding) are future work — when they land, the
+lot-ID format on a label will depend on the state, not on the form.
 
 ### Grain Lot ID
 
@@ -205,16 +223,19 @@ A print run produces N labels for one configuration of (code, date, lineage,
 
 Every grain-lot label carries:
 
-- **Cultivar** — large, dominant.
-- **Category chip** — Actives / Gourmet — small, top-right.
-- **Genus species** — italic, secondary.
-- **Lot ID** — the grain lot ID for this label.
+- **Cultivar** — full-width across the top of the label, dominant.
+  Auto-shrinks if the name is too long to fit, down to a legible
+  minimum. No truncation.
+- **Genus species** — italic, secondary, immediately below the cultivar.
+- **Lot ID** — the lot ID for this label, in the format described in §6.
 - **Lineage** — combined notation (e.g. `F1.C1_A.T3`).
-- **State** — `Grain` / `Grain Spawn`.
+- **State** — `Grain Spawn`, `Agar`, `Liquid Culture`, etc.
 - **Source** — originating state, free text.
-- **Grain type** — the grain preparation used (rye, oats, millet, custom).
-- **Date** — initiation date.
-- **Notes** — optional one-line free text.
+- **Grain type** — the grain preparation used (e.g. `RYE`); optionally
+  with description (`RYE — Rye berries`) per a form-level toggle.
+- **Date** — initiation date, bottom-left.
+- **Notes** — optional one-line free text, bottom area.
+- **Category chip** — Actives / Gourmet, bottom-right corner.
 
 Field omissions are silent — empty fields render nothing, no placeholders.
 
@@ -228,15 +249,14 @@ Indicative zoning:
 
 ```
 ┌────────────────────────────────────────┐
-│  ENIGMA                      [ACTIVE]  │  Cultivar dominant; category chip
+│  ENIGMA                                │  Cultivar full-width, auto-shrink
 │  Psilocybe cubensis                    │  Genus species italic
-├────────────────────────────────────────┤
+│  ─────                                 │  Rule
 │  SL192-260510-03   F1.C1_A.T3          │  Lot ID · lineage
-│  Grain             Src: Agar SL188.F1  │  State · originating state
-├────────────────────────────────────────┤
-│  Grain: Rye                 05.10.26   │  Grain type · date
+│  Grain Spawn       Src: Agar SL188.F1  │  State · originating state
+│  Grain: RYE — Rye berries              │  Grain type (with desc, if on)
+│  05.10.26   notes (if any)    [ACTIVE] │  Date · notes · category chip
 └────────────────────────────────────────┘
-  [Notes — smallest, only if present]
 ```
 
 Typography is calibrated to render identically on screen preview and on
@@ -251,10 +271,12 @@ for labeling.
 
 - **Lab prefix** — the genetic-code prefix (e.g. `SL`).
 - **Genetic code registry** — list of `{code, genus, species, cultivar}`
-  records. The form's primary lookup.
-- **Grain type registry** — list of grain preparations (e.g. `RYE`,
-  `OATS`, `RYE+`). User-defined.
-- **Lineage display rules** — show/hide Filial.
+  records. The form's primary lookup. Records can be added, edited, and
+  removed inline.
+- **Grain type registry** — list of `{code, description}` grain
+  preparations (e.g. `RYE — Rye berries`). Editable inline. The label
+  shows just the code by default; a per-label toggle on the form opts
+  in to including the description.
 - **(Parked)** Substrate code registry — for when Batch state returns.
 
 ---
@@ -278,8 +300,13 @@ for labeling.
 - **Genetic code** is the first field. Picking or typing a saved code
   populates genus, species, and cultivar. The auto-populated fields
   remain editable for one-off labels.
-- The form pane is user-resizable horizontally. The user adjusts width
-  to fit their screen and content density.
+- The form pane is user-resizable horizontally via a draggable splitter
+  bar between the form and the preview.
+- The form sections, in order, are: **Genetic** (genetic code, category,
+  genus, species, cultivar), **Lineage** (filial / clone / isolation /
+  transfer, plus media type), **Lot** (date, lot ID display, quantity),
+  **Details** (source, grain type with optional description, notes), and
+  **Print** (print and reset actions).
 - All fields are optional. Nothing is mandatory; nothing is validated.
   An empty field renders nothing on the label.
 - Form state persists across sessions, except **date**, which always
