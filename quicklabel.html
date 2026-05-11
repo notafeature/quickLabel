@@ -762,29 +762,30 @@ const LABEL_TEMPLATES = {
     viewBox: { w: 900, h: 500 },
     layout: {
       // padding (viewBox units; each ≈ 0.0025in at print)
-      padL: 24, padR: 24, padTop: 22, padBot: 32,
+      padL: 36, padR: 36, padTop: 26, padBot: 45,
 
       // type scale
-      cultivarFS: 124,
-      speciesFS:  46,
-      lotFS:      58,
-      lineFS:     36,
-      dimFS:      32,
-      dateFS:     32,
-      notesFS:    30,
+      cultivarFS:      100,
+      cultivarKerning: -2,     // negative = tighter; +1 = open
+      speciesFS:        40,
+      lotFS:            50,
+      lineFS:           34,
+      dimFS:            34,
+      dateFS:           30,
+      notesFS:          30,
 
       // chip
-      chipH: 42, chipPadX: 15, chipFS: 26,
+      chipH: 42, chipPadX: 18, chipFS: 30,
 
       // spacing (baseline-to-baseline unless noted)
-      cultivarSpeciesGap: 60,
-      speciesRuleGap:     14,
-      ruleLotGap:         38,
-      lotNotationGap:     40,
-      lineGap:            38,
+      cultivarSpeciesGap: 62,
+      speciesRuleGap:     20,
+      ruleLotGap:         64,
+      lotNotationGap:     24,
+      lineGap:            44,
 
       // rule
-      ruleStroke: 1.5,
+      ruleStroke: 2,
       ruleColor:  '#d8d8d8'
     },
 
@@ -823,17 +824,16 @@ const LABEL_TEMPLATES = {
 
       // Source line: one <text> with tspans (native inline flow).
       const sourceLine = (destLabel || d.source) ? `
-  <text x="${L.padL}" y="${srcY}" font-size="${L.lineFS}" fill="#222">
+  <text x="${L.padL}" y="${srcY}" font-size="${L.lineFS}" fill="#000">
     ${destLabel ? svgEsc(destLabel) : ''}
-    ${destLabel && d.source ? `<tspan dx="12" fill="#aaa">|</tspan>` : ''}
-    ${d.source ? `<tspan dx="12" font-size="${L.dimFS}" fill="#777">Src:</tspan>` : ''}
-    ${d.source ? `<tspan class="lbl-src" dx="8" font-family="${monoFam}" fill="#222">${svgEsc(d.source)}</tspan>` : ''}
+    ${destLabel && d.source ? `<tspan dx="12">|</tspan>` : ''}
+    ${d.source ? `<tspan dx="12" font-size="${L.dimFS}">Src:</tspan>` : ''}
+    ${d.source ? `<tspan class="lbl-src" dx="8" font-family="${monoFam}">${svgEsc(d.source)}</tspan>` : ''}
   </text>` : '';
 
-      // Grain line: "Grain:" prefix renders at the same weight/color as the
-      // value (per user feedback — dim prefix on this line felt off).
+      // Grain line: same weight/color as value (no dimmed prefix here).
       const grainLine = d.sub ? `
-  <text x="${L.padL}" y="${grainY}" font-size="${L.lineFS}" fill="#222">
+  <text x="${L.padL}" y="${grainY}" font-size="${L.lineFS}" fill="#000">
     <tspan>Grain:</tspan><tspan class="lbl-grain" dx="10">${svgEsc(d.sub)}</tspan>
   </text>` : '';
 
@@ -849,7 +849,7 @@ const LABEL_TEMPLATES = {
   <text class="lbl-cultivar"
         x="${L.padL}" y="${cultivarY}"
         font-size="${L.cultivarFS}" font-weight="700"
-        letter-spacing="-2"
+        letter-spacing="${L.cultivarKerning}"
         fill="#000">${svgEsc(cultivarText)}</text>
 
   ${speciesText ? `<text class="lbl-species"
@@ -878,19 +878,19 @@ const LABEL_TEMPLATES = {
   ${lineage ? `<text class="lbl-notation"
         x="${L.padL}" y="${notationY}"
         font-size="${L.lineFS}" font-family="${monoFam}"
-        fill="#222">${svgEsc(lineage)}</text>` : ''}
+        fill="#000">${svgEsc(lineage)}</text>` : ''}
 
   ${sourceLine}
   ${grainLine}
 
   ${d.date ? `<text x="${L.padL}" y="${bottomY}"
         font-size="${L.dateFS}" font-family="${monoFam}"
-        fill="#444">${svgEsc(fmtDate(d.date))}</text>` : ''}
+        fill="#000">${svgEsc(fmtDate(d.date))}</text>` : ''}
   ${d.notes ? `<text class="lbl-notes"
         x="${VB.w - L.padR}" y="${bottomY}"
         font-size="${L.notesFS}" font-style="italic"
         text-anchor="end"
-        fill="#555">${svgEsc(d.notes)}</text>` : ''}
+        fill="#000">${svgEsc(d.notes)}</text>` : ''}
 
 </svg>`.trim();
     },
@@ -956,6 +956,7 @@ const FIDDLE_KNOBS = [
   { group: 'Padding',    key: 'padBot',             label: 'Pad Bottom',       min: 8,   max: 60,  step: 1    },
 
   { group: 'Type Scale', key: 'cultivarFS',         label: 'Cultivar',         min: 80,  max: 180, step: 1    },
+  { group: 'Type Scale', key: 'cultivarKerning',    label: 'Cultivar kerning', min: -6,  max: 6,   step: 0.25 },
   { group: 'Type Scale', key: 'speciesFS',          label: 'Species',          min: 24,  max: 64,  step: 1    },
   { group: 'Type Scale', key: 'lotFS',              label: 'Lot ID',           min: 32,  max: 80,  step: 1    },
   { group: 'Type Scale', key: 'lineFS',             label: 'Body Line',        min: 20,  max: 52,  step: 1    },
@@ -1557,7 +1558,7 @@ function buildLabelData(seqOverride) {
   let sub = subCode;
   if (subShowDesc && subCode) {
     const desc = grainTypeDesc(subCode);
-    if (desc) sub = `${subCode.toUpperCase()} — ${desc}`;
+    if (desc) sub = `${subCode.toUpperCase()} - ${desc}`;
   }
 
   let lotId = '';
