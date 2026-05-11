@@ -308,6 +308,79 @@ input[type=number] { padding-right: 4px; }
 .add-block input { font-size: 12px; padding: 5px 8px; }
 .add-block .code-input { width: 80px; font-family: monospace; flex-shrink: 0; }
 
+/* ── FIDDLE PANEL (live layout tuning) ── */
+#fiddle-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 340px;
+  background: var(--surface); border-left: 1px solid var(--border);
+  z-index: 99; transform: translateX(100%);
+  transition: transform .22s ease;
+  display: flex; flex-direction: column;
+}
+#fiddle-panel.open { transform: translateX(0); }
+.fp-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  gap: 10px;
+}
+.fp-header h2 { font-size: 13px; font-weight: 600; }
+.fp-header .hint {
+  font-size: 9px; color: var(--muted);
+  letter-spacing: 0.5px; margin-top: 2px;
+  font-family: 'SF Mono', Menlo, monospace;
+}
+.fp-body { flex: 1; overflow-y: auto; padding: 12px 14px; }
+.fp-body::-webkit-scrollbar { width: 3px; }
+.fp-body::-webkit-scrollbar-thumb { background: var(--border); }
+.fp-group { margin-bottom: 14px; }
+.fp-group h3 {
+  font-size: 9px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.9px; color: var(--muted); margin-bottom: 7px;
+}
+.fp-row {
+  display: grid; grid-template-columns: 100px 1fr 52px;
+  align-items: center; gap: 8px; padding: 3px 0; font-size: 11px;
+}
+.fp-row label { color: var(--text); }
+.fp-row input[type=range] {
+  appearance: none; -webkit-appearance: none;
+  background: var(--surface2); height: 4px; border-radius: 2px;
+  outline: none; cursor: pointer;
+}
+.fp-row input[type=range]::-webkit-slider-thumb {
+  appearance: none; -webkit-appearance: none;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--green); cursor: pointer;
+}
+.fp-row input[type=range]::-moz-range-thumb {
+  width: 12px; height: 12px; border-radius: 50%; border: 0;
+  background: var(--green); cursor: pointer;
+}
+.fp-row input[type=number] {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 3px 5px; font-size: 11px;
+  border-radius: 3px; width: 100%;
+  font-family: 'SF Mono', Menlo, monospace;
+}
+.fp-footer {
+  display: flex; gap: 6px; padding: 10px 14px;
+  border-top: 1px solid var(--border); flex-shrink: 0; align-items: center;
+}
+.fp-footer button {
+  flex: 1; padding: 7px 10px; font-size: 11px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 4px; cursor: pointer;
+  font-family: inherit;
+}
+.fp-footer button.primary {
+  background: var(--green); color: #000;
+  border-color: var(--green); font-weight: 600;
+}
+.fp-footer .copy-status {
+  font-size: 10px; color: var(--green);
+  font-family: 'SF Mono', Menlo, monospace;
+  min-width: 40px;
+}
+
 @media print {
   @page { size: 2.25in 1.25in; margin: 0; }
   html, body {
@@ -337,6 +410,7 @@ input[type=number] { padding-right: 4px; }
   <header>
     <div class="logo">Quick<em>Label</em><span class="workflow-tag" id="workflow-tag">Make Grain Spawn</span></div>
     <div class="header-right">
+      <button class="icon ghost" id="fiddle-btn" title="Layout Lab (⌘\)" onclick="toggleFiddle()" data-testid="fiddle-toggle-btn">▦</button>
       <button class="icon ghost" id="settings-btn" title="Settings">⚙</button>
     </div>
   </header>
@@ -490,6 +564,23 @@ input[type=number] { padding-right: 4px; }
 
 <!-- Hidden multi-label print container -->
 <div id="print-area"></div>
+
+<!-- ── FIDDLE PANEL ── -->
+<div id="fiddle-panel">
+  <div class="fp-header">
+    <div>
+      <h2>Layout Lab</h2>
+      <div class="hint">live tuning · ⌘\ to toggle</div>
+    </div>
+    <button class="icon ghost" onclick="closeFiddle()" data-testid="fiddle-close-btn">✕</button>
+  </div>
+  <div class="fp-body" id="fp-body"></div>
+  <div class="fp-footer">
+    <button onclick="resetFiddle()" data-testid="fiddle-reset-btn">Reset</button>
+    <button class="primary" onclick="copyFiddle()" data-testid="fiddle-copy-btn">Copy JSON</button>
+    <span class="copy-status" id="fp-copy-status"></span>
+  </div>
+</div>
 
 <!-- ── SETTINGS ── -->
 <div id="settings-overlay" onclick="closeSettings()"></div>
@@ -661,74 +752,89 @@ function fitText(textEl, maxLen) {
 }
 
 // ── Template: grain-spawn-9x5 ────────────────────────────────────────────────
-// Layout for a 9:5 landscape label (DYMO 30334). All coordinates are in a
-// 900 × 500 viewBox. Mental model: each unit is roughly 0.0025in at print
-// scale. Adjust here, not in CSS.
+// Layout for a 9:5 landscape label (DYMO 30334). All coordinates live in a
+// 900 × 500 viewBox. Every tunable lives on `layout` (not as render-local
+// constants) so the in-browser fiddle panel can mutate them live. To revert
+// to authored defaults, click Reset in the fiddle panel — it restores from
+// LAYOUT_DEFAULTS, captured once on module load.
 const LABEL_TEMPLATES = {
   'grain-spawn-9x5': {
     viewBox: { w: 900, h: 500 },
+    layout: {
+      // padding (viewBox units; each ≈ 0.0025in at print)
+      padL: 24, padR: 24, padTop: 22, padBot: 32,
+
+      // type scale
+      cultivarFS: 124,
+      speciesFS:  46,
+      lotFS:      58,
+      lineFS:     36,
+      dimFS:      32,
+      dateFS:     32,
+      notesFS:    30,
+
+      // chip
+      chipH: 42, chipPadX: 15, chipFS: 26,
+
+      // spacing (baseline-to-baseline unless noted)
+      cultivarSpeciesGap: 60,
+      speciesRuleGap:     14,
+      ruleLotGap:         38,
+      lotNotationGap:     40,
+      lineGap:            38,
+
+      // rule
+      ruleStroke: 1.5,
+      ruleColor:  '#d8d8d8'
+    },
+
     render(d) {
       const VB = this.viewBox;
-      const padL = 24, padR = 24, padTop = 18, padBot = 18;
-      const contentW = VB.w - padL - padR;        // 852
+      const L  = this.layout;
+      const contentW = VB.w - L.padL - L.padR;
 
-      const cat = d.cat === 'actives' ? 'actives' : 'gourmet';
-      const chip = CHIP_COLORS[cat];
+      const cat      = d.cat === 'actives' ? 'actives' : 'gourmet';
+      const chip     = CHIP_COLORS[cat];
       const chipText = cat === 'actives' ? 'ACTIVE' : 'GOURMET';
 
-      // ── CULTIVAR (big bold, top) ───────────────────────────────────────────
-      const cultivarFS = 140;
-      const cultivarY  = padTop + cultivarFS * 0.82;   // baseline
+      const cultivarY = L.padTop + L.cultivarFS * 0.82;            // baseline
+      const speciesY  = cultivarY + L.cultivarSpeciesGap;
 
-      // ── SPECIES ROW (italic species left, chip right) ──────────────────────
-      const speciesFS  = 46;
-      const speciesY   = cultivarY + 54;
+      // Chip — width derived from its own text + padding (refined post-mount).
+      const chipTextW = chipText.length * L.chipFS * 0.62;
+      const chipW     = chipTextW + L.chipPadX * 2;
+      const chipX     = VB.w - L.padR - chipW;
+      const chipY     = speciesY - L.chipH * 0.78;
 
-      const chipH      = 34;
-      const chipPadX   = 13;
-      const chipFS     = 21;
-      const chipTextW  = chipText.length * chipFS * 0.62;   // approx; refined post-mount
-      const chipW      = chipTextW + chipPadX * 2;
-      const chipX      = VB.w - padR - chipW;
-      const chipY      = speciesY - chipH * 0.78;
+      const ruleY     = speciesY + L.speciesRuleGap;
 
-      // ── RULE ───────────────────────────────────────────────────────────────
-      const ruleY = speciesY + 16;
-
-      // ── MID BLOCK ──────────────────────────────────────────────────────────
-      const lotFS     = 58;
-      const lineFS    = 36;
-      const dimFS     = 32;
       const monoFam   = "'SF Mono', Menlo, Monaco, Consolas, monospace";
+      const lotY      = ruleY + L.ruleLotGap;
+      const notationY = lotY + L.lotNotationGap;
+      const srcY      = notationY + L.lineGap;
+      const grainY    = srcY + L.lineGap;
 
-      const lotY      = ruleY + 56;
-      const notationY = lotY + lineFS + 6;
-      const srcY      = notationY + lineFS + 6;
-      const grainY    = srcY + lineFS + 4;
-
-      // ── BOTTOM ROW ─────────────────────────────────────────────────────────
-      const dateFS    = 32;
-      const notesFS   = 30;
-      const bottomY   = VB.h - padBot;
+      const bottomY   = VB.h - L.padBot;
 
       const cultivarText = d.cultivar || '—';
       const speciesText  = [d.genus, d.species].filter(Boolean).join(' ');
       const lineage      = d.notation || '';
       const destLabel    = d.destination || '';
 
-      // Source line: flow as one <text> with tspans (SVG-native inline flow).
-      // The browser handles spacing; no hand-positioned x values.
+      // Source line: one <text> with tspans (native inline flow).
       const sourceLine = (destLabel || d.source) ? `
-  <text x="${padL}" y="${srcY}" font-size="${lineFS}" fill="#222">
+  <text x="${L.padL}" y="${srcY}" font-size="${L.lineFS}" fill="#222">
     ${destLabel ? svgEsc(destLabel) : ''}
     ${destLabel && d.source ? `<tspan dx="12" fill="#aaa">|</tspan>` : ''}
-    ${d.source ? `<tspan dx="12" font-size="${dimFS}" fill="#777">Src:</tspan>` : ''}
+    ${d.source ? `<tspan dx="12" font-size="${L.dimFS}" fill="#777">Src:</tspan>` : ''}
     ${d.source ? `<tspan class="lbl-src" dx="8" font-family="${monoFam}" fill="#222">${svgEsc(d.source)}</tspan>` : ''}
   </text>` : '';
 
+      // Grain line: "Grain:" prefix renders at the same weight/color as the
+      // value (per user feedback — dim prefix on this line felt off).
       const grainLine = d.sub ? `
-  <text x="${padL}" y="${grainY}" font-size="${lineFS}" fill="#222">
-    <tspan font-size="${dimFS}" fill="#777">Grain:</tspan><tspan class="lbl-grain" dx="8" fill="#222">${svgEsc(d.sub)}</tspan>
+  <text x="${L.padL}" y="${grainY}" font-size="${L.lineFS}" fill="#222">
+    <tspan>Grain:</tspan><tspan class="lbl-grain" dx="10">${svgEsc(d.sub)}</tspan>
   </text>` : '';
 
       return `
@@ -741,96 +847,79 @@ const LABEL_TEMPLATES = {
   <rect width="${VB.w}" height="${VB.h}" fill="#ffffff"/>
 
   <text class="lbl-cultivar"
-        x="${padL}" y="${cultivarY}"
-        font-size="${cultivarFS}" font-weight="700"
+        x="${L.padL}" y="${cultivarY}"
+        font-size="${L.cultivarFS}" font-weight="700"
         letter-spacing="-2"
         fill="#000">${svgEsc(cultivarText)}</text>
 
   ${speciesText ? `<text class="lbl-species"
-        x="${padL}" y="${speciesY}"
-        font-size="${speciesFS}" font-style="italic"
+        x="${L.padL}" y="${speciesY}"
+        font-size="${L.speciesFS}" font-style="italic"
         fill="#333">${svgEsc(speciesText)}</text>` : ''}
 
   <g class="lbl-chip" transform="translate(${chipX} ${chipY})">
-    <rect width="${chipW}" height="${chipH}" rx="5" ry="5" fill="${chip.fill}"/>
-    <text x="${chipW / 2}" y="${chipH * 0.72}"
-          font-size="${chipFS}" font-weight="700"
+    <rect width="${chipW}" height="${L.chipH}" rx="6" ry="6" fill="${chip.fill}"/>
+    <text x="${chipW / 2}" y="${L.chipH * 0.72}"
+          font-size="${L.chipFS}" font-weight="700"
           letter-spacing="1.3"
           text-anchor="middle"
           fill="${chip.text}">${chipText}</text>
   </g>
 
-  <line x1="${padL}" y1="${ruleY}" x2="${VB.w - padR}" y2="${ruleY}"
-        stroke="#cccccc" stroke-width="2.5"/>
+  <line x1="${L.padL}" y1="${ruleY}" x2="${VB.w - L.padR}" y2="${ruleY}"
+        stroke="${L.ruleColor}" stroke-width="${L.ruleStroke}"/>
 
   ${d.lotId ? `<text class="lbl-lot"
-        x="${padL}" y="${lotY}"
-        font-size="${lotFS}" font-weight="600"
+        x="${L.padL}" y="${lotY}"
+        font-size="${L.lotFS}" font-weight="600"
         font-family="${monoFam}"
         fill="#000">${svgEsc(d.lotId)}</text>` : ''}
 
   ${lineage ? `<text class="lbl-notation"
-        x="${padL}" y="${notationY}"
-        font-size="${lineFS}" font-family="${monoFam}"
+        x="${L.padL}" y="${notationY}"
+        font-size="${L.lineFS}" font-family="${monoFam}"
         fill="#222">${svgEsc(lineage)}</text>` : ''}
 
   ${sourceLine}
   ${grainLine}
 
-  ${d.date ? `<text x="${padL}" y="${bottomY}"
-        font-size="${dateFS}" font-family="${monoFam}"
+  ${d.date ? `<text x="${L.padL}" y="${bottomY}"
+        font-size="${L.dateFS}" font-family="${monoFam}"
         fill="#444">${svgEsc(fmtDate(d.date))}</text>` : ''}
   ${d.notes ? `<text class="lbl-notes"
-        x="${VB.w - padR}" y="${bottomY}"
-        font-size="${notesFS}" font-style="italic"
+        x="${VB.w - L.padR}" y="${bottomY}"
+        font-size="${L.notesFS}" font-style="italic"
         text-anchor="end"
         fill="#555">${svgEsc(d.notes)}</text>` : ''}
 
 </svg>`.trim();
     },
 
-    // Post-mount fit: SVG textLength only resolves once attached. Called after
-    // injection in renderLabel().
     fit(svgEl, d) {
       const VB = this.viewBox;
-      const padL = 24, padR = 24;
-      const contentW = VB.w - padL - padR;
+      const L  = this.layout;
+      const contentW = VB.w - L.padL - L.padR;
 
-      // Cultivar: full content width.
       fitText(svgEl.querySelector('.lbl-cultivar'), contentW);
 
-      // Species: clamp to the space left of the chip.
       const chipG = svgEl.querySelector('.lbl-chip');
       if (chipG) {
         const chipBBox = chipG.getBBox();
-        const species = svgEl.querySelector('.lbl-species');
-        if (species) fitText(species, chipBBox.x - padL - 14);
+        const species  = svgEl.querySelector('.lbl-species');
+        if (species) fitText(species, chipBBox.x - L.padL - 14);
       }
 
-      // Lot id + notation: full width safety clamp.
-      fitText(svgEl.querySelector('.lbl-lot'), contentW);
+      fitText(svgEl.querySelector('.lbl-lot'),      contentW);
       fitText(svgEl.querySelector('.lbl-notation'), contentW);
-
-      // Source value (a tspan inside the source line). textLength on a tspan
-      // works the same way; we cap it to whatever space remains on its line.
-      const src = svgEl.querySelector('.lbl-src');
-      if (src) {
-        // tspan inherits the parent <text>'s x; for fitting we want to limit
-        // its own rendered length. The remaining space on the source line is
-        // contentW minus everything that came before; we conservatively cap
-        // at contentW * 0.7 which leaves room for "Destination | Src: ".
-        fitText(src, contentW * 0.72);
-      }
-
-      // Grain value tspan.
-      const grain = svgEl.querySelector('.lbl-grain');
-      if (grain) fitText(grain, contentW * 0.85);
-
-      // Notes (right-anchored): clamp to ~55% of content width.
-      fitText(svgEl.querySelector('.lbl-notes'), contentW * 0.55);
+      fitText(svgEl.querySelector('.lbl-src'),      contentW * 0.72);
+      fitText(svgEl.querySelector('.lbl-grain'),    contentW * 0.78);
+      fitText(svgEl.querySelector('.lbl-notes'),    contentW * 0.55);
     }
   }
 };
+
+// Snapshot the authored defaults so the fiddle panel's Reset can restore them.
+const LAYOUT_DEFAULTS = JSON.parse(JSON.stringify(LABEL_TEMPLATES['grain-spawn-9x5'].layout));
 
 // Render label data into a host element. opts.physical='print' uses the
 // printer's true paper size; otherwise the live preview scale.
@@ -853,6 +942,107 @@ function renderLabel(host, d, opts) {
   // Post-mount fit — SVG textLength needs the element attached to resolve.
   tpl.fit(svg, d);
 }
+
+// ─── FIDDLE PANEL (live layout tuning) ────────────────────────────────────────
+// A development tool: mutates LABEL_TEMPLATES[...].layout in place and re-
+// renders the preview on every input. Not exposed to print path; pure UX
+// scaffolding around the existing layout object. The panel is built from
+// FIDDLE_KNOBS so adding a new tunable means one entry here.
+
+const FIDDLE_KNOBS = [
+  { group: 'Padding',    key: 'padL',               label: 'Pad Left',         min: 8,   max: 48,  step: 1    },
+  { group: 'Padding',    key: 'padR',               label: 'Pad Right',        min: 8,   max: 48,  step: 1    },
+  { group: 'Padding',    key: 'padTop',             label: 'Pad Top',          min: 8,   max: 48,  step: 1    },
+  { group: 'Padding',    key: 'padBot',             label: 'Pad Bottom',       min: 8,   max: 60,  step: 1    },
+
+  { group: 'Type Scale', key: 'cultivarFS',         label: 'Cultivar',         min: 80,  max: 180, step: 1    },
+  { group: 'Type Scale', key: 'speciesFS',          label: 'Species',          min: 24,  max: 64,  step: 1    },
+  { group: 'Type Scale', key: 'lotFS',              label: 'Lot ID',           min: 32,  max: 80,  step: 1    },
+  { group: 'Type Scale', key: 'lineFS',             label: 'Body Line',        min: 20,  max: 52,  step: 1    },
+  { group: 'Type Scale', key: 'dimFS',              label: 'Src: prefix',      min: 18,  max: 48,  step: 1    },
+  { group: 'Type Scale', key: 'dateFS',             label: 'Date',             min: 18,  max: 48,  step: 1    },
+  { group: 'Type Scale', key: 'notesFS',            label: 'Notes',            min: 18,  max: 48,  step: 1    },
+
+  { group: 'Spacing',    key: 'cultivarSpeciesGap', label: 'Cultivar→Species', min: 30,  max: 90,  step: 1    },
+  { group: 'Spacing',    key: 'speciesRuleGap',     label: 'Species→Rule',     min: 4,   max: 40,  step: 1    },
+  { group: 'Spacing',    key: 'ruleLotGap',         label: 'Rule→Lot',         min: 18,  max: 80,  step: 1    },
+  { group: 'Spacing',    key: 'lotNotationGap',     label: 'Lot→Notation',     min: 24,  max: 70,  step: 1    },
+  { group: 'Spacing',    key: 'lineGap',            label: 'Line spacing',     min: 28,  max: 60,  step: 1    },
+
+  { group: 'Chip',       key: 'chipH',              label: 'Height',           min: 24,  max: 60,  step: 1    },
+  { group: 'Chip',       key: 'chipPadX',           label: 'Pad X',            min: 6,   max: 28,  step: 1    },
+  { group: 'Chip',       key: 'chipFS',             label: 'Text size',        min: 14,  max: 36,  step: 1    },
+
+  { group: 'Rule',       key: 'ruleStroke',         label: 'Stroke',           min: 0.5, max: 4,   step: 0.25 }
+];
+
+function activeLayout() {
+  return LABEL_TEMPLATES[PRINTERS[currentPrinterId].template].layout;
+}
+
+function buildFiddleBody() {
+  const L = activeLayout();
+  const groups = {};
+  for (const k of FIDDLE_KNOBS) (groups[k.group] = groups[k.group] || []).push(k);
+
+  $('fp-body').innerHTML = Object.entries(groups).map(([groupName, knobs]) => `
+    <div class="fp-group">
+      <h3>${groupName}</h3>
+      ${knobs.map(k => `
+        <div class="fp-row" data-key="${k.key}">
+          <label>${k.label}</label>
+          <input type="range" min="${k.min}" max="${k.max}" step="${k.step}" value="${L[k.key]}"
+                 oninput="updateFiddle('${k.key}', this.value)">
+          <input type="number" min="${k.min}" max="${k.max}" step="${k.step}" value="${L[k.key]}"
+                 oninput="updateFiddle('${k.key}', this.value)">
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function updateFiddle(key, value) {
+  const v = parseFloat(value);
+  if (isNaN(v)) return;
+  activeLayout()[key] = v;
+  // Sync the sibling input in the same row.
+  const row = document.querySelector(`.fp-row[data-key="${key}"]`);
+  if (row) row.querySelectorAll('input').forEach(inp => {
+    if (parseFloat(inp.value) !== v) inp.value = v;
+  });
+  updatePreview();
+}
+
+function openFiddle()  { buildFiddleBody(); $('fiddle-panel').classList.add('open'); }
+function closeFiddle() { $('fiddle-panel').classList.remove('open'); }
+function toggleFiddle() {
+  if ($('fiddle-panel').classList.contains('open')) closeFiddle();
+  else openFiddle();
+}
+
+function resetFiddle() {
+  Object.assign(activeLayout(), LAYOUT_DEFAULTS);
+  buildFiddleBody();
+  updatePreview();
+}
+
+function copyFiddle() {
+  const json = JSON.stringify(activeLayout(), null, 2);
+  navigator.clipboard.writeText(json).then(() => {
+    const el = $('fp-copy-status');
+    el.textContent = 'copied';
+    setTimeout(() => el.textContent = '', 1500);
+  });
+}
+
+// Keyboard shortcut: Cmd/Ctrl + \ toggles the panel. Plain `\` would conflict
+// with typing a backslash into any focused input (e.g. the form fields).
+document.addEventListener('keydown', e => {
+  if (e.key === '\\' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    toggleFiddle();
+  }
+});
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 

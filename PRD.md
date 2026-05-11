@@ -435,3 +435,76 @@ Each expansion level may carry its own date.
 
 The challenge is whether each expansion node carries a date or only the
 root does. Needs design.
+
+---
+
+## 16. Session Backlog — 2026-05-11
+
+Items captured during the SVG-rendering migration session. These are real
+requirements, not nice-to-haves, but were deferred to keep the SVG migration
+focused. Listed in rough order of when they'll hurt.
+
+### Lot ID type modifier (P1, blocking once a second state ships)
+
+The current Grain Lot ID format is `<genetic-code>-<YYMMDD>-<seq>`, e.g.
+`SL189-260511-03`. This is unambiguous **as long as grain spawn is the only
+state being labeled.** The moment a second state ships (harvest, batch,
+homogenized, etc.) two distinct things can share the same `(genetic, date,
+seq)` triple — e.g. a grain lot and a harvest lot both indexed `SL189-260511-01`
+on the same day. That collision breaks lot identity.
+
+Fix: insert a single-character **lot-type modifier** into the ID. Proposed
+format:
+
+```
+<genetic-code>-<lot-type>-<YYMMDD>-<seq>
+SL189-G-260511-03   ← Grain spawn lot
+SL189-H-260511-03   ← Harvest lot (same genetic, same day, different state)
+SL189-B-260511-03   ← Batch (bulk substrate) lot
+```
+
+Lot-type letter is workflow-derived (each WORKFLOWS entry declares its own).
+`lotCounters` keys become `"<code>_<type>_<YYMMDD>"` so sequences are per-type
+per-day. Migration of existing counters: trivial, single-user, one-time
+relabel. No backward-compatibility shim needed.
+
+### QR / barcode region (P2)
+
+The right side of the label below the chip is currently empty space. Reserve
+it for an optional 2D code (QR for URLs / full lot payload, or DataMatrix /
+Code128 for inventory scanners). Implementation note: the SVG template's
+viewBox already gives a stable coordinate system; adding a `<g>` at, e.g.,
+`(VB.w - padR - QR_SIZE, ruleY + 20)` is a few lines. The mid-block (lot,
+notation, source, grain) would clamp its right edge to `chipX - 12` instead
+of `VB.w - padR`. **Defer until a real scanning use case exists** — premature
+without a workflow that reads them.
+
+### Live layout tuning panel (DONE 2026-05-11)
+
+A development-time fiddle panel for the SVG template's layout object.
+Toggle with `\` key or the `▦` header button. Sliders + numeric inputs for
+padding, type scale, spacing, chip, and rule properties. Mutates
+`LABEL_TEMPLATES[id].layout` in place and re-renders on every input. Reset
+restores from `LAYOUT_DEFAULTS` (snapshot at module load). Copy JSON button
+dumps the current layout for paste-back into source. Not exposed in print.
+
+Listed here so it's findable for future templates: when a second template
+ships, the same panel works against it — just point `activeLayout()` at the
+new template's layout object.
+
+### Future label-rendering targets (parked)
+
+The SVG-based renderer means the label is already a vector document. Two
+downstream paths become cheap-to-build when needed:
+
+- **PDF export** — serialize the same SVG into a PDF at exact paper size
+  (e.g. via `pdf-lib` or server-side `cairo`/`weasyprint`). One label = one
+  page. Useful for archival, batch reprint, sharing.
+- **Direct-to-printer rendering** — bypass the browser print dialog by
+  rasterizing the SVG to the printer's native bitmap (DYMO SDK, ZPL for
+  Zebra, etc.). Removes one click per print run, supports per-printer
+  defaults, enables the "plug in a new printer and the layout adapts"
+  story from the session notes.
+
+Both are mechanically separate from the layout work and don't need to be
+designed now.
