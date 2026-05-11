@@ -215,97 +215,33 @@ input[type=number] { padding-right: 4px; }
 }
 
 /* ── LABEL ──
-   Single source of truth for label sizes. .label is the container-query
-   container (width: 5.4in live / 2.25in print, set by selectors below).
-   .label-content holds the actual padding + flex layout. Padding lives on
-   the inner div on purpose: cqw on .label's OWN properties resolves
-   against the nearest ANCESTOR container-query container, not against
-   .label itself (CSS spec — prevents circular sizing). With padding on
-   .label-content, cqw resolves against .label = the inner padding is
-   genuinely 3.5% of the label width in both contexts. WYSIWYG.
+   The label is rendered as a single inline <svg>. All layout — positions,
+   font sizes, padding — lives inside the SVG in viewBox coordinates. The
+   outer <svg> declares its physical size via width="<n>in", and the
+   viewBox handles the proportional scaling. This makes screen preview and
+   print the exact same rendering pipeline at two different physical sizes:
+   WYSIWYG by construction, no JS measurement of HTML boxes, no container
+   queries, no font-fallback drift between canvas and DOM.
+
+   The host elements (#label-preview, #print-area > div) carry only chrome:
+   background, border-radius, shadow. They size themselves to whatever the
+   inner SVG asks for.
 */
-.label {
-  container-type: inline-size;
-  width: 5.4in;       /* 2.4× the print size for screen preview */
-  aspect-ratio: 9 / 5;
+.label-host {
+  display: inline-block; line-height: 0;     /* shrink-wrap the SVG */
   background: #fff; color: #000;
   border-radius: 8px;
   box-shadow: 0 6px 32px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.08);
-  overflow: hidden; position: relative;
+  overflow: hidden;
 }
-.label-content {
-  padding: 2.5cqw 3.5cqw 2cqw;
-  display: flex; flex-direction: column;
-  width: 100%; height: 100%;
-  box-sizing: border-box;
-  font-family: Arial, Helvetica, sans-serif;
-}
-.label-cultivar {
-  font-size: 13cqw; font-weight: 700; line-height: 1.02;
-  letter-spacing: -.5px;
-  white-space: nowrap; overflow: hidden;
-  flex-shrink: 0;
-  min-width: 0;          /* flex item: don't grow to intrinsic content width */
-  align-self: stretch;   /* fill cross-axis (label's content width) */
-}
-.label-species-row {
-  display: flex; align-items: baseline; justify-content: space-between;
-  gap: 2cqw; flex-shrink: 0; margin-top: 0.3cqw;
-}
-.label-species {
-  font-size: 5.2cqw; font-style: italic; color: #333;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  flex: 1; min-width: 0;
-}
-.label-rule { height: 0.25cqw; background: #ccc; margin: 0.9cqw 0; flex-shrink: 0; }
-.label-mid {
-  flex: 1; display: flex; flex-direction: column;
-  justify-content: center; gap: 0.4cqw; min-height: 0;
-}
-.label-line {
-  font-size: 3.8cqw; color: #222; display: flex;
-  align-items: baseline; gap: 0; flex-wrap: nowrap;
-  white-space: nowrap; overflow: hidden;
-}
-.label-line.label-line-lot {
-  font-size: 4.6cqw; font-weight: 600; color: #000;
-}
-.label-line .mono { font-family: 'SF Mono', Monaco, 'Menlo', monospace; }
-.label-line .sep  { color: #aaa; padding: 0 1.2cqw; }
-.label-line .dim  { color: #777; font-size: 3.3cqw; padding-right: 0.5cqw; }
-.label-line .grain-text {
-  overflow: hidden; text-overflow: ellipsis;
-  padding-right: 2cqw;
-}
-.label-bottom {
-  display: flex; justify-content: space-between; align-items: baseline;
-  flex-shrink: 0; margin-top: 0.8cqw; gap: 2cqw;
-}
-.label-date {
-  font-family: 'SF Mono', Monaco, monospace;
-  font-size: 3.4cqw; color: #444; white-space: nowrap; flex-shrink: 0;
-}
-.label-notes {
-  font-size: 3.2cqw; color: #555; font-style: italic;
-  flex: 1; min-width: 0; text-align: right;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.label-chip {
-  font-size: 2.8cqw; font-weight: 700; letter-spacing: .9px;
-  text-transform: uppercase; padding: 0.6cqw 1.4cqw; border-radius: 0.7cqw;
-  flex-shrink: 0; white-space: nowrap;
-}
-.label-chip.actives { background: #dcfce7; color: #14532d; }
-.label-chip.gourmet { background: #cffafe; color: #164e63; }
+.label-host > svg { display: block; }
 
 /* ── PRINT AREA ── */
 #print-area {
   position: absolute; left: -10000px; top: 0;
   visibility: hidden;
 }
-#print-area .label {
-  width: 2.25in;
-  aspect-ratio: 9 / 5;
+#print-area .label-host {
   border-radius: 0;
   box-shadow: none;
 }
@@ -384,14 +320,14 @@ input[type=number] { padding-right: 4px; }
     position: static !important; left: auto !important; top: auto !important;
     visibility: visible !important; display: block !important;
   }
-  #print-area .label {
+  #print-area .label-host {
     page-break-after: always;
     page-break-inside: avoid;
     margin: 0; border-radius: 0;
     box-shadow: none !important;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
-  #print-area .label:last-child { page-break-after: auto; }
+  #print-area .label-host:last-child { page-break-after: auto; }
 }
 </style>
 </head>
@@ -541,25 +477,7 @@ input[type=number] { padding-right: 4px; }
     <div id="preview-panel">
       <span class="preview-label-hint">Label Preview — 2.25 × 1.25 in</span>
 
-      <div id="label-preview" class="label">
-        <div class="label-content">
-          <div class="label-cultivar">—</div>
-          <div class="label-species-row">
-            <div class="label-species"></div>
-            <div class="label-chip actives">Active</div>
-          </div>
-          <div class="label-rule"></div>
-          <div class="label-mid">
-            <div class="label-line"></div>
-            <div class="label-line"></div>
-            <div class="label-line"></div>
-          </div>
-          <div class="label-bottom">
-            <div class="label-date"></div>
-            <div class="label-notes"></div>
-          </div>
-        </div>
-      </div>
+      <div id="label-preview" class="label-host"></div>
 
       <div class="printer-row">
         Print uses the browser dialog. Select <strong style="color:var(--text)">DYMO LabelWriter</strong>
@@ -685,16 +603,256 @@ const WORKFLOWS = {
 };
 const CURRENT_WORKFLOW = WORKFLOWS['grain-spawn'];
 
-// Cultivar fit-to-width config. Lives outside fitCultivar() so a future
-// label-template selector (multi-printer, multi-media) can swap the whole
-// block in one place. padHCqw must match the .label-content horizontal
-// padding in CSS — the two are coupled by definition.
-const CULTIVAR_FIT = {
-  padHCqw: 3.5,    // cqw, each side (must match .label-content padding)
-  maxCqw:  13,     // default size (cqw)
-  minCqw:  6,      // floor above species 5.2cqw → preserves hierarchy
-  safety:  0.97,   // buffer for letter-spacing's fixed-px nonlinearity
+// ─── PRINTERS & LABEL TEMPLATES ───────────────────────────────────────────────
+//
+// The label is rendered as inline SVG. Each printer declares its physical
+// paper size and points at a layout template. A template is a pure function
+// that returns SVG markup positioned inside a fixed viewBox; the outer <svg>
+// gets width="<n>in" and the viewBox handles all proportional scaling. Same
+// markup paints to screen at preview size and to paper at physical size —
+// WYSIWYG by construction, no JS measurement of HTML boxes.
+//
+// To add a printer: add an entry here pointing at a template (existing or
+// new). To add a label shape: add a template function.
+
+const PRINTERS = {
+  'dymo-30334': {
+    id: 'dymo-30334',
+    name: 'DYMO LabelWriter — 30334',
+    paper: { widthIn: 2.25, heightIn: 1.25 },
+    template: 'grain-spawn-9x5'
+  }
 };
+
+// Live preview multiplier: render the SVG at PREVIEW_SCALE × physical size
+// for legibility on screen. WYSIWYG is preserved because the viewBox is
+// unchanged — only the outer width attribute scales.
+const PREVIEW_SCALE = 2.4;
+
+// Active printer. Today: hard-coded. Tomorrow: user-selectable / discovered.
+let currentPrinterId = 'dymo-30334';
+
+// Categorical chip palette (used by templates that render a chip).
+const CHIP_COLORS = {
+  actives: { fill: '#dcfce7', text: '#14532d' },
+  gourmet: { fill: '#cffafe', text: '#164e63' }
+};
+
+// Escape user-provided text for inclusion in SVG text nodes.
+function svgEsc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// SVG-native shrink-to-fit. Reads natural rendered length via the browser's
+// own layout, sets textLength + lengthAdjust only when it overflows. This
+// replaces all canvas measurement / DOM probing: one call, one rendering
+// pipeline, deterministic across browsers and OSs.
+function fitText(textEl, maxLen) {
+  if (!textEl || !maxLen) return;
+  // Clear any previous fit so we measure natural length.
+  textEl.removeAttribute('textLength');
+  textEl.removeAttribute('lengthAdjust');
+  const natural = textEl.getComputedTextLength();
+  if (natural > maxLen) {
+    textEl.setAttribute('textLength', maxLen);
+    textEl.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+  }
+}
+
+// ── Template: grain-spawn-9x5 ────────────────────────────────────────────────
+// Layout for a 9:5 landscape label (DYMO 30334). All coordinates are in a
+// 900 × 500 viewBox. Mental model: each unit is roughly 0.0025in at print
+// scale. Adjust here, not in CSS.
+const LABEL_TEMPLATES = {
+  'grain-spawn-9x5': {
+    viewBox: { w: 900, h: 500 },
+    render(d) {
+      const VB = this.viewBox;
+      const padL = 24, padR = 24, padTop = 18, padBot = 18;
+      const contentW = VB.w - padL - padR;        // 852
+
+      const cat = d.cat === 'actives' ? 'actives' : 'gourmet';
+      const chip = CHIP_COLORS[cat];
+      const chipText = cat === 'actives' ? 'ACTIVE' : 'GOURMET';
+
+      // ── CULTIVAR (big bold, top) ───────────────────────────────────────────
+      const cultivarFS = 140;
+      const cultivarY  = padTop + cultivarFS * 0.82;   // baseline
+
+      // ── SPECIES ROW (italic species left, chip right) ──────────────────────
+      const speciesFS  = 46;
+      const speciesY   = cultivarY + 54;
+
+      const chipH      = 34;
+      const chipPadX   = 13;
+      const chipFS     = 21;
+      const chipTextW  = chipText.length * chipFS * 0.62;   // approx; refined post-mount
+      const chipW      = chipTextW + chipPadX * 2;
+      const chipX      = VB.w - padR - chipW;
+      const chipY      = speciesY - chipH * 0.78;
+
+      // ── RULE ───────────────────────────────────────────────────────────────
+      const ruleY = speciesY + 16;
+
+      // ── MID BLOCK ──────────────────────────────────────────────────────────
+      const lotFS     = 58;
+      const lineFS    = 36;
+      const dimFS     = 32;
+      const monoFam   = "'SF Mono', Menlo, Monaco, Consolas, monospace";
+
+      const lotY      = ruleY + 56;
+      const notationY = lotY + lineFS + 6;
+      const srcY      = notationY + lineFS + 6;
+      const grainY    = srcY + lineFS + 4;
+
+      // ── BOTTOM ROW ─────────────────────────────────────────────────────────
+      const dateFS    = 32;
+      const notesFS   = 30;
+      const bottomY   = VB.h - padBot;
+
+      const cultivarText = d.cultivar || '—';
+      const speciesText  = [d.genus, d.species].filter(Boolean).join(' ');
+      const lineage      = d.notation || '';
+      const destLabel    = d.destination || '';
+
+      // Source line: flow as one <text> with tspans (SVG-native inline flow).
+      // The browser handles spacing; no hand-positioned x values.
+      const sourceLine = (destLabel || d.source) ? `
+  <text x="${padL}" y="${srcY}" font-size="${lineFS}" fill="#222">
+    ${destLabel ? svgEsc(destLabel) : ''}
+    ${destLabel && d.source ? `<tspan dx="12" fill="#aaa">|</tspan>` : ''}
+    ${d.source ? `<tspan dx="12" font-size="${dimFS}" fill="#777">Src:</tspan>` : ''}
+    ${d.source ? `<tspan class="lbl-src" dx="8" font-family="${monoFam}" fill="#222">${svgEsc(d.source)}</tspan>` : ''}
+  </text>` : '';
+
+      const grainLine = d.sub ? `
+  <text x="${padL}" y="${grainY}" font-size="${lineFS}" fill="#222">
+    <tspan font-size="${dimFS}" fill="#777">Grain:</tspan><tspan class="lbl-grain" dx="8" fill="#222">${svgEsc(d.sub)}</tspan>
+  </text>` : '';
+
+      return `
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 ${VB.w} ${VB.h}"
+     font-family="Arial, Helvetica, sans-serif"
+     shape-rendering="geometricPrecision"
+     text-rendering="geometricPrecision">
+
+  <rect width="${VB.w}" height="${VB.h}" fill="#ffffff"/>
+
+  <text class="lbl-cultivar"
+        x="${padL}" y="${cultivarY}"
+        font-size="${cultivarFS}" font-weight="700"
+        letter-spacing="-2"
+        fill="#000">${svgEsc(cultivarText)}</text>
+
+  ${speciesText ? `<text class="lbl-species"
+        x="${padL}" y="${speciesY}"
+        font-size="${speciesFS}" font-style="italic"
+        fill="#333">${svgEsc(speciesText)}</text>` : ''}
+
+  <g class="lbl-chip" transform="translate(${chipX} ${chipY})">
+    <rect width="${chipW}" height="${chipH}" rx="5" ry="5" fill="${chip.fill}"/>
+    <text x="${chipW / 2}" y="${chipH * 0.72}"
+          font-size="${chipFS}" font-weight="700"
+          letter-spacing="1.3"
+          text-anchor="middle"
+          fill="${chip.text}">${chipText}</text>
+  </g>
+
+  <line x1="${padL}" y1="${ruleY}" x2="${VB.w - padR}" y2="${ruleY}"
+        stroke="#cccccc" stroke-width="2.5"/>
+
+  ${d.lotId ? `<text class="lbl-lot"
+        x="${padL}" y="${lotY}"
+        font-size="${lotFS}" font-weight="600"
+        font-family="${monoFam}"
+        fill="#000">${svgEsc(d.lotId)}</text>` : ''}
+
+  ${lineage ? `<text class="lbl-notation"
+        x="${padL}" y="${notationY}"
+        font-size="${lineFS}" font-family="${monoFam}"
+        fill="#222">${svgEsc(lineage)}</text>` : ''}
+
+  ${sourceLine}
+  ${grainLine}
+
+  ${d.date ? `<text x="${padL}" y="${bottomY}"
+        font-size="${dateFS}" font-family="${monoFam}"
+        fill="#444">${svgEsc(fmtDate(d.date))}</text>` : ''}
+  ${d.notes ? `<text class="lbl-notes"
+        x="${VB.w - padR}" y="${bottomY}"
+        font-size="${notesFS}" font-style="italic"
+        text-anchor="end"
+        fill="#555">${svgEsc(d.notes)}</text>` : ''}
+
+</svg>`.trim();
+    },
+
+    // Post-mount fit: SVG textLength only resolves once attached. Called after
+    // injection in renderLabel().
+    fit(svgEl, d) {
+      const VB = this.viewBox;
+      const padL = 24, padR = 24;
+      const contentW = VB.w - padL - padR;
+
+      // Cultivar: full content width.
+      fitText(svgEl.querySelector('.lbl-cultivar'), contentW);
+
+      // Species: clamp to the space left of the chip.
+      const chipG = svgEl.querySelector('.lbl-chip');
+      if (chipG) {
+        const chipBBox = chipG.getBBox();
+        const species = svgEl.querySelector('.lbl-species');
+        if (species) fitText(species, chipBBox.x - padL - 14);
+      }
+
+      // Lot id + notation: full width safety clamp.
+      fitText(svgEl.querySelector('.lbl-lot'), contentW);
+      fitText(svgEl.querySelector('.lbl-notation'), contentW);
+
+      // Source value (a tspan inside the source line). textLength on a tspan
+      // works the same way; we cap it to whatever space remains on its line.
+      const src = svgEl.querySelector('.lbl-src');
+      if (src) {
+        // tspan inherits the parent <text>'s x; for fitting we want to limit
+        // its own rendered length. The remaining space on the source line is
+        // contentW minus everything that came before; we conservatively cap
+        // at contentW * 0.7 which leaves room for "Destination | Src: ".
+        fitText(src, contentW * 0.72);
+      }
+
+      // Grain value tspan.
+      const grain = svgEl.querySelector('.lbl-grain');
+      if (grain) fitText(grain, contentW * 0.85);
+
+      // Notes (right-anchored): clamp to ~55% of content width.
+      fitText(svgEl.querySelector('.lbl-notes'), contentW * 0.55);
+    }
+  }
+};
+
+// Render label data into a host element. opts.physical='print' uses the
+// printer's true paper size; otherwise the live preview scale.
+function renderLabel(host, d, opts) {
+  opts = opts || {};
+  const printer = PRINTERS[currentPrinterId];
+  const tpl     = LABEL_TEMPLATES[printer.template];
+  if (!tpl) return;
+
+  const scale     = opts.physical === 'print' ? 1 : PREVIEW_SCALE;
+  const widthIn   = printer.paper.widthIn  * scale;
+  const heightIn  = printer.paper.heightIn * scale;
+
+  host.innerHTML = tpl.render(d);
+  const svg = host.firstElementChild;
+  if (!svg) return;
+  svg.setAttribute('width',  widthIn  + 'in');
+  svg.setAttribute('height', heightIn + 'in');
+
+  // Post-mount fit — SVG textLength needs the element attached to resolve.
+  tpl.fit(svg, d);
+}
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 
@@ -1222,87 +1380,7 @@ function buildLabelData(seqOverride) {
 }
 
 function renderLabelInto(target, d) {
-  const chipText = d.cat === 'actives' ? 'Active' : 'Gourmet';
-  const chipCls  = d.cat === 'actives' ? 'actives' : 'gourmet';
-
-  // L1: lot ID alone (core identity of the labeled thing).
-  const l1 = d.lotId ? `<span class="mono">${d.lotId}</span>` : '';
-
-  // L2: lineage notation alone.
-  const l2 = d.notation ? `<span class="mono">${d.notation}</span>` : '';
-
-  // L3: destination | source. Destination is workflow-derived. Source is
-  // optional; when empty, only the destination shows.
-  const l3Parts = [`<span>${d.destination}</span>`];
-  if (d.source) {
-    l3Parts.push(`<span class="dim">Src:</span><span class="mono">${d.source}</span>`);
-  }
-  const l3 = l3Parts.join('<span class="sep">|</span>');
-
-  // L4: grain type (with optional description).
-  const l4 = d.sub
-    ? `<span class="dim">Grain:</span><span class="grain-text">${d.sub}</span>`
-    : '';
-
-  target.innerHTML = `
-    <div class="label-content">
-      <div class="label-cultivar">${d.cultivar || '—'}</div>
-      <div class="label-species-row">
-        <div class="label-species">${[d.genus, d.species].filter(Boolean).join(' ')}</div>
-        <div class="label-chip ${chipCls}">${chipText}</div>
-      </div>
-      <div class="label-rule"></div>
-      <div class="label-mid">
-        <div class="label-line label-line-lot">${l1}</div>
-        <div class="label-line">${l2}</div>
-        <div class="label-line">${l3}</div>
-        <div class="label-line">${l4}</div>
-      </div>
-      <div class="label-bottom">
-        <div class="label-date">${fmtDate(d.date)}</div>
-        <div class="label-notes">${d.notes || ''}</div>
-      </div>
-    </div>
-  `;
-
-  fitCultivar(target);
-}
-
-function fitCultivar(labelEl) {
-  const cultivar = labelEl.querySelector('.label-cultivar');
-  if (!cultivar) return;
-  const text = (cultivar.textContent || '').trim();
-  if (!text) {                          // empty cultivar → fall back to CSS default
-    cultivar.style.fontSize = '';
-    return;
-  }
-
-  // Measure the actual rendered text width at the CSS default size, then
-  // linearly scale font-size to fit. Using the browser's own rendering as
-  // the source of truth means we don't have to estimate metrics — what
-  // measures is what prints. The print-path attaches labels before this
-  // runs (see printLabel), so measurements are real, not zero.
-  cultivar.style.fontSize = '';                // reset to CSS default (13cqw)
-  void cultivar.offsetHeight;                  // force layout
-  const containerW = cultivar.clientWidth;     // cultivar fills label-content area
-  const naturalW   = cultivar.scrollWidth;     // natural text width at default size
-  if (!containerW || !naturalW) return;
-  if (naturalW <= containerW) return;          // already fits — leave at default
-
-  // Text width is approximately proportional to font-size (modulo a small
-  // fixed letter-spacing offset). One-shot scale by the overflow ratio.
-  const currentFontPx = parseFloat(getComputedStyle(cultivar).fontSize) || 0;
-  if (!currentFontPx) return;
-  let target = currentFontPx * (containerW / naturalW) * CULTIVAR_FIT.safety;
-
-  // Clamp to [min, max] cqw bounds for the active label width.
-  const labelW = labelEl.offsetWidth;
-  if (!labelW) return;
-  const cqwPx = labelW / 100;
-  target = Math.max(CULTIVAR_FIT.minCqw * cqwPx,
-                    Math.min(CULTIVAR_FIT.maxCqw * cqwPx, target));
-
-  cultivar.style.fontSize = target + 'px';
+  renderLabel(target, d);
 }
 
 function updatePreview() {
@@ -1323,13 +1401,13 @@ function printLabel() {
   const printArea = $('print-area');
   printArea.innerHTML = '';
   for (let i = 0; i < qty; i++) {
-    const labelEl = document.createElement('div');
-    labelEl.className = 'label';
-    // Attach BEFORE rendering so fitCultivar can measure. A detached
-    // element reports clientWidth/scrollWidth as 0 and cqw can't resolve,
-    // which silently disables the auto-shrink for printed labels.
-    printArea.appendChild(labelEl);
-    renderLabelInto(labelEl, buildLabelData(start + i));
+    const host = document.createElement('div');
+    host.className = 'label-host';
+    // Attach BEFORE rendering so SVG text measurement (getComputedTextLength)
+    // can resolve. A detached SVG element reports zero text lengths and
+    // silently skips the fit pass.
+    printArea.appendChild(host);
+    renderLabel(host, buildLabelData(start + i), { physical: 'print' });
   }
 
   window.print();
