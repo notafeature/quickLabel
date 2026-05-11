@@ -382,25 +382,43 @@ input[type=number] { padding-right: 4px; }
 }
 
 @media print {
+  /* Paper is exactly one label. @page margin:0 makes the printable area
+     equal the paper. Any descendant taller than that pushes a second blank
+     page, which is the bug that caused 2-page DYMO output. The fix below
+     pins both <body> and each .label-host to exact paper dimensions and
+     clips any sub-pixel overflow so Chrome can't paginate against us. */
   @page { size: 2.25in 1.25in; margin: 0; }
   html, body {
-    height: auto !important; overflow: visible !important;
-    background: #fff !important; margin: 0 !important; padding: 0 !important;
+    width: 2.25in;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important; padding: 0 !important;
+    background: #fff !important;
+    overflow: hidden !important;
   }
   /* Hide everything except print-area, including from layout. */
   body > *:not(#print-area) { display: none !important; }
   #print-area {
     position: static !important; left: auto !important; top: auto !important;
     visibility: visible !important; display: block !important;
+    width: 2.25in;
   }
   #print-area .label-host {
+    display: block !important;
+    width: 2.25in; height: 1.25in;
+    margin: 0; padding: 0; border: 0;
+    border-radius: 0;
+    box-shadow: none !important;
+    overflow: hidden;
     page-break-after: always;
     page-break-inside: avoid;
-    margin: 0; border-radius: 0;
-    box-shadow: none !important;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
   #print-area .label-host:last-child { page-break-after: auto; }
+  #print-area .label-host > svg {
+    display: block;
+    width: 2.25in !important; height: 1.25in !important;
+  }
 }
 </style>
 </head>
@@ -689,7 +707,9 @@ const WORKFLOWS = {
   'grain-spawn': {
     label:       'Make Grain Spawn',
     destination: 'Grain Spawn',
-    lotType:     'Grain Lot'
+    lotType:     'Grain Lot',
+    lotPrefix:   'GL',          // stamped on the lot ID: GL-<code>-<YYMMDD>-<seq>
+    mediaLabel:  'Media'        // the label's "media" line caption for this workflow
   }
 };
 const CURRENT_WORKFLOW = WORKFLOWS['grain-spawn'];
@@ -781,7 +801,7 @@ const LABEL_TEMPLATES = {
       cultivarSpeciesGap: 62,
       speciesRuleGap:     20,
       ruleLotGap:         64,
-      lotNotationGap:     24,
+      lotNotationGap:     36,
       lineGap:            46,
 
       // rule
@@ -835,10 +855,12 @@ const LABEL_TEMPLATES = {
     ${d.source ? `<tspan class="lbl-src" dx="8" font-family="${monoFam}">${svgEsc(d.source)}</tspan>` : ''}
   </text>` : '';
 
-      // Grain line: same weight/color as value (no dimmed prefix here).
+      // Media line: "<workflow.mediaLabel>: <value>" — same weight/color as
+      // value. Today: "Media: MILO - Brown Treasure 2lb". Future workflows
+      // (agar, LC, bulk) override mediaLabel via WORKFLOWS.
       const grainLine = d.sub ? `
   <text x="${L.padL}" y="${grainY}" font-size="${L.lineFS}" fill="#000">
-    <tspan>Grain:</tspan><tspan class="lbl-grain" dx="10">${svgEsc(d.sub)}</tspan>
+    <tspan>${CURRENT_WORKFLOW.mediaLabel}:</tspan><tspan class="lbl-grain" dx="10">${svgEsc(d.sub)}</tspan>
   </text>` : '';
 
       return `
@@ -1090,8 +1112,11 @@ function categoryForGenus(genus) {
   return 'actives';
 }
 
+// Lot counters are keyed per (workflow prefix, genetic code, date) so that
+// different workflows on the same code+date don't share a sequence. A grain
+// lot and (future) harvest lot on SL189 / 2026-05-11 are independent series.
 function lotKey(code, date) {
-  return code && date ? `${code}_${toYYMMDD(date)}` : null;
+  return code && date ? `${CURRENT_WORKFLOW.lotPrefix}_${code}_${toYYMMDD(date)}` : null;
 }
 
 function nextSeq(code, date) {
@@ -1515,7 +1540,7 @@ function rebuildLot() {
 
   const start = nextSeq(code, date);
   const end   = start + qty - 1;
-  const first = `${code}-${toYYMMDD(date)}-${pad2(start)}`;
+  const first = `${CURRENT_WORKFLOW.lotPrefix}-${code}-${toYYMMDD(date)}-${pad2(start)}`;
 
   $('lot-display').innerHTML = qty > 1
     ? `${first}<span class="range">→ ${pad2(end)}  (×${qty})</span>`
@@ -1568,7 +1593,7 @@ function buildLabelData(seqOverride) {
   let lotId = '';
   if (code && date) {
     const seq = (seqOverride !== undefined) ? seqOverride : nextSeq(code, date);
-    lotId = `${code}-${toYYMMDD(date)}-${pad2(seq)}`;
+    lotId = `${CURRENT_WORKFLOW.lotPrefix}-${code}-${toYYMMDD(date)}-${pad2(seq)}`;
   }
 
   return { cat, genus, species, cultivar, destination, date, source, sub, notes, notation, lotId };
