@@ -435,3 +435,183 @@ Each expansion level may carry its own date.
 
 The challenge is whether each expansion node carries a date or only the
 root does. Needs design.
+
+---
+
+## 16. Session Backlog — 2026-05-11
+
+Items captured during the SVG-rendering migration session. These are real
+requirements, not nice-to-haves, but were deferred to keep the SVG migration
+focused. Listed in rough order of when they'll hurt.
+
+### Lot ID type modifier (P1, blocking once a second state ships)
+
+**Status: prefix shipped 2026-05-11; per-workflow prefix architecture in place.**
+
+The Grain Lot ID format is now `<prefix>-<genetic-code>-<YYMMDD>-<seq>`,
+e.g. `GL-SL189-260511-03`. Prefix is workflow-derived
+(`WORKFLOWS[id].lotPrefix`), so future workflows declare their own:
+
+```
+GL-SL189-260511-03   ← Grain spawn lot (current)
+LL-SL189-260511-03   ← Liquid Culture lot
+AL-SL189-260511-03   ← Agar plate lot (more "plate ID" than lot)
+BL-SL189-260511-03   ← Batch (spawn-to-bulk) lot
+HL-SL189-260511-03   ← Harvest lot
+ML-SL189-260511-03   ← Homogenized / mixed lot
+PL-SL189-260511-03   ← Product lot (post-test parted-out)
+```
+
+`lotCounters` is now keyed `<prefix>_<code>_<YYMMDD>`, so sequences are
+per-workflow per-genetic per-day. Existing pre-prefix counters in
+localStorage are orphaned (single-user dev tool, no migration needed).
+
+---
+
+## 17. Workflow Architecture (forward plan)
+
+A **workflow** is a state-change event being labeled. Today the app has one
+workflow hard-wired (`grain-spawn`); the architecture is in place to add
+more. Each workflow owns four things:
+
+1. **A header label** (what shows next to the QuickLabel logo when active).
+2. **A destination state** (what the labeled thing now is).
+3. **A lot-type prefix** (e.g. `GL`, `HL`, `BL`).
+4. **A media label** (the caption on the bottom data line — for grain-spawn
+   it's "Media:", for agar it's "Media:" too but the value carries different
+   semantics, for spawn-to-bulk it's "Media:" referring to the bulk substrate
+   plus the grain-spawn inputs).
+
+### Workflow chain — pre-regulation lineage tracking
+
+The full chain a genetic line moves through, in order:
+
+```
+genetic registry  →  agar plates  →  liquid culture  →  grain spawn
+                          ↓                                   ↓
+                     (sub-lots,                          (sub-lots,
+                      isolations)                         expansions)
+                          ↓                                   ↓
+                          ←──────── spawn-to-bulk ←───────────┘
+                                       ↓
+                                    BATCH (inoculation event = regulated boundary)
+                                       ↓
+                                  flush harvests  →  HARVEST LOT
+                                       ↓
+                                    homogenize
+                                       ↓
+                                  HOMOGENIZED LOT  →  test
+                                       ↓                 ↓
+                                       (cleared)    (rejected)
+                                       ↓
+                                  PRODUCT LOTS (parted out by SKU/pack size)
+```
+
+Each arrow is a state-change event = one workflow = one label-print
+opportunity. The **source** field on each label is the lot ID of the
+predecessor: that's how lineage propagates. If you ever need to ask "what
+went into this product lot," you walk the chain backward via source IDs
+until you reach the genetic registry entry.
+
+### Regulated boundary
+
+The **batch** (spawn-to-bulk → inoculation event) is the first lot that
+carries regulatory weight in cultivation compliance frameworks. Everything
+upstream of it is pre-regulation lineage (useful for the operator, not yet
+required by law). Everything from batch onward must be tracked end-to-end:
+
+- Batch ID → all inputs (grain spawn lots, bulk substrate definition,
+  inoculation date, room/zone, operator)
+- Harvest lot(s) → batch ID + flush number + harvest date
+- Homogenized lot → harvest lot(s) it was built from
+- Product lot → homogenized lot + pack size + SKU
+
+### Compliance reporting needs (parked, design later)
+
+- **Total ingredients per batch** — every component that touches the bag
+  needs to roll up. Grain type, substrate type, additives, water source.
+  Gluten/allergen flags. This is why the label's media line had to become
+  "Media:" generically — bulk substrate workflows need to surface the
+  substrate composition, not the upstream grain.
+- **Contaminant flags** — any rejected lot in the chain quarantines
+  downstream.
+- **Test results linkage** — homogenized lot pairs with a COA from an
+  external lab. The product lot label needs the test reference visible
+  (and probably a QR linking to the full COA).
+
+### Product lot labels (deferred)
+
+Product lot labels are **structurally different** from cultivation labels:
+
+- Required content is dictated by codified rules (mg per dose, lot ID,
+  expiry, manufacturer, allergen statement, COA link, etc.).
+- Off-label channels (e.g. wholesale to dispensary) may have their own
+  formats.
+- Rules are not yet codified in the active jurisdiction — design when they
+  are.
+
+The current SVG template architecture supports this cleanly: when the rules
+exist, write a new template (`product-lot-2x4` or whatever the regulated
+sticker size is), add it to `LABEL_TEMPLATES`, register a printer paired
+with it, ship. The form/data layer barely changes.
+
+### Form behavior under workflow switching (parked)
+
+When the workflow is switchable (via the header click target near the logo),
+each workflow's left-panel form composition changes:
+
+- **Grain spawn** (today): genetic registry, lineage, lot, grain type.
+- **Agar**: genetic registry, lineage, plate ID, agar formulation.
+- **Liquid culture**: genetic registry, lineage, vessel size, formulation.
+- **Spawn-to-bulk**: bulk substrate definition, grain inputs (multi-select
+  of existing grain lots), inoculation date.
+- **Harvest**: source batch lot, flush number, wet weight, harvest date.
+- **Homogenized**: source harvest lots, mix ratio if applicable.
+- **Product**: source homogenized lot, SKU, pack size, expiry math.
+
+The "Details" section in the form panel is also workflow-derived. When in
+the grain-spawn workflow it shows "Grain Type"; in agar it would show "Agar
+Formulation"; etc. The label's media line caption changes in lockstep.
+
+---
+
+### QR / barcode region (P2)
+
+The right side of the label below the chip is currently empty space. Reserve
+it for an optional 2D code (QR for URLs / full lot payload, or DataMatrix /
+Code128 for inventory scanners). Implementation note: the SVG template's
+viewBox already gives a stable coordinate system; adding a `<g>` at, e.g.,
+`(VB.w - padR - QR_SIZE, ruleY + 20)` is a few lines. The mid-block (lot,
+notation, source, grain) would clamp its right edge to `chipX - 12` instead
+of `VB.w - padR`. **Defer until a real scanning use case exists** — premature
+without a workflow that reads them.
+
+### Live layout tuning panel (DONE 2026-05-11)
+
+A development-time fiddle panel for the SVG template's layout object.
+Toggle with `\` key or the `▦` header button. Sliders + numeric inputs for
+padding, type scale, spacing, chip, and rule properties. Mutates
+`LABEL_TEMPLATES[id].layout` in place and re-renders on every input. Reset
+restores from `LAYOUT_DEFAULTS` (snapshot at module load). Copy JSON button
+dumps the current layout for paste-back into source. Not exposed in print.
+
+Listed here so it's findable for future templates: when a second template
+ships, the same panel works against it — just point `activeLayout()` at the
+new template's layout object.
+
+### Future label-rendering targets (parked)
+
+The SVG-based renderer means the label is already a vector document. Two
+downstream paths become cheap-to-build when needed:
+
+- **PDF export** — serialize the same SVG into a PDF at exact paper size
+  (e.g. via `pdf-lib` or server-side `cairo`/`weasyprint`). One label = one
+  page. Useful for archival, batch reprint, sharing.
+- **Direct-to-printer rendering** — bypass the browser print dialog by
+  rasterizing the SVG to the printer's native bitmap (DYMO SDK, ZPL for
+  Zebra, etc.). Removes one click per print run, supports per-printer
+  defaults, enables the "plug in a new printer and the layout adapts"
+  story from the session notes.
+
+Both are mechanically separate from the layout work and don't need to be
+designed now.
