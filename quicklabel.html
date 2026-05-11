@@ -766,8 +766,8 @@ const LABEL_TEMPLATES = {
 
       // type scale
       cultivarFS:      100,
-      cultivarKerning: -2,     // negative = tighter; +1 = open
-      speciesFS:        40,
+      cultivarKerning: 1.75,    // positive = more open; negative = tighter
+      speciesFS:        38,
       lotFS:            50,
       lineFS:           34,
       dimFS:            34,
@@ -782,7 +782,7 @@ const LABEL_TEMPLATES = {
       speciesRuleGap:     20,
       ruleLotGap:         64,
       lotNotationGap:     24,
-      lineGap:            44,
+      lineGap:            46,
 
       // rule
       ruleStroke: 2,
@@ -802,10 +802,14 @@ const LABEL_TEMPLATES = {
       const speciesY  = cultivarY + L.cultivarSpeciesGap;
 
       // Chip — width derived from its own text + padding (refined post-mount).
+      // chipY centers the chip vertically against the species cap-height (not
+      // its baseline) so the badge optically nests against the type rather
+      // than hanging off it. speciesY is the baseline; cap-height ≈ FS*0.7,
+      // so the cap's vertical center sits at (speciesY - speciesFS*0.35).
       const chipTextW = chipText.length * L.chipFS * 0.62;
       const chipW     = chipTextW + L.chipPadX * 2;
       const chipX     = VB.w - L.padR - chipW;
-      const chipY     = speciesY - L.chipH * 0.78;
+      const chipY     = speciesY - L.speciesFS * 0.35 - L.chipH / 2;
 
       const ruleY     = speciesY + L.speciesRuleGap;
 
