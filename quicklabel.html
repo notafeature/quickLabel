@@ -801,7 +801,7 @@ const LABEL_TEMPLATES = {
       cultivarSpeciesGap: 62,
       speciesRuleGap:     20,
       ruleLotGap:         64,
-      lotNotationGap:     36,
+      lotSourceGap:       52,
       lineGap:            46,
 
       // rule
@@ -835,15 +835,13 @@ const LABEL_TEMPLATES = {
 
       const monoFam   = "'SF Mono', Menlo, Monaco, Consolas, monospace";
       const lotY      = ruleY + L.ruleLotGap;
-      const notationY = lotY + L.lotNotationGap;
-      const srcY      = notationY + L.lineGap;
+      const srcY      = lotY + L.lotSourceGap;
       const grainY    = srcY + L.lineGap;
 
       const bottomY   = VB.h - L.padBot;
 
       const cultivarText = d.cultivar || '—';
       const speciesText  = [d.genus, d.species].filter(Boolean).join(' ');
-      const lineage      = d.notation || '';
       const destLabel    = d.destination || '';
 
       // Source line: one <text> with tspans (native inline flow).
@@ -901,11 +899,6 @@ const LABEL_TEMPLATES = {
         font-family="${monoFam}"
         fill="#000">${svgEsc(d.lotId)}</text>` : ''}
 
-  ${lineage ? `<text class="lbl-notation"
-        x="${L.padL}" y="${notationY}"
-        font-size="${L.lineFS}" font-family="${monoFam}"
-        fill="#000">${svgEsc(lineage)}</text>` : ''}
-
   ${sourceLine}
   ${grainLine}
 
@@ -936,7 +929,6 @@ const LABEL_TEMPLATES = {
       }
 
       fitText(svgEl.querySelector('.lbl-lot'),      contentW);
-      fitText(svgEl.querySelector('.lbl-notation'), contentW);
       fitText(svgEl.querySelector('.lbl-src'),      contentW * 0.72);
       fitText(svgEl.querySelector('.lbl-grain'),    contentW * 0.78);
       fitText(svgEl.querySelector('.lbl-notes'),    contentW * 0.55);
@@ -993,7 +985,7 @@ const FIDDLE_KNOBS = [
   { group: 'Spacing',    key: 'cultivarSpeciesGap', label: 'Cultivar→Species', min: 30,  max: 90,  step: 1    },
   { group: 'Spacing',    key: 'speciesRuleGap',     label: 'Species→Rule',     min: 4,   max: 40,  step: 1    },
   { group: 'Spacing',    key: 'ruleLotGap',         label: 'Rule→Lot',         min: 18,  max: 80,  step: 1    },
-  { group: 'Spacing',    key: 'lotNotationGap',     label: 'Lot→Notation',     min: 24,  max: 70,  step: 1    },
+  { group: 'Spacing',    key: 'lotSourceGap',       label: 'Lot→Source',       min: 24,  max: 80,  step: 1    },
   { group: 'Spacing',    key: 'lineGap',            label: 'Line spacing',     min: 28,  max: 60,  step: 1    },
 
   { group: 'Chip',       key: 'chipH',              label: 'Height',           min: 24,  max: 60,  step: 1    },
@@ -1573,15 +1565,20 @@ function buildLabelData(seqOverride) {
   const notes       = $('notes').value.trim();
   const notation    = buildNotation();
 
-  // Append this thing's lineage notation to the source string on the label.
-  // The source field carries the source's identifier minus the lineage
-  // (e.g. "Agar 187"); the lineage follows the genetic line across the
-  // state change (T2 agar → T2 grain), so it can be appended automatically.
-  // If the user already typed a source ending with the same notation, skip
-  // the append so we don't double-stamp.
-  let source = sourceRaw;
+  // Compose source text. Precedence:
+  //   1. free-text source + lineage notation  → "<source> <notation>"
+  //   2. free-text source only                → "<source>"
+  //   3. lineage notation only                → "<notation>"
+  //   4. neither                              → "" (source line hidden)
+  // Separator is a space (was a period; period felt like part of the lineage
+  // string rather than a join between source and lineage).
+  // Skip the append when the free text already ends with the notation, so
+  // double-stamping doesn't happen if the user typed it manually.
+  let source = '';
   if (sourceRaw && notation && !sourceRaw.endsWith(notation)) {
-    source = `${sourceRaw}.${notation}`;
+    source = `${sourceRaw} ${notation}`;
+  } else {
+    source = sourceRaw || notation || '';
   }
 
   let sub = subCode;
