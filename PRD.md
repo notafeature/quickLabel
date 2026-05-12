@@ -599,6 +599,40 @@ Listed here so it's findable for future templates: when a second template
 ships, the same panel works against it — just point `activeLayout()` at the
 new template's layout object.
 
+### Source type tag (P2)
+
+The Lineage panel currently has a free-text "Source — optional" field plus
+filial/clone/isolation/transfer inputs that compose a lineage notation. The
+combined string lands on the label's source line as
+`<source-text> <notation>`.
+
+Missing: a way to **declare what type of source it is** — agar plate (AR),
+liquid culture (LC), upgrain (UG / stored colonized grain), external LC
+into the lab, etc. Today this is encoded only in the free-text field
+("Agar 187", "LC Yoshi") which is fine for a single user reading their own
+labels but breaks down at lineage-tracking time when the system needs to
+walk source IDs backward to a typed lot.
+
+Proposed: a small select / checkbox group below the free-text field with
+the same canonical letters used for lot prefixes (`AR`, `LC`, `GR/UG`,
+`BL`, plus a passthrough `—` for "just use the free text"). When set:
+
+- The free text remains for human notes (e.g. "Yoshi's PE", "from
+  client X").
+- The source line on the label gets the type prefix: `LC SL188-260509-02`
+  (vs the current free-form `Liquid Culture (BAS eq) F2.C1_B.T7`).
+- Downstream lineage walking becomes mechanical: source tag + lot ID
+  uniquely identifies the predecessor lot.
+
+For external / off-system sources (someone hands you a vial), keep the
+free-text field as today; the type tag describes the substrate it's *on*,
+not necessarily an in-system lot ID.
+
+Defer until the second workflow ships — without LC/agar as actual
+trackable lots, the tag has nothing to point at and is just decoration.
+
+---
+
 ### Future label-rendering targets (parked)
 
 The SVG-based renderer means the label is already a vector document. Two
