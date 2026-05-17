@@ -1,0 +1,8 @@
+{
+  "name": "quicklabel-frontend",
+  "version": "1.0.0",
+  "description": "Static file server for QuickLabel",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
