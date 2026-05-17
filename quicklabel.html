@@ -1703,11 +1703,11 @@ function updateFormForWorkflow(id) {
     el.style.display = el.dataset.wf.split(' ').includes(id) ? '' : 'none';
   });
 
-  // Show correct detail card for non-ingest workflows
+  // Show correct detail card (ingest has no data-detail element, so all hide — correct)
+  document.querySelectorAll('[data-detail]').forEach(el => {
+    el.style.display = el.dataset.detail === wf.detailSection ? '' : 'none';
+  });
   if (id !== 'ingest') {
-    document.querySelectorAll('[data-detail]').forEach(el => {
-      el.style.display = el.dataset.detail === wf.detailSection ? '' : 'none';
-    });
     $('lot-id-label').textContent = `${wf.lotType} ID (next print)`;
   }
 
