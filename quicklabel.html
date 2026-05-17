@@ -32,18 +32,11 @@ body {
 
 #app { display: flex; flex-direction: column; height: 100vh; }
 
-/* ── HEADER ── */
 header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  height: 44px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  position: relative;
-  z-index: 60;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; height: 44px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; position: relative; z-index: 60;
 }
 .logo {
   font-size: 18px; font-weight: 600; letter-spacing: -0.3px;
@@ -58,32 +51,20 @@ header {
   transition: color .15s, border-color .15s;
 }
 .workflow-tag:hover { color: var(--text); border-color: #444; }
-#settings-btn {
-  font-size: 20px; padding: 6px 10px; line-height: 1;
-}
 .header-right { display: flex; align-items: center; gap: 10px; }
 
 /* ── WORKFLOW DROPDOWN ── */
 #wf-dropdown {
-  position: fixed;
-  top: 44px;
-  left: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 var(--r) var(--r);
-  z-index: 55;
-  min-width: 210px;
-  display: none;
-  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  position: fixed; top: 44px; left: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-top: none; border-radius: 0 0 var(--r) var(--r);
+  z-index: 55; min-width: 215px;
+  display: none; box-shadow: 0 8px 24px rgba(0,0,0,.5);
 }
 #wf-dropdown.open { display: block; }
 .wf-opt {
-  padding: 9px 14px;
-  font-size: 12px;
-  cursor: pointer;
-  border-bottom: 1px solid var(--border);
-  transition: background .1s;
+  padding: 9px 14px; font-size: 12px; cursor: pointer;
+  border-bottom: 1px solid var(--border); transition: background .1s;
   display: flex; align-items: center; justify-content: space-between;
 }
 .wf-opt:last-child { border-bottom: none; }
@@ -93,12 +74,11 @@ header {
 .wf-soon {
   font-size: 9px; color: var(--muted);
   text-transform: uppercase; letter-spacing: .5px;
-  border: 1px solid var(--border); border-radius: 3px;
-  padding: 1px 5px;
+  border: 1px solid var(--border); border-radius: 3px; padding: 1px 5px;
 }
 .wf-group-label {
-  font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px;
-  color: var(--muted); padding: 8px 14px 4px;
+  font-size: 9px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--muted); padding: 8px 14px 4px;
 }
 
 /* ── BUTTONS ── */
@@ -106,131 +86,128 @@ button {
   background: var(--surface2); color: var(--text);
   border: 1px solid var(--border); border-radius: var(--r);
   padding: 6px 12px; font-size: 12px; cursor: pointer;
-  transition: background .15s, border-color .15s;
-  font-family: inherit;
+  transition: background .15s, border-color .15s; font-family: inherit;
 }
 button:hover { background: #252525; border-color: #383838; }
-button.primary {
-  background: var(--green); color: #000;
-  border-color: var(--green); font-weight: 600;
-}
+button.primary { background: var(--green); color: #000; border-color: var(--green); font-weight: 600; }
 button.primary:hover { background: #22c55e; border-color: #22c55e; }
 button.icon { padding: 5px 8px; line-height: 1; }
 button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
 button.ghost:hover { color: var(--text); background: var(--surface2); border-color: var(--border); }
+.btn-inline { padding: 3px 7px; font-size: 10px; border-radius: 3px; }
 
 /* ── MAIN LAYOUT ── */
 main { display: flex; flex: 1; overflow: hidden; }
 
-/* ── FORM PANEL ── */
 #form-panel {
-  width: 360px;
-  min-width: 280px;
-  max-width: 720px;
-  flex-shrink: 0;
-  overflow: auto;
+  width: 360px; min-width: 280px; max-width: 760px;
+  flex-shrink: 0; overflow: auto;
   padding: 14px 14px 20px;
   display: flex; flex-direction: column; gap: 10px;
 }
 #form-panel::-webkit-scrollbar { width: 3px; }
 #form-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-/* Field visibility rules — toggled by JS classes on #form-panel */
+/* Field visibility — toggled by JS on #form-panel */
 #form-panel.hide-source .field-source { display: none; }
 #form-panel.hide-filial .field-filial { display: none; }
 #form-panel.hide-clone  .field-clone  { display: none; }
 #form-panel.hide-clone  .field-iso    { display: none; }
 
-/* ── SPLITTER ── */
 #splitter {
-  width: 5px;
-  background: var(--border);
-  cursor: col-resize;
-  flex-shrink: 0;
-  transition: background .15s;
-  position: relative;
+  width: 5px; background: var(--border); cursor: col-resize;
+  flex-shrink: 0; transition: background .15s; position: relative;
 }
 #splitter::after {
-  content: '';
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 1px; height: 30px;
-  background: var(--muted);
-  border-radius: 1px;
-  opacity: .6;
+  content: ''; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 1px; height: 30px; background: var(--muted); border-radius: 1px; opacity: .6;
 }
 #splitter:hover, #splitter.dragging { background: var(--green); }
 #splitter:hover::after, #splitter.dragging::after { background: #000; opacity: 1; }
 body.splitter-dragging { cursor: col-resize !important; user-select: none; }
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 11px 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 11px 12px;
   display: flex; flex-direction: column; gap: 9px;
 }
 .card-label {
   font-size: 10px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: .8px;
-  color: var(--muted);
+  text-transform: uppercase; letter-spacing: .8px; color: var(--muted);
+}
+.card-hint {
+  font-size: 10px; color: var(--muted); line-height: 1.4; margin-top: -2px;
 }
 
 /* ── INPUTS ── */
 .field { display: flex; flex-direction: column; gap: 3px; }
 .fl { font-size: 11px; color: var(--muted); }
-input[type=text], input[type=date], input[type=number], select {
+input[type=text], input[type=date], input[type=number], select, textarea {
   background: var(--surface2); color: var(--text);
   border: 1px solid var(--border); border-radius: 4px;
   padding: 6px 8px; font-size: 13px; font-family: inherit;
   width: 100%; transition: border-color .15s;
 }
-input:focus, select:focus { outline: none; border-color: var(--green); }
-input::placeholder { color: var(--muted); }
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--green);
+}
+input::placeholder, textarea::placeholder { color: var(--muted); }
 select option { background: var(--surface2); }
 input[type=number] { padding-right: 4px; }
-#quantity { width: 64px; }
+textarea { resize: vertical; min-height: 56px; }
 
 .row { display: flex; gap: 8px; }
 .row .field { flex: 1; min-width: 0; }
 .row .field.w56 { flex: 0 0 56px; }
 .row .field.w72 { flex: 0 0 72px; }
 .row .field.w80 { flex: 0 0 80px; }
-.row .field.w90 { flex: 0 0 90px; }
-.row .field.w110 { flex: 0 0 110px; }
 
-/* ── CATEGORY TOGGLE ── */
 .cat-toggle {
-  display: flex; border: 1px solid var(--border);
-  border-radius: 4px; overflow: hidden;
+  display: flex; border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
 }
 .cat-toggle button {
-  flex: 1; border: none; border-radius: 0;
-  padding: 7px 6px; font-size: 12px; font-weight: 500;
-  background: transparent;
+  flex: 1; border: none; border-radius: 0; padding: 7px 6px;
+  font-size: 12px; font-weight: 500; background: transparent;
 }
 .cat-toggle button.on-actives { background: #14532d; color: var(--green); }
 .cat-toggle button.on-gourmet  { background: #164e63; color: var(--teal); }
 
-/* ── INLINE TOGGLE ── */
 .inline-toggle {
   display: flex; align-items: center; gap: 6px;
-  font-size: 11px; color: var(--muted);
-  margin-top: 4px; cursor: pointer; user-select: none;
+  font-size: 11px; color: var(--muted); margin-top: 4px;
+  cursor: pointer; user-select: none;
 }
 .inline-toggle input[type=checkbox] {
-  width: auto; margin: 0; cursor: pointer;
-  accent-color: var(--green);
+  width: auto; margin: 0; cursor: pointer; accent-color: var(--green);
 }
 
-/* ── LINEAGE NOTATION PREVIEW ── */
+/* source-autofill indicator */
+.source-autofill {
+  font-size: 10px; color: var(--green);
+  margin-top: 2px; display: none;
+}
+
+/* inat fields sub-section */
+.inat-sub {
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 8px; margin-top: 6px;
+  display: flex; flex-direction: column; gap: 6px;
+  background: var(--bg);
+}
+
+/* inline add form */
+.add-inline {
+  display: none; margin-top: 4px;
+}
+.add-inline .row { gap: 4px; }
+.add-inline input { font-size: 11px; padding: 4px 7px; }
+.add-inline button { padding: 4px 8px; font-size: 11px; }
+
 .notation-preview {
   font-family: 'SF Mono', Monaco, 'Inconsolata', monospace;
-  font-size: 12px; color: var(--green);
-  min-height: 18px; letter-spacing: .3px;
+  font-size: 12px; color: var(--green); min-height: 18px; letter-spacing: .3px;
 }
-
-/* ── LOT ID DISPLAY ── */
 .lot-display {
   font-family: 'SF Mono', Monaco, monospace;
   font-size: 12px; color: var(--green);
@@ -240,13 +217,11 @@ input[type=number] { padding-right: 4px; }
 }
 .lot-display .range { color: var(--muted); margin-left: 6px; font-size: 11px; }
 
-/* ── PRINT ROW ── */
 .print-row-end { align-items: stretch; }
-.print-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 700; }
-.reset-btn { padding: 10px 14px; font-size: 18px; line-height: 1; }
+.print-btn  { flex: 1; padding: 10px; font-size: 14px; font-weight: 700; }
+.reset-btn  { padding: 10px 14px; font-size: 18px; line-height: 1; }
 .reset-lot-btn { padding: 6px 12px; font-size: 11px; }
 
-/* ── PREVIEW PANEL ── */
 #preview-panel {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -258,41 +233,30 @@ input[type=number] { padding-right: 4px; }
 }
 .printer-row {
   display: flex; align-items: center; gap: 8px;
-  font-size: 11px; color: var(--muted); text-align: center;
-  max-width: 480px;
+  font-size: 11px; color: var(--muted); text-align: center; max-width: 480px;
 }
-
-/* ── LABEL HOST ── */
 .label-host {
-  display: inline-block; line-height: 0;
-  background: #fff; color: #000;
+  display: inline-block; line-height: 0; background: #fff;
   border-radius: 8px;
   box-shadow: 0 6px 32px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.08);
   overflow: hidden;
 }
 .label-host > svg { display: block; }
 
-/* ── PRINT AREA ── */
 #print-area {
-  position: absolute; left: -10000px; top: 0;
-  visibility: hidden;
+  position: absolute; left: -10000px; top: 0; visibility: hidden;
 }
-#print-area .label-host {
-  border-radius: 0;
-  box-shadow: none;
-}
+#print-area .label-host { border-radius: 0; box-shadow: none; }
 
-/* ── SETTINGS PANEL ── */
+/* ── SETTINGS ── */
 #settings-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.55); z-index: 100;
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 100;
 }
 #settings-overlay.open { display: block; }
 #settings-panel {
   position: fixed; top: 0; right: 0; bottom: 0; width: 380px;
   background: var(--surface); border-left: 1px solid var(--border);
-  z-index: 101; transform: translateX(100%);
-  transition: transform .22s ease;
+  z-index: 101; transform: translateX(100%); transition: transform .22s ease;
   display: flex; flex-direction: column;
 }
 #settings-panel.open { transform: translateX(0); }
@@ -304,20 +268,22 @@ input[type=number] { padding-right: 4px; }
 .s-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 18px; }
 .s-body::-webkit-scrollbar { width: 3px; }
 .s-body::-webkit-scrollbar-thumb { background: var(--border); }
+.s-section { display: flex; flex-direction: column; gap: 7px; }
 .s-section h3 {
   font-size: 10px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: .8px; color: var(--muted); margin-bottom: 9px;
+  letter-spacing: .8px; color: var(--muted); margin-bottom: 2px;
 }
-.s-section { display: flex; flex-direction: column; gap: 7px; }
+.s-divider { height: 1px; background: var(--border); }
 
-.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 3px 0; }
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between; padding: 3px 0;
+}
 .toggle-row span { font-size: 12px; }
 .sw { position: relative; width: 36px; height: 20px; border: none; background: none; padding: 0; cursor: pointer; }
 .sw input { opacity: 0; width: 0; height: 0; position: absolute; }
 .sw-track {
-  position: absolute; inset: 0;
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 10px; transition: background .2s;
+  position: absolute; inset: 0; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 10px; transition: background .2s;
 }
 .sw input:checked ~ .sw-track { background: var(--green); border-color: var(--green); }
 .sw-thumb {
@@ -331,124 +297,63 @@ input[type=number] { padding-right: 4px; }
 .entry-item {
   display: flex; align-items: center; gap: 6px;
   padding: 5px 8px; background: var(--surface2);
-  border-radius: 4px; border: 1px solid var(--border);
-  font-size: 12px;
+  border-radius: 4px; border: 1px solid var(--border); font-size: 12px;
 }
 .entry-item .code { font-family: monospace; color: var(--green); flex-shrink: 0; }
 .entry-item .desc { color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.entry-item .sub  { color: var(--muted); font-size: 11px; }
 .entry-item button.ghost { padding: 1px 5px; font-size: 11px; flex-shrink: 0; }
-
 .add-block { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
 .add-block .add-row { display: flex; gap: 6px; }
 .add-block input { font-size: 12px; padding: 5px 8px; }
 .add-block .code-input { width: 80px; font-family: monospace; flex-shrink: 0; }
 
-/* ── FIDDLE PANEL (live layout tuning) ── */
+/* transfer rules sub-section */
+.tr-sub {
+  border: 1px solid var(--border); border-radius: 4px; padding: 8px;
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--bg);
+}
+.tr-sub .toggle-row span { font-size: 11px; color: var(--muted); }
+.tr-override-row .toggle-row span { font-size: 12px; color: var(--text); }
+
+/* ── FIDDLE PANEL ── */
 #fiddle-panel {
   position: fixed; top: 0; right: 0; bottom: 0; width: 340px;
   background: var(--surface); border-left: 1px solid var(--border);
-  z-index: 99; transform: translateX(100%);
-  transition: transform .22s ease;
+  z-index: 99; transform: translateX(100%); transition: transform .22s ease;
   display: flex; flex-direction: column;
 }
 #fiddle-panel.open { transform: translateX(0); }
 .fp-header {
   display: flex; align-items: flex-start; justify-content: space-between;
-  padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
-  gap: 10px;
+  padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; gap: 10px;
 }
 .fp-header h2 { font-size: 13px; font-weight: 600; }
-.fp-header .hint {
-  font-size: 9px; color: var(--muted);
-  letter-spacing: 0.5px; margin-top: 2px;
-  font-family: 'SF Mono', Menlo, monospace;
-}
+.fp-header .hint { font-size: 9px; color: var(--muted); letter-spacing: 0.5px; margin-top: 2px; font-family: 'SF Mono', Menlo, monospace; }
 .fp-body { flex: 1; overflow-y: auto; padding: 12px 14px; }
 .fp-body::-webkit-scrollbar { width: 3px; }
 .fp-body::-webkit-scrollbar-thumb { background: var(--border); }
 .fp-group { margin-bottom: 14px; }
-.fp-group h3 {
-  font-size: 9px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.9px; color: var(--muted); margin-bottom: 7px;
-}
-.fp-row {
-  display: grid; grid-template-columns: 110px 1fr 52px;
-  align-items: center; gap: 8px; padding: 3px 0; font-size: 11px;
-}
+.fp-group h3 { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.9px; color: var(--muted); margin-bottom: 7px; }
+.fp-row { display: grid; grid-template-columns: 110px 1fr 52px; align-items: center; gap: 8px; padding: 3px 0; font-size: 11px; }
 .fp-row label { color: var(--text); }
-.fp-row input[type=range] {
-  appearance: none; -webkit-appearance: none;
-  background: var(--surface2); height: 4px; border-radius: 2px;
-  outline: none; cursor: pointer;
-}
-.fp-row input[type=range]::-webkit-slider-thumb {
-  appearance: none; -webkit-appearance: none;
-  width: 12px; height: 12px; border-radius: 50%;
-  background: var(--green); cursor: pointer;
-}
-.fp-row input[type=range]::-moz-range-thumb {
-  width: 12px; height: 12px; border-radius: 50%; border: 0;
-  background: var(--green); cursor: pointer;
-}
-.fp-row input[type=number] {
-  background: var(--surface2); border: 1px solid var(--border);
-  color: var(--text); padding: 3px 5px; font-size: 11px;
-  border-radius: 3px; width: 100%;
-  font-family: 'SF Mono', Menlo, monospace;
-}
-.fp-footer {
-  display: flex; gap: 6px; padding: 10px 14px;
-  border-top: 1px solid var(--border); flex-shrink: 0; align-items: center;
-}
-.fp-footer button {
-  flex: 1; padding: 7px 10px; font-size: 11px;
-  background: var(--surface2); border: 1px solid var(--border);
-  color: var(--text); border-radius: 4px; cursor: pointer;
-  font-family: inherit;
-}
-.fp-footer button.primary {
-  background: var(--green); color: #000;
-  border-color: var(--green); font-weight: 600;
-}
-.fp-footer .copy-status {
-  font-size: 10px; color: var(--green);
-  font-family: 'SF Mono', Menlo, monospace;
-  min-width: 40px;
-}
+.fp-row input[type=range] { appearance: none; -webkit-appearance: none; background: var(--surface2); height: 4px; border-radius: 2px; outline: none; cursor: pointer; }
+.fp-row input[type=range]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--green); cursor: pointer; }
+.fp-row input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; border: 0; background: var(--green); cursor: pointer; }
+.fp-row input[type=number] { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 3px 5px; font-size: 11px; border-radius: 3px; width: 100%; font-family: 'SF Mono', Menlo, monospace; }
+.fp-footer { display: flex; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--border); flex-shrink: 0; align-items: center; }
+.fp-footer button { flex: 1; padding: 7px 10px; font-size: 11px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 4px; cursor: pointer; font-family: inherit; }
+.fp-footer button.primary { background: var(--green); color: #000; border-color: var(--green); font-weight: 600; }
+.fp-footer .copy-status { font-size: 10px; color: var(--green); font-family: 'SF Mono', Menlo, monospace; min-width: 40px; }
 
 @media print {
   @page { size: 2.25in 1.25in; margin: 0; }
-  html, body {
-    width: 2.25in;
-    height: auto !important;
-    min-height: 0 !important;
-    margin: 0 !important; padding: 0 !important;
-    background: #fff !important;
-    overflow: hidden !important;
-  }
+  html, body { width: 2.25in; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; background: #fff !important; overflow: hidden !important; }
   body > *:not(#print-area) { display: none !important; }
-  #print-area {
-    position: static !important; left: auto !important; top: auto !important;
-    visibility: visible !important; display: block !important;
-    width: 2.25in;
-  }
-  #print-area .label-host {
-    display: block !important;
-    width: 2.25in; height: 1.25in;
-    margin: 0; padding: 0; border: 0;
-    border-radius: 0;
-    box-shadow: none !important;
-    overflow: hidden;
-    page-break-after: always;
-    page-break-inside: avoid;
-    -webkit-print-color-adjust: exact; print-color-adjust: exact;
-  }
+  #print-area { position: static !important; left: auto !important; top: auto !important; visibility: visible !important; display: block !important; width: 2.25in; }
+  #print-area .label-host { display: block !important; width: 2.25in; height: 1.25in; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none !important; overflow: hidden; page-break-after: always; page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   #print-area .label-host:last-child { page-break-after: auto; }
-  #print-area .label-host > svg {
-    display: block;
-    width: 2.25in !important; height: 1.25in !important;
-  }
+  #print-area .label-host > svg { display: block; width: 2.25in !important; height: 1.25in !important; }
 }
 </style>
 </head>
@@ -459,8 +364,7 @@ input[type=number] { padding-right: 4px; }
     <div class="logo">
       Quick<em>Label</em>
       <span class="workflow-tag" id="workflow-tag"
-            onclick="toggleWorkflowDropdown()"
-            title="Switch workflow"
+            onclick="toggleWorkflowDropdown()" title="Switch workflow"
             data-testid="workflow-tag">Make Grain Spawn ▾</span>
     </div>
     <div class="header-right">
@@ -472,7 +376,7 @@ input[type=number] { padding-right: 4px; }
 
   <!-- Workflow selector dropdown -->
   <div id="wf-dropdown">
-    <div class="wf-group-label">Pre-Grain</div>
+    <div class="wf-group-label">Genetics</div>
     <div class="wf-opt" id="wf-opt-ingest"         onclick="switchWorkflow('ingest')"         data-testid="wf-ingest">Ingest New Genetic</div>
     <div class="wf-opt" id="wf-opt-agar-plate"     onclick="switchWorkflow('agar-plate')"     data-testid="wf-agar">Create Agar Plate</div>
     <div class="wf-opt" id="wf-opt-liquid-culture" onclick="switchWorkflow('liquid-culture')" data-testid="wf-lc">Create Liquid Culture</div>
@@ -483,22 +387,20 @@ input[type=number] { padding-right: 4px; }
   </div>
 
   <main>
-
-    <!-- ── FORM ── -->
     <div id="form-panel">
 
-      <!-- GENETIC -->
-      <div class="card">
-        <div class="card-label">Genetic</div>
+      <!-- ══ STANDARD CARDS (agar / lc / grain — hidden for ingest) ══ -->
 
+      <!-- Genetic -->
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn">
+        <div class="card-label">Genetic</div>
         <div class="field">
           <span class="fl">Genetic Code</span>
-          <input type="text" id="gen-code" placeholder="SL192" maxlength="10"
+          <input type="text" id="gen-code" placeholder="SL192" maxlength="12"
                  oninput="onCodeChange()" onchange="onCodeChange()" list="code-dl"
                  data-testid="gen-code-input">
           <datalist id="code-dl"></datalist>
         </div>
-
         <div class="field">
           <span class="fl">Category</span>
           <div class="cat-toggle">
@@ -506,40 +408,33 @@ input[type=number] { padding-right: 4px; }
             <button id="btn-gourmet" onclick="setCategory('gourmet')">Gourmet / Functional</button>
           </div>
         </div>
-
         <div class="row">
           <div class="field">
             <span class="fl">Genus</span>
-            <select id="genus" onchange="onGenus()">
-              <option value="">— genus —</option>
-            </select>
+            <select id="genus" onchange="onGenus()"><option value="">— genus —</option></select>
           </div>
           <div class="field">
             <span class="fl">Species</span>
-            <select id="species" onchange="updatePreview()">
-              <option value="">— species —</option>
-            </select>
+            <select id="species" onchange="updatePreview()"><option value="">— species —</option></select>
           </div>
         </div>
-
         <div class="field">
           <span class="fl">Cultivar</span>
           <input type="text" id="cultivar" placeholder="e.g. Enigma" oninput="updatePreview()">
         </div>
       </div>
 
-      <!-- LINEAGE -->
-      <div class="card">
+      <!-- Lineage -->
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn">
         <div class="card-label">Lineage</div>
-
         <div class="field field-source">
-          <span class="fl" id="source-label">Source <span style="color:var(--muted);font-weight:400">— optional</span></span>
+          <span class="fl">Source Lot ID <span style="color:var(--muted);font-weight:400">— optional</span></span>
           <input type="text" id="source"
-                 placeholder="e.g. SP-SL188-260201-01, AL-SL188-260205-02"
-                 oninput="updatePreview()"
+                 placeholder="e.g. SP-SL188-260201-01"
+                 oninput="onSourceChange()"
                  data-testid="source-input">
+          <span class="source-autofill" id="source-autofill">Genetic info filled from source record</span>
         </div>
-
         <div class="row" id="lineage-row">
           <div class="field w56 field-filial" id="filial-field">
             <span class="fl">Filial</span>
@@ -561,20 +456,17 @@ input[type=number] { padding-right: 4px; }
         <div class="notation-preview" id="notation">—</div>
       </div>
 
-      <!-- LOT -->
-      <div class="card">
+      <!-- Lot -->
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn">
         <div class="card-label">Lot</div>
-
         <div class="field">
           <span class="fl">Date</span>
           <input type="date" id="date" onchange="onDateChange()">
         </div>
-
         <div class="field">
           <span class="fl" id="lot-id-label">Grain Lot ID (next print)</span>
           <div class="lot-display" id="lot-display">—</div>
         </div>
-
         <div class="row" style="align-items:flex-end;gap:8px">
           <div class="field" style="flex:0 0 auto">
             <span class="fl">Quantity</span>
@@ -586,35 +478,18 @@ input[type=number] { padding-right: 4px; }
         </div>
       </div>
 
-      <!-- DETAILS: Ingest New Genetic -->
-      <div class="card" data-detail="ingest" style="display:none">
-        <div class="card-label">Details</div>
-        <div class="field">
-          <span class="fl">Media / Source Type</span>
-          <select id="ingest-type" onchange="onIngestTypeChange()" data-testid="ingest-type-select">
-            <option value="">— select type —</option>
-          </select>
-        </div>
-        <div class="field">
-          <span class="fl">Provenance <span style="color:var(--muted);font-weight:400">— optional</span></span>
-          <input type="text" id="ingest-provenance"
-                 placeholder="e.g. Vendor: FungusHead, Trade: John, Wild: Mt Hood"
-                 oninput="updatePreview()" data-testid="ingest-provenance-input">
-        </div>
-      </div>
-
-      <!-- DETAILS: Create Agar Plate -->
+      <!-- Details: Agar Plate -->
       <div class="card" data-detail="agar" style="display:none">
         <div class="card-label">Details</div>
         <div class="field">
           <span class="fl">Agar Formula <span style="color:var(--muted);font-weight:400">— optional</span></span>
-          <input type="text" id="agar-formula" placeholder="e.g. MEA, PDYA, MYPA"
+          <input type="text" id="agar-formula" placeholder="e.g. MEA, PDYA"
                  oninput="updatePreview()" list="agar-dl" data-testid="agar-formula-input">
           <datalist id="agar-dl"></datalist>
         </div>
       </div>
 
-      <!-- DETAILS: Create Liquid Culture -->
+      <!-- Details: Liquid Culture -->
       <div class="card" data-detail="lc" style="display:none">
         <div class="card-label">Details</div>
         <div class="field">
@@ -625,7 +500,7 @@ input[type=number] { padding-right: 4px; }
         </div>
       </div>
 
-      <!-- DETAILS: Make Grain Spawn -->
+      <!-- Details: Grain Spawn -->
       <div class="card" data-detail="grain">
         <div class="card-label">Details</div>
         <div class="field">
@@ -640,20 +515,225 @@ input[type=number] { padding-right: 4px; }
         </div>
       </div>
 
-      <!-- NOTES (standalone, shared across all workflows) -->
-      <div class="card">
+      <!-- Notes (standard workflows) -->
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn">
         <div class="field">
-          <span class="fl">Notes <span style="color:var(--muted);font-weight:400">— optional</span></span>
-          <input type="text" id="notes" placeholder="Optional, ~40 chars" maxlength="60"
+          <span class="fl">Notes <span style="color:var(--muted);font-weight:400">— optional, shown on label</span></span>
+          <input type="text" id="notes" placeholder="~40 chars" maxlength="60"
                  oninput="updatePreview()" data-testid="notes-input">
         </div>
       </div>
 
-      <!-- PRINT -->
-      <div class="card">
+      <!-- Print (standard workflows) -->
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn">
         <div class="row print-row-end">
           <button class="primary print-btn" id="print-btn" onclick="printLabel()"
                   data-testid="print-btn">Print</button>
+          <button class="reset-btn" onclick="resetForm()" title="Clear form">↺</button>
+        </div>
+      </div>
+
+      <!-- ══ INGEST CARDS (shown only for ingest workflow) ══ -->
+
+      <!-- Ingest: Identity -->
+      <div class="card" data-wf="ingest" style="display:none">
+        <div class="card-label">Identity</div>
+
+        <!-- Lab Code with auto-generate -->
+        <div class="field">
+          <span class="fl">Lab Code</span>
+          <div class="row" style="gap:6px">
+            <input type="text" id="ingest-code" placeholder="SL176" maxlength="12"
+                   oninput="updatePreview()" style="flex:1" data-testid="ingest-code-input">
+            <button class="btn-inline" onclick="autoGenIngestCode()"
+                    title="Auto-assign next sequential code" data-testid="auto-gen-btn">Auto</button>
+          </div>
+        </div>
+
+        <!-- Category -->
+        <div class="field">
+          <span class="fl">Category</span>
+          <div class="cat-toggle">
+            <button id="ingest-btn-actives" onclick="setIngestCategory('actives')">Actives</button>
+            <button id="ingest-btn-gourmet" onclick="setIngestCategory('gourmet')">Gourmet / Functional</button>
+          </div>
+        </div>
+
+        <!-- Genus with + Add New -->
+        <div class="row">
+          <div class="field">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+              <span class="fl" style="margin-bottom:0">Genus</span>
+              <button class="ghost btn-inline" onclick="toggleAddGenus()">+ Add</button>
+            </div>
+            <select id="ingest-genus" onchange="onIngestGenus()">
+              <option value="">— genus —</option>
+            </select>
+            <div class="add-inline" id="add-genus-form">
+              <div class="row">
+                <input type="text" id="new-genus-text" placeholder="New genus name">
+                <button class="btn-inline" onclick="saveNewGenus()">Save</button>
+                <button class="ghost btn-inline" onclick="toggleAddGenus()">✕</button>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+              <span class="fl" style="margin-bottom:0">Species</span>
+              <button class="ghost btn-inline" onclick="toggleAddSpecies()">+ Add</button>
+            </div>
+            <select id="ingest-species" onchange="updatePreview()">
+              <option value="">— species —</option>
+            </select>
+            <div class="add-inline" id="add-species-form">
+              <div class="row">
+                <input type="text" id="new-species-text" placeholder="New species name">
+                <button class="btn-inline" onclick="saveNewSpecies()">Save</button>
+                <button class="ghost btn-inline" onclick="toggleAddSpecies()">✕</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="fl">Cultivar</span>
+          <input type="text" id="ingest-cultivar" placeholder="e.g. Mana from Heaven"
+                 oninput="updatePreview()" data-testid="ingest-cultivar-input">
+        </div>
+      </div>
+
+      <!-- Ingest: Origin -->
+      <div class="card" data-wf="ingest" style="display:none">
+        <div class="card-label">Origin</div>
+
+        <!-- Media Type -->
+        <div class="field">
+          <span class="fl">Received as</span>
+          <select id="ingest-media-type" onchange="onIngestMediaTypeChange()"
+                  data-testid="ingest-media-type-select">
+            <option value="">— select type —</option>
+          </select>
+        </div>
+
+        <!-- Filial + lineage (clone/transfer shown only for complex types) -->
+        <div class="row">
+          <div class="field w56">
+            <span class="fl">Filial</span>
+            <input type="text" id="ingest-filial" placeholder="F0" maxlength="6"
+                   value="F0" oninput="updatePreview()">
+          </div>
+          <div class="field w72" id="ingest-clone-field" style="display:none">
+            <span class="fl">Clone</span>
+            <input type="text" id="ingest-clone" placeholder="C1" maxlength="5"
+                   oninput="updatePreview()">
+          </div>
+          <div class="field w56" id="ingest-iso-field" style="display:none">
+            <span class="fl">Isolation</span>
+            <input type="text" id="ingest-iso" placeholder="A" maxlength="2"
+                   oninput="updatePreview()">
+          </div>
+          <div class="field w72" id="ingest-transfer-field" style="display:none">
+            <span class="fl">Transfer</span>
+            <input type="text" id="ingest-transfer" placeholder="T0" maxlength="4"
+                   oninput="updatePreview()">
+          </div>
+        </div>
+
+        <!-- Vendor + Originator -->
+        <div class="row">
+          <div class="field">
+            <span class="fl">From (vendor / sender)</span>
+            <input type="text" id="ingest-vendor"
+                   placeholder="e.g. FungusHead, Bacon"
+                   oninput="updatePreview()" data-testid="ingest-vendor-input">
+          </div>
+          <div class="field">
+            <span class="fl">Originator <span style="color:var(--muted);font-weight:400">— if different</span></span>
+            <input type="text" id="ingest-originator"
+                   placeholder="e.g. Raj, original cultivator"
+                   oninput="updatePreview()">
+          </div>
+        </div>
+
+        <!-- Origin Date -->
+        <div class="field">
+          <span class="fl">Origin Date <span style="color:var(--muted);font-weight:400">— when item was made / collected</span></span>
+          <input type="date" id="ingest-origin-date">
+        </div>
+
+        <!-- iNaturalist observation -->
+        <div class="field">
+          <label class="inline-toggle">
+            <input type="checkbox" id="ingest-inat-enabled" onchange="onInatToggle()">
+            <span>iNaturalist observation</span>
+          </label>
+          <div class="inat-sub" id="ingest-inat-fields" style="display:none">
+            <div class="row">
+              <div class="field">
+                <span class="fl">INAT #</span>
+                <input type="text" id="ingest-inat-number" placeholder="12345678">
+              </div>
+              <div class="field">
+                <span class="fl">Collector</span>
+                <input type="text" id="ingest-inat-collector" placeholder="Name">
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <span class="fl">Collection Date</span>
+                <input type="date" id="ingest-inat-date">
+              </div>
+              <div class="field">
+                <span class="fl">Location</span>
+                <input type="text" id="ingest-inat-location" placeholder="e.g. Mt Hood, OR">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Family Associations -->
+        <div class="field">
+          <span class="fl">Family Associations <span style="color:var(--muted);font-weight:400">— optional</span></span>
+          <input type="text" id="ingest-family"
+                 placeholder="e.g. Tidal Wave, Melmac, B+ cross">
+        </div>
+
+        <!-- Date Ingested -->
+        <div class="field">
+          <span class="fl">Date Ingested</span>
+          <input type="date" id="ingest-date">
+        </div>
+
+        <!-- Extended notes (stored only, NOT on label) -->
+        <div class="field">
+          <span class="fl">Notes <span style="color:var(--muted);font-weight:400">— stored only, not printed on label</span></span>
+          <textarea id="ingest-ext-notes"
+                    placeholder="Detailed provenance, phenotype observations, history…"></textarea>
+        </div>
+      </div>
+
+      <!-- Ingest: Label Notes (brief, appears on label) -->
+      <div class="card" data-wf="ingest" style="display:none">
+        <div class="field">
+          <span class="fl">Label Notes <span style="color:var(--muted);font-weight:400">— brief, printed on label</span></span>
+          <input type="text" id="ingest-label-notes" placeholder="~40 chars max" maxlength="60"
+                 oninput="updatePreview()" data-testid="ingest-label-notes-input">
+        </div>
+      </div>
+
+      <!-- Ingest: Print -->
+      <div class="card" data-wf="ingest" style="display:none">
+        <div class="row" style="align-items:flex-end;gap:8px;margin-bottom:6px">
+          <div class="field" style="flex:0 0 auto">
+            <span class="fl">Copies</span>
+            <input type="number" id="ingest-quantity" min="1" max="20" value="1"
+                   style="width:64px">
+          </div>
+          <span style="font-size:11px;color:var(--muted);padding-bottom:8px">labels for this item</span>
+        </div>
+        <div class="row print-row-end">
+          <button class="primary print-btn" id="ingest-print-btn"
+                  onclick="printIngestLabel()" data-testid="ingest-print-btn">Save &amp; Print</button>
           <button class="reset-btn" onclick="resetForm()" title="Clear form">↺</button>
         </div>
       </div>
@@ -662,7 +742,6 @@ input[type=number] { padding-right: 4px; }
 
     <div id="splitter" title="Drag to resize"></div>
 
-    <!-- ── PREVIEW ── -->
     <div id="preview-panel">
       <span class="preview-label-hint">Label Preview — 2.25 × 1.25 in</span>
       <div id="label-preview" class="label-host"></div>
@@ -671,25 +750,21 @@ input[type=number] { padding-right: 4px; }
         + paper <strong style="color:var(--text)">30334</strong>.
       </div>
     </div>
-
   </main>
-</div><!-- /app -->
+</div>
 
 <div id="print-area"></div>
 
 <!-- ── FIDDLE PANEL ── -->
 <div id="fiddle-panel">
   <div class="fp-header">
-    <div>
-      <h2>Layout Lab</h2>
-      <div class="hint">live tuning · ⌘\ to toggle</div>
-    </div>
-    <button class="icon ghost" onclick="closeFiddle()" data-testid="fiddle-close-btn">✕</button>
+    <div><h2>Layout Lab</h2><div class="hint">live tuning · ⌘\ to toggle</div></div>
+    <button class="icon ghost" onclick="closeFiddle()">✕</button>
   </div>
   <div class="fp-body" id="fp-body"></div>
   <div class="fp-footer">
-    <button onclick="resetFiddle()" data-testid="fiddle-reset-btn">Reset</button>
-    <button class="primary" onclick="copyFiddle()" data-testid="fiddle-copy-btn">Copy JSON</button>
+    <button onclick="resetFiddle()">Reset</button>
+    <button class="primary" onclick="copyFiddle()">Copy JSON</button>
     <span class="copy-status" id="fp-copy-status"></span>
   </div>
 </div>
@@ -707,83 +782,89 @@ input[type=number] { padding-right: 4px; }
     <div class="s-section">
       <h3>Lab</h3>
       <div class="row">
-        <div class="field w90">
+        <div class="field w80">
           <span class="fl">Lab Prefix</span>
           <input type="text" id="s-prefix" placeholder="SL" maxlength="5" oninput="saveSettings()">
         </div>
       </div>
     </div>
 
+    <!-- Genetics Library -->
+    <div class="s-section">
+      <h3>Genetics Library</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px"><span id="genetics-count">0</span> genetics in library</span>
+        <button style="font-size:11px;padding:4px 10px"
+                onclick="switchWorkflow('ingest');closeSettings()">+ Ingest New</button>
+      </div>
+      <p style="font-size:11px;color:var(--muted);line-height:1.5">
+        Add genetics via the Ingest workflow. CSV import coming soon.
+      </p>
+    </div>
+
     <!-- Lineage Field Visibility -->
     <div class="s-section">
       <h3>Lineage Fields</h3>
       <p style="font-size:11px;color:var(--muted);line-height:1.5">
-        Show or hide lineage fields on the form. Hidden fields are omitted from labels.
+        Show or hide lineage fields. Hidden fields are omitted from labels.
       </p>
       <div class="toggle-row">
         <span>Show Source field</span>
-        <label class="sw">
-          <input type="checkbox" id="fv-source" onchange="saveFieldVis('source')">
-          <span class="sw-track"></span><span class="sw-thumb"></span>
-        </label>
+        <label class="sw"><input type="checkbox" id="fv-source" onchange="saveFieldVis('source')"><span class="sw-track"></span><span class="sw-thumb"></span></label>
       </div>
       <div class="toggle-row">
         <span>Show Filial (F) field</span>
-        <label class="sw">
-          <input type="checkbox" id="fv-filial" onchange="saveFieldVis('filial')">
-          <span class="sw-track"></span><span class="sw-thumb"></span>
-        </label>
+        <label class="sw"><input type="checkbox" id="fv-filial" onchange="saveFieldVis('filial')"><span class="sw-track"></span><span class="sw-thumb"></span></label>
       </div>
       <div class="toggle-row">
         <span>Show Clone / Isolation (C / _A)</span>
-        <label class="sw">
-          <input type="checkbox" id="fv-clone" onchange="saveFieldVis('clone')">
-          <span class="sw-track"></span><span class="sw-thumb"></span>
-        </label>
+        <label class="sw"><input type="checkbox" id="fv-clone" onchange="saveFieldVis('clone')"><span class="sw-track"></span><span class="sw-thumb"></span></label>
       </div>
     </div>
 
-    <!-- Genetic Codes -->
+    <!-- Transfer Rules -->
     <div class="s-section">
-      <h3>Genetic Codes</h3>
+      <h3>Transfer Advancement Rules</h3>
       <p style="font-size:11px;color:var(--muted);line-height:1.5">
-        Each entry maps a code to a genetic. Selecting a code on the form fills genus, species, cultivar.
+        When does the Transfer (T) number advance on state change?
       </p>
-      <div class="add-block">
-        <div class="cat-toggle">
-          <button id="s-cv-actives" onclick="setCvCat('actives')">Actives</button>
-          <button id="s-cv-gourmet" onclick="setCvCat('gourmet')">Gourmet / Functional</button>
-        </div>
-        <div class="row">
-          <div class="field">
-            <span class="fl">Genus</span>
-            <select id="s-cv-genus" onchange="onCvGenus()">
-              <option value="">— genus —</option>
-            </select>
-          </div>
-          <div class="field">
-            <span class="fl">Species</span>
-            <select id="s-cv-species">
-              <option value="">— species —</option>
-            </select>
-          </div>
-        </div>
-        <div class="add-row">
-          <input class="code-input" type="text" id="cv-code" placeholder="SL192" maxlength="10">
-          <input type="text" id="cv-name" placeholder="Cultivar name" onkeydown="if(event.key==='Enter')saveCode()">
-          <button id="cv-save-btn" onclick="saveCode()">Add</button>
-          <button id="cv-cancel-btn" onclick="cancelEditCode()" style="display:none">Cancel</button>
+      <div class="tr-override-row">
+        <div class="toggle-row">
+          <span>Allow manual override (global)</span>
+          <label class="sw"><input type="checkbox" id="tr-override" onchange="saveTransferRules()"><span class="sw-track"></span><span class="sw-thumb"></span></label>
         </div>
       </div>
-      <div class="entry-list" id="codes-list" style="margin-top:8px"></div>
+      <div class="tr-sub">
+        <div class="toggle-row">
+          <span>Agar → Agar: advance T</span>
+          <label class="sw"><input type="checkbox" id="tr-agar-agar" onchange="saveTransferRules()"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>Agar → LC: advance T</span>
+          <label class="sw"><input type="checkbox" id="tr-agar-lc" onchange="saveTransferRules()"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>Agar → Grain: advance T</span>
+          <label class="sw"><input type="checkbox" id="tr-agar-grain" onchange="saveTransferRules()"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>LC → LC: advance T</span>
+          <label class="sw"><input type="checkbox" id="tr-lc-lc" onchange="saveTransferRules()"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>Grain → Grain: advance T</span>
+          <label class="sw"><input type="checkbox" id="tr-grain-grain" onchange="saveTransferRules()"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>Grain → Bulk Substrate: advance T</span>
+          <label class="sw"><input type="checkbox" id="tr-grain-bulk" onchange="saveTransferRules()"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+        </div>
+      </div>
     </div>
 
     <!-- Grain Types -->
     <div class="s-section">
       <h3>Grain Types</h3>
-      <p style="font-size:11px;color:var(--muted);line-height:1.5">
-        Grain preparations for the Make Grain Spawn workflow.
-      </p>
       <div class="add-block">
         <div class="add-row">
           <input class="code-input" type="text" id="new-grain-code" placeholder="RYE" maxlength="12">
@@ -800,7 +881,7 @@ input[type=number] { padding-right: 4px; }
     <div class="s-section">
       <h3>Ingest Types</h3>
       <p style="font-size:11px;color:var(--muted);line-height:1.5">
-        Media types for ingesting new genetics. Code is used as the lot-ID prefix (e.g., <strong style="color:var(--green)">SP</strong>-SL192-…).
+        Code is used as the lot prefix (e.g., <strong style="color:var(--green)">SP</strong>-SL176-…).
       </p>
       <div class="add-block">
         <div class="add-row">
@@ -818,9 +899,6 @@ input[type=number] { padding-right: 4px; }
     <!-- Agar Formulas -->
     <div class="s-section">
       <h3>Agar Formulas</h3>
-      <p style="font-size:11px;color:var(--muted);line-height:1.5">
-        Agar preparations for the Create Agar Plate workflow.
-      </p>
       <div class="add-block">
         <div class="add-row">
           <input class="code-input" type="text" id="new-agar-code" placeholder="MEA" maxlength="10"
@@ -842,10 +920,8 @@ input[type=number] { padding-right: 4px; }
 
 const TAXA = {
   actives: {
-    Psilocybe: [
-      'azurescens','caerulescens','cubensis','mexicana',
-      'ochraceocentrata','subaeruginosa','subtropicalis','tampanensis','zapotecorum'
-    ],
+    Psilocybe: ['azurescens','caerulescens','cubensis','mexicana',
+                'ochraceocentrata','subaeruginosa','subtropicalis','tampanensis','zapotecorum'],
     Panaeolus: ['cyanescens']
   },
   gourmet: {
@@ -874,6 +950,9 @@ const DEFAULT_INGEST_TYPES = [
   { code: 'CT', label: 'Castellani Tube' }
 ];
 
+// Types that carry complex lineage (clone, transfer fields shown on ingest form)
+const COMPLEX_INGEST_TYPES = new Set(['AP', 'LI', 'SN', 'CT', 'GT']);
+
 const DEFAULT_AGAR_FORMULAS = [
   { code: 'MEA',  desc: 'Malt Extract Agar' },
   { code: 'PDYA', desc: 'Potato Dextrose Yeast Agar' },
@@ -883,46 +962,40 @@ const DEFAULT_AGAR_FORMULAS = [
 ];
 
 const DEFAULT_VESSEL_TYPES = [
-  { code: 'JAR',   desc: 'Bulk Jar' },
-  { code: '10mL',  desc: '10mL Syringe' },
-  { code: '20mL',  desc: '20mL Syringe' },
-  { code: 'BAG',   desc: 'Filter Patch Bag' }
+  { code: 'JAR',  desc: 'Bulk Jar' },
+  { code: '10mL', desc: '10mL Syringe' },
+  { code: '20mL', desc: '20mL Syringe' },
+  { code: 'BAG',  desc: 'Filter Patch Bag' }
 ];
+
+const DEFAULT_TRANSFER_RULES = {
+  allowOverride: true,
+  agarToAgar:    true,
+  agarToLC:      false,
+  agarToGrain:   false,
+  lcToLC:        true,
+  grainToGrain:  true,
+  grainToBulk:   false
+};
 
 // ─── WORKFLOWS ────────────────────────────────────────────────────────────────
 
 const WORKFLOWS = {
   'ingest': {
-    label:         'Ingest New Genetic',
-    destination:   null,        // dynamically set from ingest type selection
-    lotType:       'Ingest Record',
-    lotPrefix:     null,        // dynamically set from ingest type selection
-    mediaLabel:    null,        // not used on ingest labels
-    detailSection: 'ingest'
+    label: 'Ingest New Genetic', lotType: 'Ingest Record',
+    lotPrefix: null, destination: null, mediaLabel: null, detailSection: 'ingest'
   },
   'agar-plate': {
-    label:         'Create Agar Plate',
-    destination:   'Agar Plate',
-    lotType:       'Agar Lot',
-    lotPrefix:     'AL',
-    mediaLabel:    'Media',
-    detailSection: 'agar'
+    label: 'Create Agar Plate', lotType: 'Agar Lot',
+    lotPrefix: 'AL', destination: 'Agar Plate', mediaLabel: 'Media', detailSection: 'agar'
   },
   'liquid-culture': {
-    label:         'Create Liquid Culture',
-    destination:   'Liquid Culture',
-    lotType:       'LC Lot',
-    lotPrefix:     'LC',
-    mediaLabel:    'Vessel',
-    detailSection: 'lc'
+    label: 'Create Liquid Culture', lotType: 'LC Lot',
+    lotPrefix: 'LC', destination: 'Liquid Culture', mediaLabel: 'Vessel', detailSection: 'lc'
   },
   'grain-spawn': {
-    label:         'Make Grain Spawn',
-    destination:   'Grain Spawn',
-    lotType:       'Grain Lot',
-    lotPrefix:     'GL',
-    mediaLabel:    'Media',
-    detailSection: 'grain'
+    label: 'Make Grain Spawn', lotType: 'Grain Lot',
+    lotPrefix: 'GL', destination: 'Grain Spawn', mediaLabel: 'Media', detailSection: 'grain'
   }
 };
 
@@ -933,14 +1006,12 @@ function currentWorkflow() { return WORKFLOWS[currentWorkflowId]; }
 
 const PRINTERS = {
   'dymo-30334': {
-    id: 'dymo-30334',
-    name: 'DYMO LabelWriter — 30334',
-    paper: { widthIn: 2.25, heightIn: 1.25 },
-    template: 'grain-spawn-9x5'
+    id: 'dymo-30334', name: 'DYMO LabelWriter — 30334',
+    paper: { widthIn: 2.25, heightIn: 1.25 }, template: 'grain-spawn-9x5'
   }
 };
 
-const PREVIEW_SCALE = 2.4;
+const PREVIEW_SCALE  = 2.4;
 let currentPrinterId = 'dymo-30334';
 
 const CHIP_COLORS = {
@@ -949,14 +1020,12 @@ const CHIP_COLORS = {
 };
 
 function svgEsc(s) {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function fitText(textEl, maxLen) {
   if (!textEl || !maxLen) return;
-  textEl.removeAttribute('textLength');
-  textEl.removeAttribute('lengthAdjust');
+  textEl.removeAttribute('textLength'); textEl.removeAttribute('lengthAdjust');
   const natural = textEl.getComputedTextLength();
   if (natural > maxLen) {
     textEl.setAttribute('textLength', maxLen);
@@ -964,66 +1033,38 @@ function fitText(textEl, maxLen) {
   }
 }
 
-// ── Label template ────────────────────────────────────────────────────────────
-// All workflows use the same 9:5 landscape template. Different workflow data
-// changes what appears on each line; the layout is unchanged.
 const LABEL_TEMPLATES = {
   'grain-spawn-9x5': {
     viewBox: { w: 900, h: 500 },
     layout: {
       padL: 36, padR: 36, padTop: 26, padBot: 45,
-
-      cultivarFS:      100,
-      cultivarKerning: 1.75,
-      speciesFS:        38,
-      lotFS:            50,
-      lineFS:           34,
-      dimFS:            34,
-      dateFS:           30,
-      notesFS:          30,
-
+      cultivarFS: 100, cultivarKerning: 1.75,
+      speciesFS: 38, lotFS: 50, lineFS: 34, dimFS: 34,
+      dateFS: 30, notesFS: 30,
       chipH: 42, chipPadX: 18, chipFS: 30,
-
-      cultivarSpeciesGap: 62,
-      speciesRuleGap:     20,
-      ruleLotGap:         50,
-      lotNotationGap:     44,   // lot ID → lineage notation
-      notationSrcGap:     44,   // lineage notation → destination|source line
-      lotSourceGap:       52,   // fallback when notation is absent
-      lineGap:            44,
-
-      ruleStroke: 2,
-      ruleColor:  '#d8d8d8'
+      cultivarSpeciesGap: 62, speciesRuleGap: 20,
+      ruleLotGap: 50, lotNotationGap: 44, notationSrcGap: 44,
+      lotSourceGap: 52, lineGap: 44,
+      ruleStroke: 2, ruleColor: '#d8d8d8'
     },
 
     render(d) {
-      const VB = this.viewBox;
-      const L  = this.layout;
-      const contentW = VB.w - L.padL - L.padR;
-
+      const VB = this.viewBox, L = this.layout;
       const cat      = d.cat === 'actives' ? 'actives' : 'gourmet';
       const chip     = CHIP_COLORS[cat];
       const chipText = cat === 'actives' ? 'ACTIVE' : 'GOURMET';
 
-      const cultivarY = L.padTop + L.cultivarFS * 0.82;
-      const speciesY  = cultivarY + L.cultivarSpeciesGap;
-
-      const chipTextW = chipText.length * L.chipFS * 0.62;
-      const chipW     = chipTextW + L.chipPadX * 2;
-      const chipX     = VB.w - L.padR - chipW;
-      const chipY     = speciesY - L.speciesFS * 0.35 - L.chipH / 2;
-
+      const cultivarY  = L.padTop + L.cultivarFS * 0.82;
+      const speciesY   = cultivarY + L.cultivarSpeciesGap;
+      const chipTextW  = chipText.length * L.chipFS * 0.62;
+      const chipW      = chipTextW + L.chipPadX * 2;
+      const chipX      = VB.w - L.padR - chipW;
+      const chipY      = speciesY - L.speciesFS * 0.35 - L.chipH / 2;
       const ruleY      = speciesY + L.speciesRuleGap;
       const monoFam    = "'SF Mono', Menlo, Monaco, Consolas, monospace";
       const lotY       = ruleY + L.ruleLotGap;
-
-      // Notation line and source line y-positions:
-      // If notation is present, notation gets its own line, then source follows.
-      // If notation is absent, source collapses up using the old lotSourceGap.
       const notationY  = lotY + L.lotNotationGap;
-      const srcY       = d.notation
-        ? notationY + L.notationSrcGap
-        : lotY + L.lotSourceGap;
+      const srcY       = d.notation ? notationY + L.notationSrcGap : lotY + L.lotSourceGap;
       const grainY     = srcY + L.lineGap;
       const bottomY    = VB.h - L.padBot;
 
@@ -1040,84 +1081,53 @@ const LABEL_TEMPLATES = {
   </text>` : '';
 
       const mediaLabel = d.mediaLabel || 'Media';
-      const grainLine = d.sub ? `
+      const grainLine  = d.sub ? `
   <text x="${L.padL}" y="${grainY}" font-size="${L.lineFS}" fill="#000">
     <tspan>${svgEsc(mediaLabel)}:</tspan><tspan class="lbl-grain" dx="10">${svgEsc(d.sub)}</tspan>
   </text>` : '';
 
-      return `
-<svg xmlns="http://www.w3.org/2000/svg"
+      return `<svg xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 ${VB.w} ${VB.h}"
      font-family="Arial, Helvetica, sans-serif"
-     shape-rendering="geometricPrecision"
-     text-rendering="geometricPrecision">
-
+     shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
   <rect width="${VB.w}" height="${VB.h}" fill="#ffffff"/>
-
-  <text class="lbl-cultivar"
-        x="${L.padL}" y="${cultivarY}"
+  <text class="lbl-cultivar" x="${L.padL}" y="${cultivarY}"
         font-size="${L.cultivarFS}" font-weight="700"
-        letter-spacing="${L.cultivarKerning}"
-        fill="#000">${svgEsc(cultivarText)}</text>
-
-  ${speciesText ? `<text class="lbl-species"
-        x="${L.padL}" y="${speciesY}"
-        font-size="${L.speciesFS}" font-style="italic"
-        fill="#333">${svgEsc(speciesText)}</text>` : ''}
-
+        letter-spacing="${L.cultivarKerning}" fill="#000">${svgEsc(cultivarText)}</text>
+  ${speciesText ? `<text class="lbl-species" x="${L.padL}" y="${speciesY}"
+        font-size="${L.speciesFS}" font-style="italic" fill="#333">${svgEsc(speciesText)}</text>` : ''}
   <g class="lbl-chip" transform="translate(${chipX} ${chipY})">
     <rect width="${chipW}" height="${L.chipH}" rx="6" ry="6" fill="${chip.fill}"/>
-    <text x="${chipW / 2}" y="${L.chipH * 0.72}"
-          font-size="${L.chipFS}" font-weight="700"
-          letter-spacing="1.3"
-          text-anchor="middle"
-          fill="${chip.text}">${chipText}</text>
+    <text x="${chipW/2}" y="${L.chipH*0.72}" font-size="${L.chipFS}" font-weight="700"
+          letter-spacing="1.3" text-anchor="middle" fill="${chip.text}">${chipText}</text>
   </g>
-
-  <line x1="${L.padL}" y1="${ruleY}" x2="${VB.w - L.padR}" y2="${ruleY}"
+  <line x1="${L.padL}" y1="${ruleY}" x2="${VB.w-L.padR}" y2="${ruleY}"
         stroke="${L.ruleColor}" stroke-width="${L.ruleStroke}"/>
-
-  ${d.lotId ? `<text class="lbl-lot"
-        x="${L.padL}" y="${lotY}"
+  ${d.lotId ? `<text class="lbl-lot" x="${L.padL}" y="${lotY}"
         font-size="${L.lotFS}" font-weight="600"
-        font-family="${monoFam}"
-        fill="#000">${svgEsc(d.lotId)}</text>` : ''}
-
-  ${d.notation ? `<text class="lbl-notation"
-        x="${L.padL}" y="${notationY}"
-        font-size="${L.lineFS}"
-        font-family="${monoFam}"
-        fill="#555">${svgEsc(d.notation)}</text>` : ''}
-
+        font-family="${monoFam}" fill="#000">${svgEsc(d.lotId)}</text>` : ''}
+  ${d.notation ? `<text class="lbl-notation" x="${L.padL}" y="${notationY}"
+        font-size="${L.lineFS}" font-family="${monoFam}" fill="#555">${svgEsc(d.notation)}</text>` : ''}
   ${sourceLine}
   ${grainLine}
-
-  ${d.date ? `<text x="${L.padL}" y="${bottomY}"
-        font-size="${L.dateFS}" font-family="${monoFam}"
-        fill="#000">${svgEsc(fmtDate(d.date))}</text>` : ''}
-  ${d.notes ? `<text class="lbl-notes"
-        x="${VB.w - L.padR}" y="${bottomY}"
-        font-size="${L.notesFS}" font-style="italic"
-        text-anchor="end"
+  ${d.date ? `<text x="${L.padL}" y="${bottomY}" font-size="${L.dateFS}"
+        font-family="${monoFam}" fill="#000">${svgEsc(fmtDate(d.date))}</text>` : ''}
+  ${d.notes ? `<text class="lbl-notes" x="${VB.w-L.padR}" y="${bottomY}"
+        font-size="${L.notesFS}" font-style="italic" text-anchor="end"
         fill="#000">${svgEsc(d.notes)}</text>` : ''}
-
 </svg>`.trim();
     },
 
-    fit(svgEl, d) {
-      const VB = this.viewBox;
-      const L  = this.layout;
+    fit(svgEl) {
+      const L = this.layout, VB = this.viewBox;
       const contentW = VB.w - L.padL - L.padR;
-
       fitText(svgEl.querySelector('.lbl-cultivar'), contentW);
-
       const chipG = svgEl.querySelector('.lbl-chip');
       if (chipG) {
-        const chipBBox = chipG.getBBox();
-        const species  = svgEl.querySelector('.lbl-species');
-        if (species) fitText(species, chipBBox.x - L.padL - 14);
+        const cb = chipG.getBBox();
+        const sp = svgEl.querySelector('.lbl-species');
+        if (sp) fitText(sp, cb.x - L.padL - 14);
       }
-
       fitText(svgEl.querySelector('.lbl-lot'),      contentW);
       fitText(svgEl.querySelector('.lbl-notation'), contentW);
       fitText(svgEl.querySelector('.lbl-src'),      contentW * 0.72);
@@ -1134,135 +1144,101 @@ function renderLabel(host, d, opts) {
   const printer = PRINTERS[currentPrinterId];
   const tpl     = LABEL_TEMPLATES[printer.template];
   if (!tpl) return;
-
   const scale   = opts.physical === 'print' ? 1 : PREVIEW_SCALE;
-  const widthIn = printer.paper.widthIn  * scale;
-  const heightIn= printer.paper.heightIn * scale;
-
   host.innerHTML = tpl.render(d);
   const svg = host.firstElementChild;
   if (!svg) return;
-  svg.setAttribute('width',  widthIn  + 'in');
-  svg.setAttribute('height', heightIn + 'in');
-
-  tpl.fit(svg, d);
+  svg.setAttribute('width',  printer.paper.widthIn  * scale + 'in');
+  svg.setAttribute('height', printer.paper.heightIn * scale + 'in');
+  tpl.fit(svg);
 }
 
 // ─── FIDDLE PANEL ─────────────────────────────────────────────────────────────
 
 const FIDDLE_KNOBS = [
-  { group: 'Padding',    key: 'padL',               label: 'Pad Left',            min: 8,   max: 48,  step: 1    },
-  { group: 'Padding',    key: 'padR',               label: 'Pad Right',           min: 8,   max: 48,  step: 1    },
-  { group: 'Padding',    key: 'padTop',             label: 'Pad Top',             min: 8,   max: 48,  step: 1    },
-  { group: 'Padding',    key: 'padBot',             label: 'Pad Bottom',          min: 8,   max: 60,  step: 1    },
-
-  { group: 'Type Scale', key: 'cultivarFS',         label: 'Cultivar',            min: 80,  max: 180, step: 1    },
-  { group: 'Type Scale', key: 'cultivarKerning',    label: 'Cultivar kerning',    min: -6,  max: 6,   step: 0.25 },
-  { group: 'Type Scale', key: 'speciesFS',          label: 'Species',             min: 24,  max: 64,  step: 1    },
-  { group: 'Type Scale', key: 'lotFS',              label: 'Lot ID',              min: 32,  max: 80,  step: 1    },
-  { group: 'Type Scale', key: 'lineFS',             label: 'Body Line',           min: 20,  max: 52,  step: 1    },
-  { group: 'Type Scale', key: 'dimFS',              label: 'Src: prefix',         min: 18,  max: 48,  step: 1    },
-  { group: 'Type Scale', key: 'dateFS',             label: 'Date',                min: 18,  max: 48,  step: 1    },
-  { group: 'Type Scale', key: 'notesFS',            label: 'Notes',               min: 18,  max: 48,  step: 1    },
-
-  { group: 'Spacing',    key: 'cultivarSpeciesGap', label: 'Cultivar→Species',    min: 30,  max: 90,  step: 1    },
-  { group: 'Spacing',    key: 'speciesRuleGap',     label: 'Species→Rule',        min: 4,   max: 40,  step: 1    },
-  { group: 'Spacing',    key: 'ruleLotGap',         label: 'Rule→Lot',            min: 18,  max: 80,  step: 1    },
-  { group: 'Spacing',    key: 'lotNotationGap',     label: 'Lot→Notation',        min: 28,  max: 70,  step: 1    },
-  { group: 'Spacing',    key: 'notationSrcGap',     label: 'Notation→Src',        min: 28,  max: 70,  step: 1    },
-  { group: 'Spacing',    key: 'lotSourceGap',       label: 'Lot→Src (no notat.)', min: 28,  max: 80,  step: 1    },
-  { group: 'Spacing',    key: 'lineGap',            label: 'Line spacing',        min: 28,  max: 60,  step: 1    },
-
-  { group: 'Chip',       key: 'chipH',              label: 'Height',              min: 24,  max: 60,  step: 1    },
-  { group: 'Chip',       key: 'chipPadX',           label: 'Pad X',               min: 6,   max: 28,  step: 1    },
-  { group: 'Chip',       key: 'chipFS',             label: 'Text size',           min: 14,  max: 36,  step: 1    },
-
-  { group: 'Rule',       key: 'ruleStroke',         label: 'Stroke',              min: 0.5, max: 4,   step: 0.25 }
+  { group:'Padding',    key:'padL',               label:'Pad Left',            min:8,   max:48,  step:1    },
+  { group:'Padding',    key:'padR',               label:'Pad Right',           min:8,   max:48,  step:1    },
+  { group:'Padding',    key:'padTop',             label:'Pad Top',             min:8,   max:48,  step:1    },
+  { group:'Padding',    key:'padBot',             label:'Pad Bottom',          min:8,   max:60,  step:1    },
+  { group:'Type Scale', key:'cultivarFS',         label:'Cultivar',            min:80,  max:180, step:1    },
+  { group:'Type Scale', key:'cultivarKerning',    label:'Cultivar kerning',    min:-6,  max:6,   step:0.25 },
+  { group:'Type Scale', key:'speciesFS',          label:'Species',             min:24,  max:64,  step:1    },
+  { group:'Type Scale', key:'lotFS',              label:'Lot ID',              min:32,  max:80,  step:1    },
+  { group:'Type Scale', key:'lineFS',             label:'Body Line',           min:20,  max:52,  step:1    },
+  { group:'Type Scale', key:'dimFS',              label:'Src: prefix',         min:18,  max:48,  step:1    },
+  { group:'Type Scale', key:'dateFS',             label:'Date',                min:18,  max:48,  step:1    },
+  { group:'Type Scale', key:'notesFS',            label:'Notes',               min:18,  max:48,  step:1    },
+  { group:'Spacing',    key:'cultivarSpeciesGap', label:'Cultivar→Species',    min:30,  max:90,  step:1    },
+  { group:'Spacing',    key:'speciesRuleGap',     label:'Species→Rule',        min:4,   max:40,  step:1    },
+  { group:'Spacing',    key:'ruleLotGap',         label:'Rule→Lot',            min:18,  max:80,  step:1    },
+  { group:'Spacing',    key:'lotNotationGap',     label:'Lot→Notation',        min:28,  max:70,  step:1    },
+  { group:'Spacing',    key:'notationSrcGap',     label:'Notation→Src',        min:28,  max:70,  step:1    },
+  { group:'Spacing',    key:'lotSourceGap',       label:'Lot→Src (no notat.)', min:28,  max:80,  step:1    },
+  { group:'Spacing',    key:'lineGap',            label:'Line spacing',        min:28,  max:60,  step:1    },
+  { group:'Chip',       key:'chipH',              label:'Height',              min:24,  max:60,  step:1    },
+  { group:'Chip',       key:'chipPadX',           label:'Pad X',               min:6,   max:28,  step:1    },
+  { group:'Chip',       key:'chipFS',             label:'Text size',           min:14,  max:36,  step:1    },
+  { group:'Rule',       key:'ruleStroke',         label:'Stroke',              min:0.5, max:4,   step:0.25 }
 ];
 
-function activeLayout() {
-  return LABEL_TEMPLATES[PRINTERS[currentPrinterId].template].layout;
-}
+function activeLayout() { return LABEL_TEMPLATES[PRINTERS[currentPrinterId].template].layout; }
 
 function buildFiddleBody() {
   const L = activeLayout();
   const groups = {};
   for (const k of FIDDLE_KNOBS) (groups[k.group] = groups[k.group] || []).push(k);
-
-  $('fp-body').innerHTML = Object.entries(groups).map(([groupName, knobs]) => `
-    <div class="fp-group">
-      <h3>${groupName}</h3>
-      ${knobs.map(k => `
-        <div class="fp-row" data-key="${k.key}">
-          <label>${k.label}</label>
-          <input type="range" min="${k.min}" max="${k.max}" step="${k.step}" value="${L[k.key]}"
-                 oninput="updateFiddle('${k.key}', this.value)">
-          <input type="number" min="${k.min}" max="${k.max}" step="${k.step}" value="${L[k.key]}"
-                 oninput="updateFiddle('${k.key}', this.value)">
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
+  $('fp-body').innerHTML = Object.entries(groups).map(([gn, knobs]) => `
+    <div class="fp-group"><h3>${gn}</h3>
+      ${knobs.map(k => `<div class="fp-row" data-key="${k.key}">
+        <label>${k.label}</label>
+        <input type="range"  min="${k.min}" max="${k.max}" step="${k.step}" value="${L[k.key]}" oninput="updateFiddle('${k.key}',this.value)">
+        <input type="number" min="${k.min}" max="${k.max}" step="${k.step}" value="${L[k.key]}" oninput="updateFiddle('${k.key}',this.value)">
+      </div>`).join('')}
+    </div>`).join('');
 }
 
 function updateFiddle(key, value) {
-  const v = parseFloat(value);
-  if (isNaN(v)) return;
+  const v = parseFloat(value); if (isNaN(v)) return;
   activeLayout()[key] = v;
   const row = document.querySelector(`.fp-row[data-key="${key}"]`);
-  if (row) row.querySelectorAll('input').forEach(inp => {
-    if (parseFloat(inp.value) !== v) inp.value = v;
-  });
+  if (row) row.querySelectorAll('input').forEach(inp => { if (parseFloat(inp.value) !== v) inp.value = v; });
   updatePreview();
 }
 
-function openFiddle()  { buildFiddleBody(); $('fiddle-panel').classList.add('open'); }
-function closeFiddle() { $('fiddle-panel').classList.remove('open'); }
-function toggleFiddle() {
-  if ($('fiddle-panel').classList.contains('open')) closeFiddle();
-  else openFiddle();
-}
-
-function resetFiddle() {
-  Object.assign(activeLayout(), LAYOUT_DEFAULTS);
-  buildFiddleBody();
-  updatePreview();
-}
-
+function openFiddle()   { buildFiddleBody(); $('fiddle-panel').classList.add('open'); }
+function closeFiddle()  { $('fiddle-panel').classList.remove('open'); }
+function toggleFiddle() { $('fiddle-panel').classList.contains('open') ? closeFiddle() : openFiddle(); }
+function resetFiddle()  { Object.assign(activeLayout(), LAYOUT_DEFAULTS); buildFiddleBody(); updatePreview(); }
 function copyFiddle() {
-  const json = JSON.stringify(activeLayout(), null, 2);
-  navigator.clipboard.writeText(json).then(() => {
-    const el = $('fp-copy-status');
-    el.textContent = 'copied';
+  navigator.clipboard.writeText(JSON.stringify(activeLayout(), null, 2)).then(() => {
+    const el = $('fp-copy-status'); el.textContent = 'copied';
     setTimeout(() => el.textContent = '', 1500);
   });
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === '\\' && (e.metaKey || e.ctrlKey)) {
-    e.preventDefault();
-    toggleFiddle();
-  }
+  if (e.key === '\\' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); toggleFiddle(); }
 });
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 
-let cat = 'actives';
+let cat        = 'actives';
+let ingestCat  = 'actives';
 let initializing = true;
 
 let cfg = {
-  prefix:       'SL',
-  codes:        [],
-  grainTypes:   [...DEFAULT_GRAIN_TYPES],
-  ingestTypes:  [...DEFAULT_INGEST_TYPES],
-  agarFormulas: [...DEFAULT_AGAR_FORMULAS],
-  substrates:   [],
-  fieldVis:     { source: true, filial: true, clone: true }
+  prefix:        'SL',
+  codes:         [],
+  grainTypes:    [...DEFAULT_GRAIN_TYPES],
+  ingestTypes:   [...DEFAULT_INGEST_TYPES],
+  agarFormulas:  [...DEFAULT_AGAR_FORMULAS],
+  substrates:    [],
+  customTaxa:    { actives: {}, gourmet: {} },
+  fieldVis:      { source: true, filial: true, clone: true },
+  transferRules: { ...DEFAULT_TRANSFER_RULES }
 };
 
 let lotCounters = {};
-
-let editingCodeIdx        = -1;
 let editingGrainIdx       = -1;
 let editingIngestTypeIdx  = -1;
 let editingAgarFormulaIdx = -1;
@@ -1270,31 +1246,41 @@ let editingAgarFormulaIdx = -1;
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 
 const $ = id => document.getElementById(id);
-const todayISO = () => new Date().toISOString().split('T')[0];
-
-function fmtDate(iso) {
-  if (!iso) return '';
-  const [y,m,d] = iso.split('-');
-  return `${m}.${d}.${y.slice(2)}`;
-}
-
-function toYYMMDD(iso) {
-  if (!iso) return '';
-  const [y,m,d] = iso.split('-');
-  return `${y.slice(2)}${m}${d}`;
-}
+const todayISO  = () => new Date().toISOString().split('T')[0];
+const fmtDate   = iso => { if (!iso) return ''; const [y,m,d] = iso.split('-'); return `${m}.${d}.${y.slice(2)}`; };
+const toYYMMDD  = iso => { if (!iso) return ''; const [y,m,d] = iso.split('-'); return `${y.slice(2)}${m}${d}`; };
+const pad2      = n => String(n).padStart(2,'0');
 
 function categoryForGenus(genus) {
-  for (const c of Object.keys(TAXA)) {
-    if (genus in TAXA[c]) return c;
-  }
+  for (const c of Object.keys(TAXA)) if (genus in TAXA[c]) return c;
+  if (cfg.customTaxa) for (const c of Object.keys(cfg.customTaxa)) if (genus in cfg.customTaxa[c]) return c;
   return 'actives';
 }
 
-// Effective lot prefix: for ingest, derived from selected type; otherwise from workflow.
+// Merged taxa (built-in + custom)
+function allTaxa(category) {
+  const base = { ...TAXA[category] };
+  const custom = (cfg.customTaxa || {})[category] || {};
+  for (const [g, sp] of Object.entries(custom)) {
+    base[g] = [...new Set([...(base[g] || []), ...sp])];
+  }
+  return base;
+}
+
+// Extract genetic code from a lot ID string (e.g. "SP-SL176-260517-01" → "SL176")
+function extractCodeFromLotId(lotId) {
+  if (!lotId) return null;
+  const u = lotId.trim().toUpperCase();
+  const m = u.match(/^[A-Z]{1,5}-([A-Z]{1,6}\d+)-\d{6}-\d{2}$/);
+  if (m) return m[1];
+  if (/^[A-Z]{1,6}\d+$/.test(u)) return u;
+  return null;
+}
+
+// Effective lot prefix
 function effectiveLotPrefix() {
   if (currentWorkflowId === 'ingest') {
-    const sel = $('ingest-type');
+    const sel = $('ingest-media-type');
     const typeCode = sel ? sel.value : '';
     const t = cfg.ingestTypes.find(x => x.code === typeCode);
     return t ? t.code : 'IG';
@@ -1313,8 +1299,6 @@ function nextSeq(code, date) {
   return (lotCounters[key] || 0) + 1;
 }
 
-function pad2(n) { return String(n).padStart(2, '0'); }
-
 // ─── STORAGE / MIGRATION ──────────────────────────────────────────────────────
 
 function loadStorage() {
@@ -1329,23 +1313,19 @@ function loadStorage() {
 
 function migrateCfg() {
   if (!Array.isArray(cfg.codes)) cfg.codes = [];
-  if (!Array.isArray(cfg.grainTypes) || !cfg.grainTypes.length) {
-    cfg.grainTypes = [...DEFAULT_GRAIN_TYPES];
-  }
-  if (!Array.isArray(cfg.ingestTypes) || !cfg.ingestTypes.length) {
-    cfg.ingestTypes = [...DEFAULT_INGEST_TYPES];
-  }
-  if (!Array.isArray(cfg.agarFormulas) || !cfg.agarFormulas.length) {
-    cfg.agarFormulas = [...DEFAULT_AGAR_FORMULAS];
-  }
+  if (!Array.isArray(cfg.grainTypes)   || !cfg.grainTypes.length)   cfg.grainTypes   = [...DEFAULT_GRAIN_TYPES];
+  if (!Array.isArray(cfg.ingestTypes)  || !cfg.ingestTypes.length)  cfg.ingestTypes  = [...DEFAULT_INGEST_TYPES];
+  if (!Array.isArray(cfg.agarFormulas) || !cfg.agarFormulas.length) cfg.agarFormulas = [...DEFAULT_AGAR_FORMULAS];
   if (!Array.isArray(cfg.substrates)) cfg.substrates = [];
-  if (!cfg.fieldVis) cfg.fieldVis = { source: true, filial: true, clone: true };
+  if (!cfg.customTaxa)    cfg.customTaxa    = { actives: {}, gourmet: {} };
+  if (!cfg.fieldVis)      cfg.fieldVis      = { source: true, filial: true, clone: true };
+  if (!cfg.transferRules) cfg.transferRules = { ...DEFAULT_TRANSFER_RULES };
   else {
-    if (cfg.fieldVis.source === undefined) cfg.fieldVis.source = true;
-    if (cfg.fieldVis.filial === undefined) cfg.fieldVis.filial = true;
-    if (cfg.fieldVis.clone  === undefined) cfg.fieldVis.clone  = true;
+    // Fill missing keys
+    for (const [k, v] of Object.entries(DEFAULT_TRANSFER_RULES)) {
+      if (cfg.transferRules[k] === undefined) cfg.transferRules[k] = v;
+    }
   }
-
   // Migrate legacy cfg.cultivars
   if (cfg.cultivars && typeof cfg.cultivars === 'object') {
     for (const [key, names] of Object.entries(cfg.cultivars)) {
@@ -1353,11 +1333,9 @@ function migrateCfg() {
       const species = rest.join('_');
       if (!Array.isArray(names)) continue;
       for (const cultivar of names) {
-        const exists = cfg.codes.some(r =>
-          (r.cultivar || '').toLowerCase() === (cultivar || '').toLowerCase() &&
-          (r.genus || '').toLowerCase() === (genus || '').toLowerCase()
-        );
-        if (!exists) cfg.codes.push({ code: '', genus, species, cultivar });
+        if (!cfg.codes.some(r => (r.cultivar||'').toLowerCase() === (cultivar||'').toLowerCase() && (r.genus||'').toLowerCase() === (genus||'').toLowerCase())) {
+          cfg.codes.push({ code: '', genus, species, cultivar });
+        }
       }
     }
     delete cfg.cultivars;
@@ -1369,28 +1347,42 @@ function persistLots() { localStorage.setItem('ql_lots', JSON.stringify(lotCount
 
 function saveFormState() {
   if (initializing) return;
-  const state = {
-    workflowId:       currentWorkflowId,
-    cat,
-    genus:            $('genus').value,
-    species:          $('species').value,
-    cultivar:         $('cultivar').value,
-    filial:           $('filial').value,
-    clone:            $('clone').value,
-    iso:              $('iso').value,
-    transfer:         $('transfer').value,
-    genCode:          $('gen-code').value,
-    quantity:         $('quantity').value,
-    source:           $('source').value,
-    notes:            $('notes').value,
-    subCode:          $('sub-code').value,
-    subShowDesc:      $('grain-show-desc').checked,
-    ingestType:       $('ingest-type') ? $('ingest-type').value : '',
-    ingestProvenance: $('ingest-provenance') ? $('ingest-provenance').value : '',
-    agarFormula:      $('agar-formula') ? $('agar-formula').value : '',
-    lcVessel:         $('lc-vessel') ? $('lc-vessel').value : '',
-  };
-  localStorage.setItem('ql_form', JSON.stringify(state));
+  localStorage.setItem('ql_form', JSON.stringify({
+    workflowId:    currentWorkflowId,
+    cat, ingestCat,
+    genus:         $('genus').value,
+    species:       $('species').value,
+    cultivar:      $('cultivar').value,
+    filial:        $('filial').value,
+    clone:         $('clone').value,
+    iso:           $('iso').value,
+    transfer:      $('transfer').value,
+    genCode:       $('gen-code').value,
+    quantity:      $('quantity').value,
+    source:        $('source').value,
+    notes:         $('notes').value,
+    subCode:       $('sub-code').value,
+    subShowDesc:   $('grain-show-desc').checked,
+    agarFormula:   $('agar-formula').value,
+    lcVessel:      $('lc-vessel').value,
+    // ingest fields
+    ingestCode:       ($('ingest-code')          || {}).value || '',
+    ingestMediaType:  ($('ingest-media-type')     || {}).value || '',
+    ingestFilial:     ($('ingest-filial')         || {}).value || 'F0',
+    ingestClone:      ($('ingest-clone')          || {}).value || '',
+    ingestIso:        ($('ingest-iso')            || {}).value || '',
+    ingestTransfer:   ($('ingest-transfer')       || {}).value || '',
+    ingestVendor:     ($('ingest-vendor')         || {}).value || '',
+    ingestOriginator: ($('ingest-originator')     || {}).value || '',
+    ingestOriginDate: ($('ingest-origin-date')    || {}).value || '',
+    ingestGenus:      ($('ingest-genus')          || {}).value || '',
+    ingestSpecies:    ($('ingest-species')        || {}).value || '',
+    ingestCultivar:   ($('ingest-cultivar')       || {}).value || '',
+    ingestFamily:     ($('ingest-family')         || {}).value || '',
+    ingestDate:       ($('ingest-date')           || {}).value || '',
+    ingestLabelNotes: ($('ingest-label-notes')    || {}).value || '',
+    ingestQuantity:   ($('ingest-quantity')       || {}).value || '1',
+  }));
 }
 
 function restoreFormState() {
@@ -1406,27 +1398,43 @@ function restoreFormState() {
 
     setCategory(s.cat || 'actives');
     if (s.genus)    { $('genus').value = s.genus; onGenus(); }
-    if (s.species)             $('species').value  = s.species;
-    if (s.cultivar)            $('cultivar').value = s.cultivar;
-    if (s.filial)              $('filial').value   = s.filial;
-    if (s.clone)               $('clone').value    = s.clone;
-    if (s.iso)                 $('iso').value      = s.iso;
-    if (s.transfer)            $('transfer').value = s.transfer;
-    if (s.genCode)             $('gen-code').value = s.genCode;
-    if (s.quantity)            $('quantity').value = s.quantity;
-    if (s.source)              $('source').value   = s.source;
-    if (s.notes)               $('notes').value    = s.notes;
-    if (s.subCode)             $('sub-code').value = s.subCode;
+    if (s.species)   $('species').value  = s.species;
+    if (s.cultivar)  $('cultivar').value = s.cultivar;
+    if (s.filial)    $('filial').value   = s.filial;
+    if (s.clone)     $('clone').value    = s.clone;
+    if (s.iso)       $('iso').value      = s.iso;
+    if (s.transfer)  $('transfer').value = s.transfer;
+    if (s.genCode)   $('gen-code').value = s.genCode;
+    if (s.quantity)  $('quantity').value = s.quantity;
+    if (s.source)    $('source').value   = s.source;
+    if (s.notes)     $('notes').value    = s.notes;
+    if (s.subCode)   $('sub-code').value = s.subCode;
     $('grain-show-desc').checked = !!s.subShowDesc;
+    if (s.agarFormula) $('agar-formula').value = s.agarFormula;
+    if (s.lcVessel)    $('lc-vessel').value    = s.lcVessel;
 
-    const ingestSel = $('ingest-type');
-    if (ingestSel && s.ingestType) ingestSel.value = s.ingestType;
-    const ingestProv = $('ingest-provenance');
-    if (ingestProv && s.ingestProvenance) ingestProv.value = s.ingestProvenance;
-    const agarEl = $('agar-formula');
-    if (agarEl && s.agarFormula) agarEl.value = s.agarFormula;
-    const lcEl = $('lc-vessel');
-    if (lcEl && s.lcVessel) lcEl.value = s.lcVessel;
+    // ingest fields
+    if (s.ingestCat) setIngestCategory(s.ingestCat);
+    if (s.ingestGenus) {
+      fillIngestGenus();
+      $('ingest-genus').value = s.ingestGenus;
+      onIngestGenus();
+    }
+    if (s.ingestSpecies)    $('ingest-species').value    = s.ingestSpecies;
+    if (s.ingestCultivar)   $('ingest-cultivar').value   = s.ingestCultivar;
+    if (s.ingestCode)       $('ingest-code').value       = s.ingestCode;
+    if (s.ingestMediaType)  { $('ingest-media-type').value = s.ingestMediaType; onIngestMediaTypeChange(); }
+    if (s.ingestFilial)     $('ingest-filial').value     = s.ingestFilial;
+    if (s.ingestClone)      $('ingest-clone').value      = s.ingestClone;
+    if (s.ingestIso)        $('ingest-iso').value        = s.ingestIso;
+    if (s.ingestTransfer)   $('ingest-transfer').value   = s.ingestTransfer;
+    if (s.ingestVendor)     $('ingest-vendor').value     = s.ingestVendor;
+    if (s.ingestOriginator) $('ingest-originator').value = s.ingestOriginator;
+    if (s.ingestOriginDate) $('ingest-origin-date').value= s.ingestOriginDate;
+    if (s.ingestFamily)     $('ingest-family').value     = s.ingestFamily;
+    if (s.ingestDate)       $('ingest-date').value       = s.ingestDate;
+    if (s.ingestLabelNotes) $('ingest-label-notes').value= s.ingestLabelNotes;
+    if (s.ingestQuantity)   $('ingest-quantity').value   = s.ingestQuantity;
 
     onLineage();
     rebuildLot();
@@ -1439,16 +1447,11 @@ function restoreFormState() {
 function openSettings() {
   $('settings-overlay').classList.add('open');
   $('settings-panel').classList.add('open');
-  cancelEditCode();
-  cancelEditGrainType();
-  cancelEditIngestType();
-  cancelEditAgarFormula();
-  setCvCat(cvCat);
-  renderCodesList();
-  renderGrainList();
-  renderIngestTypesList();
-  renderAgarFormulasList();
-  applyFieldVisibility(); // sync toggle checkboxes
+  renderGrainList(); renderIngestTypesList(); renderAgarFormulasList();
+  applyTransferRules();
+  applyFieldVisibility();
+  const countEl = $('genetics-count');
+  if (countEl) countEl.textContent = cfg.codes.length;
 }
 
 function closeSettings() {
@@ -1466,24 +1469,20 @@ function applySettings() {
   $('s-prefix').value = cfg.prefix;
   refreshCodeDl();
   renderGrainDl();
-  renderIngestTypeSel();
+  renderIngestMediaTypeSel();
   renderAgarDl();
   renderVesselDl();
+  const countEl = $('genetics-count');
+  if (countEl) countEl.textContent = cfg.codes.length;
   updatePreview();
 }
-
-// ── Field visibility ──
 
 function applyFieldVisibility() {
   const fp = $('form-panel');
   fp.classList.toggle('hide-source', !cfg.fieldVis.source);
   fp.classList.toggle('hide-filial', !cfg.fieldVis.filial);
   fp.classList.toggle('hide-clone',  !cfg.fieldVis.clone);
-
-  // Sync toggle checkboxes in settings
-  const srcCb   = $('fv-source');
-  const filCb   = $('fv-filial');
-  const clnCb   = $('fv-clone');
+  const srcCb = $('fv-source'), filCb = $('fv-filial'), clnCb = $('fv-clone');
   if (srcCb) srcCb.checked = !!cfg.fieldVis.source;
   if (filCb) filCb.checked = !!cfg.fieldVis.filial;
   if (clnCb) clnCb.checked = !!cfg.fieldVis.clone;
@@ -1491,105 +1490,183 @@ function applyFieldVisibility() {
 
 function saveFieldVis(field) {
   cfg.fieldVis[field] = $(`fv-${field}`).checked;
-  persistCfg();
-  applyFieldVisibility();
-  updatePreview();
+  persistCfg(); applyFieldVisibility(); updatePreview();
 }
 
-// ── Genetic Codes ──
-let cvCat = 'actives';
-
-function setCvCat(c) {
-  cvCat = c;
-  $('s-cv-actives').className = c === 'actives' ? 'on-actives' : '';
-  $('s-cv-gourmet').className = c === 'gourmet' ? 'on-gourmet' : '';
-  $('s-cv-genus').innerHTML = '<option value="">— genus —</option>' +
-    Object.keys(TAXA[c]).map(g => `<option value="${g}">${g}</option>`).join('');
-  $('s-cv-species').innerHTML = '<option value="">— species —</option>';
-}
-
-function onCvGenus() {
-  const g = $('s-cv-genus').value;
-  $('s-cv-species').innerHTML = '<option value="">— species —</option>' +
-    (TAXA[cvCat][g] || []).map(s => `<option value="${s}">${s}</option>`).join('');
-}
-
-function saveCode() {
-  const code     = $('cv-code').value.trim().toUpperCase();
-  const genus    = $('s-cv-genus').value;
-  const species  = $('s-cv-species').value;
-  const cultivar = $('cv-name').value.trim();
-  if (!genus || !species || !cultivar) return;
-  const rec = { code, genus, species, cultivar };
-  if (editingCodeIdx >= 0) {
-    cfg.codes[editingCodeIdx] = rec;
-    editingCodeIdx = -1;
-  } else {
-    cfg.codes.push(rec);
+function applyTransferRules() {
+  const tr = cfg.transferRules || DEFAULT_TRANSFER_RULES;
+  const map = { 'override':'allowOverride','agar-agar':'agarToAgar','agar-lc':'agarToLC',
+                'agar-grain':'agarToGrain','lc-lc':'lcToLC','grain-grain':'grainToGrain','grain-bulk':'grainToBulk' };
+  for (const [id, key] of Object.entries(map)) {
+    const el = $(`tr-${id}`);
+    if (el) el.checked = !!tr[key];
   }
+}
+
+function saveTransferRules() {
+  cfg.transferRules = {
+    allowOverride: $('tr-override').checked,
+    agarToAgar:    $('tr-agar-agar').checked,
+    agarToLC:      $('tr-agar-lc').checked,
+    agarToGrain:   $('tr-agar-grain').checked,
+    lcToLC:        $('tr-lc-lc').checked,
+    grainToGrain:  $('tr-grain-grain').checked,
+    grainToBulk:   $('tr-grain-bulk').checked
+  };
   persistCfg();
-  $('cv-code').value = '';
-  $('cv-name').value = '';
-  updateCodeFormButtons();
-  renderCodesList();
-  refreshCodeDl();
 }
 
-function editCode(i) {
-  const r = cfg.codes[i];
-  if (!r) return;
-  editingCodeIdx = i;
-  setCvCat(categoryForGenus(r.genus));
-  $('s-cv-genus').value = r.genus;
-  onCvGenus();
-  $('s-cv-species').value = r.species;
-  $('cv-code').value = r.code || '';
-  $('cv-name').value = r.cultivar;
-  updateCodeFormButtons();
-  renderCodesList();
-}
-
-function cancelEditCode() {
-  editingCodeIdx = -1;
-  $('cv-code').value = '';
-  $('cv-name').value = '';
-  updateCodeFormButtons();
-  renderCodesList();
-}
-
-function updateCodeFormButtons() {
-  const editing = editingCodeIdx >= 0;
-  $('cv-save-btn').textContent = editing ? 'Save' : 'Add';
-  $('cv-cancel-btn').style.display = editing ? '' : 'none';
-}
-
-function removeCode(idx) {
-  cfg.codes.splice(idx, 1);
-  if (editingCodeIdx === idx) cancelEditCode();
-  else if (editingCodeIdx > idx) editingCodeIdx--;
+// ── Grain Types ──
+function saveGrainType() {
+  const code = $('new-grain-code').value.trim().toUpperCase();
+  const desc = $('new-grain-desc').value.trim();
+  if (!code) return;
+  const rec = { code, desc };
+  if (editingGrainIdx >= 0) { cfg.grainTypes[editingGrainIdx] = rec; editingGrainIdx = -1; }
+  else cfg.grainTypes.push(rec);
   persistCfg();
-  renderCodesList();
-  refreshCodeDl();
+  $('new-grain-code').value = ''; $('new-grain-desc').value = '';
+  updateGrainFormButtons(); renderGrainList(); renderGrainDl(); updatePreview();
+}
+function editGrainType(i) {
+  const g = cfg.grainTypes[i]; if (!g) return;
+  editingGrainIdx = i;
+  $('new-grain-code').value = g.code; $('new-grain-desc').value = g.desc || '';
+  updateGrainFormButtons(); renderGrainList();
+}
+function cancelEditGrainType() {
+  editingGrainIdx = -1; $('new-grain-code').value = ''; $('new-grain-desc').value = '';
+  updateGrainFormButtons(); renderGrainList();
+}
+function updateGrainFormButtons() {
+  const e = editingGrainIdx >= 0;
+  $('grain-save-btn').textContent = e ? 'Save' : 'Add';
+  $('grain-cancel-btn').style.display = e ? '' : 'none';
+}
+function removeGrainType(i) {
+  cfg.grainTypes.splice(i, 1);
+  if (editingGrainIdx === i) cancelEditGrainType();
+  else if (editingGrainIdx > i) editingGrainIdx--;
+  persistCfg(); renderGrainList(); renderGrainDl(); updatePreview();
+}
+function renderGrainList() {
+  $('grain-list').innerHTML = cfg.grainTypes.map((g, i) => `
+    <div class="entry-item${editingGrainIdx===i?' editing':''}">
+      <span class="code">${g.code}</span>
+      <span class="desc">${g.desc||''}</span>
+      <button class="ghost" onclick="editGrainType(${i})">✏</button>
+      <button class="ghost" onclick="removeGrainType(${i})">✕</button>
+    </div>`).join('') || '<span style="font-size:11px;color:var(--muted)">No grain types.</span>';
+}
+function renderGrainDl() {
+  $('sub-dl').innerHTML = cfg.grainTypes.map(g => `<option value="${g.code}">${g.desc||''}</option>`).join('');
 }
 
-function renderCodesList() {
-  const items = cfg.codes.map((r, i) => {
-    const codeHtml = r.code
-      ? `<span class="code">${r.code}</span>`
-      : `<span class="code" style="color:var(--muted)">—</span>`;
-    const editingCls = editingCodeIdx === i ? ' editing' : '';
-    return `
-      <div class="entry-item${editingCls}">
-        ${codeHtml}
-        <span class="desc"><strong>${r.cultivar}</strong></span>
-        <span class="sub">${r.genus} ${r.species}</span>
-        <button class="ghost" onclick="editCode(${i})" title="Edit">✏</button>
-        <button class="ghost" onclick="removeCode(${i})" title="Delete">✕</button>
-      </div>`;
-  }).join('');
-  $('codes-list').innerHTML = items || '<span style="font-size:11px;color:var(--muted)">No codes saved.</span>';
+// ── Ingest Types ──
+function saveIngestType() {
+  const code  = $('new-ingest-code').value.trim().toUpperCase();
+  const label = $('new-ingest-label').value.trim();
+  if (!code || !label) return;
+  const rec = { code, label };
+  if (editingIngestTypeIdx >= 0) { cfg.ingestTypes[editingIngestTypeIdx] = rec; editingIngestTypeIdx = -1; }
+  else cfg.ingestTypes.push(rec);
+  persistCfg();
+  $('new-ingest-code').value = ''; $('new-ingest-label').value = '';
+  updateIngestTypeFormButtons(); renderIngestTypesList(); renderIngestMediaTypeSel();
+}
+function editIngestType(i) {
+  const t = cfg.ingestTypes[i]; if (!t) return;
+  editingIngestTypeIdx = i;
+  $('new-ingest-code').value = t.code; $('new-ingest-label').value = t.label;
+  updateIngestTypeFormButtons(); renderIngestTypesList();
+}
+function cancelEditIngestType() {
+  editingIngestTypeIdx = -1; $('new-ingest-code').value = ''; $('new-ingest-label').value = '';
+  updateIngestTypeFormButtons(); renderIngestTypesList();
+}
+function updateIngestTypeFormButtons() {
+  const e = editingIngestTypeIdx >= 0;
+  $('ingest-type-save-btn').textContent     = e ? 'Save' : 'Add';
+  $('ingest-type-cancel-btn').style.display = e ? '' : 'none';
+}
+function removeIngestType(i) {
+  cfg.ingestTypes.splice(i, 1);
+  if (editingIngestTypeIdx === i) cancelEditIngestType();
+  else if (editingIngestTypeIdx > i) editingIngestTypeIdx--;
+  persistCfg(); renderIngestTypesList(); renderIngestMediaTypeSel();
+}
+function renderIngestTypesList() {
+  $('ingest-types-list').innerHTML = cfg.ingestTypes.map((t, i) => `
+    <div class="entry-item${editingIngestTypeIdx===i?' editing':''}">
+      <span class="code">${t.code}</span>
+      <span class="desc">${t.label}</span>
+      <button class="ghost" onclick="editIngestType(${i})">✏</button>
+      <button class="ghost" onclick="removeIngestType(${i})">✕</button>
+    </div>`).join('') || '<span style="font-size:11px;color:var(--muted)">No types.</span>';
 }
 
+// Populate the ingest-media-type select in the form
+function renderIngestMediaTypeSel() {
+  const sel = $('ingest-media-type');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— select type —</option>' +
+    cfg.ingestTypes.map(t => `<option value="${t.code}">${t.label}</option>`).join('');
+  if (current) sel.value = current;
+}
+
+// ── Agar Formulas ──
+function saveAgarFormula() {
+  const code = $('new-agar-code').value.trim().toUpperCase();
+  const desc = $('new-agar-desc').value.trim();
+  if (!code) return;
+  const rec = { code, desc };
+  if (editingAgarFormulaIdx >= 0) { cfg.agarFormulas[editingAgarFormulaIdx] = rec; editingAgarFormulaIdx = -1; }
+  else cfg.agarFormulas.push(rec);
+  persistCfg();
+  $('new-agar-code').value = ''; $('new-agar-desc').value = '';
+  updateAgarFormulaFormButtons(); renderAgarFormulasList(); renderAgarDl(); updatePreview();
+}
+function editAgarFormula(i) {
+  const a = cfg.agarFormulas[i]; if (!a) return;
+  editingAgarFormulaIdx = i;
+  $('new-agar-code').value = a.code; $('new-agar-desc').value = a.desc || '';
+  updateAgarFormulaFormButtons(); renderAgarFormulasList();
+}
+function cancelEditAgarFormula() {
+  editingAgarFormulaIdx = -1; $('new-agar-code').value = ''; $('new-agar-desc').value = '';
+  updateAgarFormulaFormButtons(); renderAgarFormulasList();
+}
+function updateAgarFormulaFormButtons() {
+  const e = editingAgarFormulaIdx >= 0;
+  $('agar-formula-save-btn').textContent     = e ? 'Save' : 'Add';
+  $('agar-formula-cancel-btn').style.display = e ? '' : 'none';
+}
+function removeAgarFormula(i) {
+  cfg.agarFormulas.splice(i, 1);
+  if (editingAgarFormulaIdx === i) cancelEditAgarFormula();
+  else if (editingAgarFormulaIdx > i) editingAgarFormulaIdx--;
+  persistCfg(); renderAgarFormulasList(); renderAgarDl(); updatePreview();
+}
+function renderAgarFormulasList() {
+  $('agar-formulas-list').innerHTML = cfg.agarFormulas.map((a, i) => `
+    <div class="entry-item${editingAgarFormulaIdx===i?' editing':''}">
+      <span class="code">${a.code}</span>
+      <span class="desc">${a.desc||''}</span>
+      <button class="ghost" onclick="editAgarFormula(${i})">✏</button>
+      <button class="ghost" onclick="removeAgarFormula(${i})">✕</button>
+    </div>`).join('') || '<span style="font-size:11px;color:var(--muted)">No formulas.</span>';
+}
+function renderAgarDl() {
+  const dl = $('agar-dl'); if (!dl) return;
+  dl.innerHTML = cfg.agarFormulas.map(a => `<option value="${a.code}">${a.desc||''}</option>`).join('');
+}
+function renderVesselDl() {
+  const dl = $('vessel-dl'); if (!dl) return;
+  dl.innerHTML = DEFAULT_VESSEL_TYPES.map(v => `<option value="${v.code}">${v.desc||''}</option>`).join('');
+}
+
+// Code datalist (for gen-code field in standard workflows)
 function refreshCodeDl() {
   $('code-dl').innerHTML = cfg.codes
     .filter(r => r.code)
@@ -1600,240 +1677,7 @@ function refreshCodeDl() {
 function findCode(code) {
   if (!code) return null;
   const upper = code.trim().toUpperCase();
-  return cfg.codes.find(r => (r.code || '').toUpperCase() === upper) || null;
-}
-
-// ── Grain Types ──
-
-function saveGrainType() {
-  const code = $('new-grain-code').value.trim().toUpperCase();
-  const desc = $('new-grain-desc').value.trim();
-  if (!code) return;
-  const rec = { code, desc };
-  if (editingGrainIdx >= 0) {
-    cfg.grainTypes[editingGrainIdx] = rec;
-    editingGrainIdx = -1;
-  } else {
-    cfg.grainTypes.push(rec);
-  }
-  persistCfg();
-  $('new-grain-code').value = '';
-  $('new-grain-desc').value = '';
-  updateGrainFormButtons();
-  renderGrainList();
-  renderGrainDl();
-  updatePreview();
-}
-
-function editGrainType(i) {
-  const g = cfg.grainTypes[i];
-  if (!g) return;
-  editingGrainIdx = i;
-  $('new-grain-code').value = g.code;
-  $('new-grain-desc').value = g.desc || '';
-  updateGrainFormButtons();
-  renderGrainList();
-}
-
-function cancelEditGrainType() {
-  editingGrainIdx = -1;
-  $('new-grain-code').value = '';
-  $('new-grain-desc').value = '';
-  updateGrainFormButtons();
-  renderGrainList();
-}
-
-function updateGrainFormButtons() {
-  const editing = editingGrainIdx >= 0;
-  $('grain-save-btn').textContent = editing ? 'Save' : 'Add';
-  $('grain-cancel-btn').style.display = editing ? '' : 'none';
-}
-
-function removeGrainType(i) {
-  cfg.grainTypes.splice(i, 1);
-  if (editingGrainIdx === i) cancelEditGrainType();
-  else if (editingGrainIdx > i) editingGrainIdx--;
-  persistCfg();
-  renderGrainList();
-  renderGrainDl();
-  updatePreview();
-}
-
-function renderGrainList() {
-  $('grain-list').innerHTML = cfg.grainTypes.map((g, i) => {
-    const editingCls = editingGrainIdx === i ? ' editing' : '';
-    return `
-      <div class="entry-item${editingCls}">
-        <span class="code">${g.code}</span>
-        <span class="desc">${g.desc || ''}</span>
-        <button class="ghost" onclick="editGrainType(${i})" title="Edit">✏</button>
-        <button class="ghost" onclick="removeGrainType(${i})" title="Delete">✕</button>
-      </div>`;
-  }).join('') || '<span style="font-size:11px;color:var(--muted)">No grain types saved.</span>';
-}
-
-function renderGrainDl() {
-  $('sub-dl').innerHTML = cfg.grainTypes
-    .map(g => `<option value="${g.code}">${g.desc || ''}</option>`).join('');
-}
-
-// ── Ingest Types ──
-
-function saveIngestType() {
-  const code  = $('new-ingest-code').value.trim().toUpperCase();
-  const label = $('new-ingest-label').value.trim();
-  if (!code || !label) return;
-  const rec = { code, label };
-  if (editingIngestTypeIdx >= 0) {
-    cfg.ingestTypes[editingIngestTypeIdx] = rec;
-    editingIngestTypeIdx = -1;
-  } else {
-    cfg.ingestTypes.push(rec);
-  }
-  persistCfg();
-  $('new-ingest-code').value  = '';
-  $('new-ingest-label').value = '';
-  updateIngestTypeFormButtons();
-  renderIngestTypesList();
-  renderIngestTypeSel();
-}
-
-function editIngestType(i) {
-  const t = cfg.ingestTypes[i];
-  if (!t) return;
-  editingIngestTypeIdx = i;
-  $('new-ingest-code').value  = t.code;
-  $('new-ingest-label').value = t.label;
-  updateIngestTypeFormButtons();
-  renderIngestTypesList();
-}
-
-function cancelEditIngestType() {
-  editingIngestTypeIdx = -1;
-  $('new-ingest-code').value  = '';
-  $('new-ingest-label').value = '';
-  updateIngestTypeFormButtons();
-  renderIngestTypesList();
-}
-
-function updateIngestTypeFormButtons() {
-  const editing = editingIngestTypeIdx >= 0;
-  $('ingest-type-save-btn').textContent       = editing ? 'Save' : 'Add';
-  $('ingest-type-cancel-btn').style.display   = editing ? '' : 'none';
-}
-
-function removeIngestType(i) {
-  cfg.ingestTypes.splice(i, 1);
-  if (editingIngestTypeIdx === i) cancelEditIngestType();
-  else if (editingIngestTypeIdx > i) editingIngestTypeIdx--;
-  persistCfg();
-  renderIngestTypesList();
-  renderIngestTypeSel();
-}
-
-function renderIngestTypesList() {
-  $('ingest-types-list').innerHTML = cfg.ingestTypes.map((t, i) => {
-    const editingCls = editingIngestTypeIdx === i ? ' editing' : '';
-    return `
-      <div class="entry-item${editingCls}">
-        <span class="code">${t.code}</span>
-        <span class="desc">${t.label}</span>
-        <button class="ghost" onclick="editIngestType(${i})" title="Edit">✏</button>
-        <button class="ghost" onclick="removeIngestType(${i})" title="Delete">✕</button>
-      </div>`;
-  }).join('') || '<span style="font-size:11px;color:var(--muted)">No types saved.</span>';
-}
-
-function renderIngestTypeSel() {
-  const sel = $('ingest-type');
-  if (!sel) return;
-  const current = sel.value;
-  sel.innerHTML = '<option value="">— select type —</option>' +
-    cfg.ingestTypes.map(t => `<option value="${t.code}">${t.label}</option>`).join('');
-  if (current) sel.value = current;
-}
-
-// ── Agar Formulas ──
-
-function saveAgarFormula() {
-  const code = $('new-agar-code').value.trim().toUpperCase();
-  const desc = $('new-agar-desc').value.trim();
-  if (!code) return;
-  const rec = { code, desc };
-  if (editingAgarFormulaIdx >= 0) {
-    cfg.agarFormulas[editingAgarFormulaIdx] = rec;
-    editingAgarFormulaIdx = -1;
-  } else {
-    cfg.agarFormulas.push(rec);
-  }
-  persistCfg();
-  $('new-agar-code').value = '';
-  $('new-agar-desc').value = '';
-  updateAgarFormulaFormButtons();
-  renderAgarFormulasList();
-  renderAgarDl();
-  updatePreview();
-}
-
-function editAgarFormula(i) {
-  const a = cfg.agarFormulas[i];
-  if (!a) return;
-  editingAgarFormulaIdx = i;
-  $('new-agar-code').value = a.code;
-  $('new-agar-desc').value = a.desc || '';
-  updateAgarFormulaFormButtons();
-  renderAgarFormulasList();
-}
-
-function cancelEditAgarFormula() {
-  editingAgarFormulaIdx = -1;
-  $('new-agar-code').value = '';
-  $('new-agar-desc').value = '';
-  updateAgarFormulaFormButtons();
-  renderAgarFormulasList();
-}
-
-function updateAgarFormulaFormButtons() {
-  const editing = editingAgarFormulaIdx >= 0;
-  $('agar-formula-save-btn').textContent     = editing ? 'Save' : 'Add';
-  $('agar-formula-cancel-btn').style.display = editing ? '' : 'none';
-}
-
-function removeAgarFormula(i) {
-  cfg.agarFormulas.splice(i, 1);
-  if (editingAgarFormulaIdx === i) cancelEditAgarFormula();
-  else if (editingAgarFormulaIdx > i) editingAgarFormulaIdx--;
-  persistCfg();
-  renderAgarFormulasList();
-  renderAgarDl();
-  updatePreview();
-}
-
-function renderAgarFormulasList() {
-  $('agar-formulas-list').innerHTML = cfg.agarFormulas.map((a, i) => {
-    const editingCls = editingAgarFormulaIdx === i ? ' editing' : '';
-    return `
-      <div class="entry-item${editingCls}">
-        <span class="code">${a.code}</span>
-        <span class="desc">${a.desc || ''}</span>
-        <button class="ghost" onclick="editAgarFormula(${i})" title="Edit">✏</button>
-        <button class="ghost" onclick="removeAgarFormula(${i})" title="Delete">✕</button>
-      </div>`;
-  }).join('') || '<span style="font-size:11px;color:var(--muted)">No formulas saved.</span>';
-}
-
-function renderAgarDl() {
-  const dl = $('agar-dl');
-  if (!dl) return;
-  dl.innerHTML = cfg.agarFormulas
-    .map(a => `<option value="${a.code}">${a.desc || ''}</option>`).join('');
-}
-
-function renderVesselDl() {
-  const dl = $('vessel-dl');
-  if (!dl) return;
-  dl.innerHTML = DEFAULT_VESSEL_TYPES
-    .map(v => `<option value="${v.code}">${v.desc || ''}</option>`).join('');
+  return cfg.codes.find(r => (r.code||'').toUpperCase() === upper) || null;
 }
 
 // ─── WORKFLOW SELECTOR ────────────────────────────────────────────────────────
@@ -1841,92 +1685,268 @@ function renderVesselDl() {
 function switchWorkflow(id) {
   if (!WORKFLOWS[id]) return;
   currentWorkflowId = id;
+  updateFormForWorkflow(id);
+  closeWorkflowDropdown();
+  if (id !== 'ingest') { rebuildLot(); }
+  saveFormState();
+}
+
+function updateFormForWorkflow(id) {
+  if (!WORKFLOWS[id]) return;
   const wf = WORKFLOWS[id];
 
   // Update header tag
   $('workflow-tag').textContent = wf.label + ' ▾';
 
-  // Show correct detail card
-  document.querySelectorAll('[data-detail]').forEach(el => {
-    el.style.display = el.dataset.detail === wf.detailSection ? '' : 'none';
+  // Show/hide card groups by data-wf
+  document.querySelectorAll('[data-wf]').forEach(el => {
+    el.style.display = el.dataset.wf.split(' ').includes(id) ? '' : 'none';
   });
 
-  // Update lot label
-  $('lot-id-label').textContent = `${wf.lotType} ID (next print)`;
+  // Show correct detail card for non-ingest workflows
+  if (id !== 'ingest') {
+    document.querySelectorAll('[data-detail]').forEach(el => {
+      el.style.display = el.dataset.detail === wf.detailSection ? '' : 'none';
+    });
+    $('lot-id-label').textContent = `${wf.lotType} ID (next print)`;
+  }
 
   // Update active marker in dropdown
   document.querySelectorAll('.wf-opt[id^="wf-opt-"]').forEach(el => {
     el.classList.toggle('active', el.id === `wf-opt-${id}`);
   });
 
-  // Populate ingest type select if switching to ingest
-  if (id === 'ingest') renderIngestTypeSel();
+  if (id === 'ingest') {
+    fillIngestGenus();
+    renderIngestMediaTypeSel();
+    if (!($('ingest-date').value)) $('ingest-date').value = todayISO();
+    if (!($('ingest-code').value)) autoGenIngestCode();
+    if (!($('ingest-filial').value)) $('ingest-filial').value = 'F0';
+  }
 
   applyFieldVisibility();
-  closeWorkflowDropdown();
-  rebuildLot();
-  saveFormState();
 }
 
-function openWorkflowDropdown() {
-  $('wf-dropdown').classList.add('open');
-}
-
-function closeWorkflowDropdown() {
-  $('wf-dropdown').classList.remove('open');
-}
-
+function openWorkflowDropdown()  { $('wf-dropdown').classList.add('open'); }
+function closeWorkflowDropdown() { $('wf-dropdown').classList.remove('open'); }
 function toggleWorkflowDropdown() {
-  const open = $('wf-dropdown').classList.contains('open');
-  if (open) closeWorkflowDropdown();
-  else openWorkflowDropdown();
+  $('wf-dropdown').classList.contains('open') ? closeWorkflowDropdown() : openWorkflowDropdown();
 }
-
-// Close dropdown on outside click
 document.addEventListener('click', e => {
-  const dd  = $('wf-dropdown');
-  const tag = $('workflow-tag');
-  if (dd && tag && !dd.contains(e.target) && e.target !== tag) {
-    closeWorkflowDropdown();
-  }
+  const dd = $('wf-dropdown'), tag = $('workflow-tag');
+  if (dd && tag && !dd.contains(e.target) && e.target !== tag) closeWorkflowDropdown();
 });
 
-// Called when switching to ingest — also needs to update form for ingest workflow
-function updateFormForWorkflow(id) {
-  if (!WORKFLOWS[id]) return;
-  const wf = WORKFLOWS[id];
-  $('workflow-tag').textContent = wf.label + ' ▾';
-  document.querySelectorAll('[data-detail]').forEach(el => {
-    el.style.display = el.dataset.detail === wf.detailSection ? '' : 'none';
-  });
-  $('lot-id-label').textContent = `${wf.lotType} ID (next print)`;
-  document.querySelectorAll('.wf-opt[id^="wf-opt-"]').forEach(el => {
-    el.classList.toggle('active', el.id === `wf-opt-${id}`);
-  });
-  if (id === 'ingest') renderIngestTypeSel();
-  applyFieldVisibility();
+// ─── INGEST WORKFLOW ──────────────────────────────────────────────────────────
+
+function autoGenIngestCode() {
+  const prefix = (cfg.prefix || 'SL').toUpperCase();
+  let maxNum = 0;
+  for (const entry of cfg.codes) {
+    const code = (entry.code || '').toUpperCase();
+    if (code.startsWith(prefix)) {
+      const num = parseInt(code.slice(prefix.length), 10);
+      if (!isNaN(num) && num > maxNum) maxNum = num;
+    }
+  }
+  $('ingest-code').value = `${prefix}${maxNum + 1}`;
+  updatePreview();
 }
 
-// ─── FORM ─────────────────────────────────────────────────────────────────────
+function setIngestCategory(c) {
+  ingestCat = c;
+  $('ingest-btn-actives').className = c === 'actives' ? 'on-actives' : '';
+  $('ingest-btn-gourmet').className = c === 'gourmet' ? 'on-gourmet' : '';
+  fillIngestGenus();
+  updatePreview();
+}
+
+function fillIngestGenus() {
+  const taxa = allTaxa(ingestCat);
+  const current = $('ingest-genus').value;
+  $('ingest-genus').innerHTML = '<option value="">— genus —</option>' +
+    Object.keys(taxa).sort().map(g => `<option value="${g}">${g}</option>`).join('');
+  $('ingest-genus').value = current;
+  if (!current) $('ingest-species').innerHTML = '<option value="">— species —</option>';
+}
+
+function onIngestGenus() {
+  const g = $('ingest-genus').value;
+  const taxa = allTaxa(ingestCat);
+  $('ingest-species').innerHTML = '<option value="">— species —</option>' +
+    (taxa[g] || []).sort().map(s => `<option value="${s}">${s}</option>`).join('');
+  updatePreview();
+}
+
+function onIngestMediaTypeChange() {
+  const mediaType = $('ingest-media-type').value;
+  const isComplex = COMPLEX_INGEST_TYPES.has(mediaType);
+  $('ingest-clone-field').style.display    = isComplex ? '' : 'none';
+  $('ingest-iso-field').style.display      = isComplex ? '' : 'none';
+  $('ingest-transfer-field').style.display = isComplex ? '' : 'none';
+  updatePreview();
+}
+
+function onInatToggle() {
+  $('ingest-inat-fields').style.display = $('ingest-inat-enabled').checked ? '' : 'none';
+}
+
+function toggleAddGenus() {
+  const f = $('add-genus-form');
+  f.style.display = f.style.display === 'none' ? 'flex' : 'none';
+  if (f.style.display !== 'none') $('new-genus-text').focus();
+}
+function toggleAddSpecies() {
+  const f = $('add-species-form');
+  f.style.display = f.style.display === 'none' ? 'flex' : 'none';
+  if (f.style.display !== 'none') $('new-species-text').focus();
+}
+
+function saveNewGenus() {
+  const genus = $('new-genus-text').value.trim();
+  if (!genus) return;
+  if (!cfg.customTaxa) cfg.customTaxa = {};
+  if (!cfg.customTaxa[ingestCat]) cfg.customTaxa[ingestCat] = {};
+  if (!cfg.customTaxa[ingestCat][genus]) cfg.customTaxa[ingestCat][genus] = [];
+  persistCfg();
+  $('new-genus-text').value = '';
+  toggleAddGenus();
+  fillIngestGenus();
+  $('ingest-genus').value = genus;
+  onIngestGenus();
+}
+
+function saveNewSpecies() {
+  const genus   = $('ingest-genus').value;
+  const species = $('new-species-text').value.trim();
+  if (!genus || !species) return;
+  if (!cfg.customTaxa) cfg.customTaxa = {};
+  if (!cfg.customTaxa[ingestCat]) cfg.customTaxa[ingestCat] = {};
+  if (!cfg.customTaxa[ingestCat][genus]) cfg.customTaxa[ingestCat][genus] = [];
+  if (!cfg.customTaxa[ingestCat][genus].includes(species)) cfg.customTaxa[ingestCat][genus].push(species);
+  persistCfg();
+  $('new-species-text').value = '';
+  toggleAddSpecies();
+  onIngestGenus();
+  $('ingest-species').value = species;
+}
+
+function buildIngestNotation() {
+  const mediaType = $('ingest-media-type').value;
+  const isComplex = COMPLEX_INGEST_TYPES.has(mediaType);
+  const parts = [];
+  let f = ($('ingest-filial').value || 'F0').trim().toUpperCase();
+  if (f) parts.push(f.startsWith('F') ? f : 'F' + f);
+  if (isComplex) {
+    let c = ($('ingest-clone').value || '').trim().toUpperCase();
+    const iso = ($('ingest-iso').value || '').trim().toUpperCase();
+    if (c) { if (!c.startsWith('C')) c = 'C' + c; parts.push(iso ? `${c}_${iso}` : c); }
+    let t = ($('ingest-transfer').value || '').trim().toUpperCase();
+    if (t) parts.push(t.startsWith('T') ? t : 'T' + t);
+  }
+  return parts.join('.');
+}
+
+function buildIngestLabelData() {
+  const mediaType  = $('ingest-media-type').value;
+  const ingestType = cfg.ingestTypes.find(t => t.code === mediaType);
+  const vendor     = ($('ingest-vendor').value || '').trim();
+  const originator = ($('ingest-originator').value || '').trim();
+
+  const destination = ingestType ? ingestType.label : (mediaType || 'Ingest');
+  let source = vendor;
+  if (originator && originator !== vendor) source = vendor ? `${vendor} / ${originator}` : originator;
+
+  return {
+    cat:         ingestCat,
+    genus:       ($('ingest-genus').value || ''),
+    species:     ($('ingest-species').value || ''),
+    cultivar:    ($('ingest-cultivar').value || '').trim() || '—',
+    destination,
+    source,
+    date:        $('ingest-date').value || todayISO(),
+    sub:         null,
+    mediaLabel:  null,
+    notes:       ($('ingest-label-notes').value || '').trim(),
+    notation:    buildIngestNotation(),
+    lotId:       ($('ingest-code').value || '').trim().toUpperCase()
+  };
+}
+
+function printIngestLabel() {
+  const code     = ($('ingest-code').value || '').trim().toUpperCase();
+  const cultivar = ($('ingest-cultivar').value || '').trim();
+  if (!code || !cultivar) {
+    alert('Please fill in Lab Code and Cultivar before printing.');
+    return;
+  }
+
+  // Save genetic to library if not already present
+  if (!cfg.codes.find(r => (r.code||'').toUpperCase() === code)) {
+    cfg.codes.push({
+      code,
+      cat:     ingestCat,
+      genus:   $('ingest-genus').value,
+      species: $('ingest-species').value,
+      cultivar,
+      ingestData: {
+        mediaType:     $('ingest-media-type').value,
+        vendor:        ($('ingest-vendor').value || '').trim(),
+        originator:    ($('ingest-originator').value || '').trim(),
+        originDate:    $('ingest-origin-date').value,
+        family:        ($('ingest-family').value || '').trim(),
+        inat: {
+          enabled:   $('ingest-inat-enabled').checked,
+          number:    ($('ingest-inat-number').value || '').trim(),
+          collector: ($('ingest-inat-collector').value || '').trim(),
+          date:      $('ingest-inat-date').value,
+          location:  ($('ingest-inat-location').value || '').trim()
+        },
+        extNotes:   ($('ingest-ext-notes').value || '').trim(),
+        ingestDate: $('ingest-date').value || todayISO()
+      }
+    });
+    persistCfg();
+    refreshCodeDl();
+    const countEl = $('genetics-count');
+    if (countEl) countEl.textContent = cfg.codes.length;
+  }
+
+  const d   = buildIngestLabelData();
+  const qty = Math.max(1, Math.min(20, parseInt($('ingest-quantity').value, 10) || 1));
+
+  const printArea = $('print-area');
+  printArea.innerHTML = '';
+  for (let i = 0; i < qty; i++) {
+    const host = document.createElement('div');
+    host.className = 'label-host';
+    printArea.appendChild(host);
+    renderLabel(host, d, { physical: 'print' });
+  }
+  window.print();
+}
+
+// ─── STANDARD FORM ────────────────────────────────────────────────────────────
 
 function setCategory(c) {
   cat = c;
   $('btn-actives').className = c === 'actives' ? 'on-actives' : '';
   $('btn-gourmet').className = c === 'gourmet' ? 'on-gourmet' : '';
-  fillGenus();
-  updatePreview();
+  fillGenus(); updatePreview();
 }
 
 function fillGenus() {
+  const taxa = allTaxa(cat);
   $('genus').innerHTML = '<option value="">— genus —</option>' +
-    Object.keys(TAXA[cat]).map(g => `<option value="${g}">${g}</option>`).join('');
+    Object.keys(taxa).sort().map(g => `<option value="${g}">${g}</option>`).join('');
   $('species').innerHTML = '<option value="">— species —</option>';
 }
 
 function onGenus() {
-  const g = $('genus').value;
+  const g    = $('genus').value;
+  const taxa = allTaxa(cat);
   $('species').innerHTML = '<option value="">— species —</option>' +
-    (TAXA[cat][g] || []).map(s => `<option value="${s}">${s}</option>`).join('');
+    (taxa[g] || []).sort().map(s => `<option value="${s}">${s}</option>`).join('');
   updatePreview();
 }
 
@@ -1936,10 +1956,7 @@ function buildNotation() {
   if (f) parts.push(f.startsWith('F') ? f : 'F' + f);
   let c = $('clone').value.trim().toUpperCase();
   const iso = $('iso').value.trim().toUpperCase();
-  if (c) {
-    if (!c.startsWith('C')) c = 'C' + c;
-    parts.push(iso ? `${c}_${iso}` : c);
-  }
+  if (c) { if (!c.startsWith('C')) c = 'C' + c; parts.push(iso ? `${c}_${iso}` : c); }
   let t = $('transfer').value.trim().toUpperCase();
   if (t) parts.push(t.startsWith('T') ? t : 'T' + t);
   return parts.join('.');
@@ -1947,8 +1964,7 @@ function buildNotation() {
 
 function grainTypeDesc(code) {
   if (!code) return '';
-  const upper = code.toUpperCase();
-  const g = cfg.grainTypes.find(x => (x.code || '').toUpperCase() === upper);
+  const g = cfg.grainTypes.find(x => (x.code||'').toUpperCase() === code.toUpperCase());
   return g ? (g.desc || '') : '';
 }
 
@@ -1957,150 +1973,150 @@ function onLineage() {
   updatePreview();
 }
 
+// Source field with auto-fill
+function onSourceChange() {
+  updatePreview();
+  const sourceVal = $('source').value.trim();
+  const autofill  = $('source-autofill');
+  const code = extractCodeFromLotId(sourceVal);
+  if (!code) { if (autofill) autofill.style.display = 'none'; return; }
+  const rec  = findCode(code);
+  if (!rec)  { if (autofill) autofill.style.display = 'none'; return; }
+
+  // Only auto-fill if gen-code is empty or already matches
+  const currentCode = $('gen-code').value.trim().toUpperCase();
+  if (!currentCode || currentCode === code) {
+    $('gen-code').value = code;
+    const newCat = rec.cat || categoryForGenus(rec.genus) || 'actives';
+    if (newCat !== cat) setCategory(newCat);
+    $('genus').value = rec.genus;
+    onGenus();
+    $('species').value  = rec.species;
+    $('cultivar').value = rec.cultivar;
+    if (autofill) autofill.style.display = '';
+  }
+}
+
 function onCodeChange() {
   const code = $('gen-code').value.trim().toUpperCase();
   const rec  = findCode(code);
   if (rec) {
-    const newCat = categoryForGenus(rec.genus);
+    const newCat = rec.cat || categoryForGenus(rec.genus) || 'actives';
     if (newCat !== cat) setCategory(newCat);
     $('genus').value = rec.genus;
     onGenus();
-    $('species').value = rec.species;
+    $('species').value  = rec.species;
     $('cultivar').value = rec.cultivar;
   }
   rebuildLot();
 }
 
-function onDateChange() { rebuildLot(); }
+function onDateChange()     { rebuildLot(); }
 function onQuantityChange() { rebuildLot(); }
-
-// Called when ingest type changes — lot prefix changes so lot ID must rebuild
-function onIngestTypeChange() { rebuildLot(); }
 
 function resetLotCounter() {
   const code = $('gen-code').value.trim().toUpperCase();
   const date = $('date').value;
   if (!code || !date) { alert('Set Genetic Code and Date first.'); return; }
   const key = lotKey(code, date);
-  const input = prompt(
-    `Reset Lot ID counter for ${effectiveLotPrefix()}-${code} on ${toYYMMDD(date)}.\nNext print will use this number:`,
-    '1'
-  );
+  const input = prompt(`Reset Lot ID counter for ${effectiveLotPrefix()}-${code} on ${toYYMMDD(date)}.\nNext print will use this number:`, '1');
   if (input === null) return;
   const n = parseInt(input, 10);
-  if (isNaN(n) || n < 1 || n > 99) { alert('Enter a number between 1 and 99.'); return; }
+  if (isNaN(n) || n < 1 || n > 99) { alert('Enter 1–99.'); return; }
   lotCounters[key] = n - 1;
-  persistLots();
-  rebuildLot();
+  persistLots(); rebuildLot();
 }
 
 function rebuildLot() {
   const code = $('gen-code').value.trim().toUpperCase();
   const date = $('date').value;
   const qty  = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
-
-  if (!code || !date) {
-    $('lot-display').innerHTML = '—';
-    updatePreview();
-    return;
-  }
-
+  if (!code || !date) { $('lot-display').innerHTML = '—'; updatePreview(); return; }
   const prefix = effectiveLotPrefix();
   const start  = nextSeq(code, date);
   const end    = start + qty - 1;
   const first  = prefix
     ? `${prefix}-${code}-${toYYMMDD(date)}-${pad2(start)}`
     : `${code}-${toYYMMDD(date)}-${pad2(start)}`;
-
   $('lot-display').innerHTML = qty > 1
     ? `${first}<span class="range">→ ${pad2(end)}  (×${qty})</span>`
     : first;
-
   updatePreview();
 }
 
 function resetForm() {
-  ['cultivar','filial','clone','iso','transfer',
-   'gen-code','source','sub-code','notes'].forEach(id => {
-    const el = $(id); if (el) el.value = '';
-  });
-  const ingestProv = $('ingest-provenance'); if (ingestProv) ingestProv.value = '';
-  const agarEl     = $('agar-formula');      if (agarEl)     agarEl.value = '';
-  const lcEl       = $('lc-vessel');         if (lcEl)       lcEl.value = '';
-  const ingestSel  = $('ingest-type');       if (ingestSel)  ingestSel.value = '';
+  ['cultivar','filial','clone','iso','transfer','gen-code','source','sub-code','notes',
+   'agar-formula','lc-vessel'].forEach(id => { const el = $(id); if (el) el.value = ''; });
   $('quantity').value = 1;
   $('date').value = todayISO();
   $('notation').textContent = '—';
   $('grain-show-desc').checked = false;
+  const af = $('source-autofill');
+  if (af) af.style.display = 'none';
+  // ingest fields
+  ['ingest-code','ingest-cultivar','ingest-vendor','ingest-originator','ingest-origin-date',
+   'ingest-family','ingest-label-notes','ingest-clone','ingest-iso','ingest-transfer',
+   'ingest-ext-notes','ingest-inat-number','ingest-inat-collector','ingest-inat-date','ingest-inat-location']
+    .forEach(id => { const el = $(id); if (el) el.value = ''; });
+  const ingestFilial = $('ingest-filial'); if (ingestFilial) ingestFilial.value = 'F0';
+  const ingestQty    = $('ingest-quantity'); if (ingestQty) ingestQty.value = 1;
+  const inatCb = $('ingest-inat-enabled'); if (inatCb) { inatCb.checked = false; onInatToggle(); }
+  const mediaSel = $('ingest-media-type'); if (mediaSel) { mediaSel.value = ''; onIngestMediaTypeChange(); }
+  const ingestDate = $('ingest-date'); if (ingestDate) ingestDate.value = todayISO();
+  autoGenIngestCode();
   rebuildLot();
 }
 
-// ─── PREVIEW / RENDER ─────────────────────────────────────────────────────────
+// ─── LABEL DATA & PREVIEW ─────────────────────────────────────────────────────
 
 function buildLabelData(seqOverride) {
-  const wfId     = currentWorkflowId;
-  const wf       = currentWorkflow();
-  const code     = $('gen-code').value.trim().toUpperCase();
-  const date     = $('date').value;
-  const genus    = $('genus').value;
-  const species  = $('species').value;
-  const cultivar = $('cultivar').value.trim();
-  const notation = buildNotation();
-  const notes    = $('notes').value.trim();
+  const wfId = currentWorkflowId;
+  const wf   = currentWorkflow();
+  const code    = $('gen-code').value.trim().toUpperCase();
+  const date    = $('date').value;
+  const genus   = $('genus').value;
+  const species = $('species').value;
+  const cultivar= $('cultivar').value.trim();
+  const notation= buildNotation();
+  const source  = $('source').value.trim();
+  const notes   = $('notes').value.trim();
 
-  // Source is the raw source lot ID field (lineage notation shown on its own SVG line now)
-  const source = $('source').value.trim();
-
-  // Build workflow-specific destination, sub (media line), mediaLabel
   let destination = wf.destination;
   let sub         = '';
   let mediaLabel  = wf.mediaLabel || 'Media';
-  let finalSource = source;
 
   if (wfId === 'grain-spawn') {
-    const subCode    = $('sub-code').value.trim();
-    const subShowDesc = $('grain-show-desc').checked;
+    const subCode = $('sub-code').value.trim();
     sub = subCode;
-    if (subShowDesc && subCode) {
+    if ($('grain-show-desc').checked && subCode) {
       const desc = grainTypeDesc(subCode);
       if (desc) sub = `${subCode.toUpperCase()} - ${desc}`;
     }
   } else if (wfId === 'agar-plate') {
-    sub = ($('agar-formula').value || '').trim().toUpperCase() || '';
+    sub = ($('agar-formula').value || '').trim().toUpperCase();
   } else if (wfId === 'liquid-culture') {
     sub = ($('lc-vessel').value || '').trim();
-  } else if (wfId === 'ingest') {
-    const sel        = $('ingest-type');
-    const typeCode   = sel ? sel.value : '';
-    const ingestType = cfg.ingestTypes.find(t => t.code === typeCode);
-    destination = ingestType ? ingestType.label : (typeCode || 'Ingest');
-    finalSource = ($('ingest-provenance').value || '').trim();
-    sub         = '';
-    mediaLabel  = null;
   }
 
-  // Lot ID
   let lotId = '';
   if (code && date) {
     const prefix = effectiveLotPrefix();
-    const seq    = (seqOverride !== undefined) ? seqOverride : nextSeq(code, date);
+    const seq    = seqOverride !== undefined ? seqOverride : nextSeq(code, date);
     lotId = prefix
       ? `${prefix}-${code}-${toYYMMDD(date)}-${pad2(seq)}`
       : `${code}-${toYYMMDD(date)}-${pad2(seq)}`;
   }
 
-  return { cat, genus, species, cultivar, destination, date,
-           source: finalSource, sub, mediaLabel, notes, notation, lotId };
+  return { cat, genus, species, cultivar, destination, date, source, sub, mediaLabel, notes, notation, lotId };
 }
-
-function renderLabelInto(target, d) { renderLabel(target, d); }
 
 function updatePreview() {
   saveFormState();
-  renderLabelInto($('label-preview'), buildLabelData());
+  const d = currentWorkflowId === 'ingest' ? buildIngestLabelData() : buildLabelData();
+  renderLabel($('label-preview'), d);
 }
 
-// ─── PRINT ────────────────────────────────────────────────────────────────────
+// ─── PRINT (standard workflows) ───────────────────────────────────────────────
 
 function printLabel() {
   const code = $('gen-code').value.trim().toUpperCase();
@@ -2118,41 +2134,31 @@ function printLabel() {
     printArea.appendChild(host);
     renderLabel(host, buildLabelData(start + i), { physical: 'print' });
   }
-
   window.print();
 
-  if (key) {
-    lotCounters[key] = start + qty - 1;
-    persistLots();
-  }
+  if (key) { lotCounters[key] = start + qty - 1; persistLots(); }
   rebuildLot();
 }
 
 // ─── SPLITTER ─────────────────────────────────────────────────────────────────
 
 function setupSplitter() {
-  const splitter = $('splitter');
-  const form     = $('form-panel');
+  const splitter = $('splitter'), form = $('form-panel');
   if (!splitter || !form) return;
   let dragging = false, startX = 0, startWidth = 0;
   splitter.addEventListener('mousedown', e => {
-    dragging   = true;
-    startX     = e.clientX;
-    startWidth = form.offsetWidth;
-    splitter.classList.add('dragging');
-    document.body.classList.add('splitter-dragging');
+    dragging = true; startX = e.clientX; startWidth = form.offsetWidth;
+    splitter.classList.add('dragging'); document.body.classList.add('splitter-dragging');
     e.preventDefault();
   });
   document.addEventListener('mousemove', e => {
     if (!dragging) return;
-    const next = Math.max(280, Math.min(720, startWidth + (e.clientX - startX)));
-    form.style.width = next + 'px';
+    form.style.width = Math.max(280, Math.min(760, startWidth + (e.clientX - startX))) + 'px';
   });
   document.addEventListener('mouseup', () => {
     if (!dragging) return;
     dragging = false;
-    splitter.classList.remove('dragging');
-    document.body.classList.remove('splitter-dragging');
+    splitter.classList.remove('dragging'); document.body.classList.remove('splitter-dragging');
   });
 }
 
@@ -2162,16 +2168,12 @@ function init() {
   loadStorage();
   applySettings();
   applyFieldVisibility();
-
+  applyTransferRules();
   $('date').value = todayISO();
   $('settings-btn').onclick = openSettings;
   setupSplitter();
-
-  // Mark current workflow in dropdown
   updateFormForWorkflow(currentWorkflowId);
-
   if (!restoreFormState()) setCategory('actives');
-
   initializing = false;
   rebuildLot();
 }
