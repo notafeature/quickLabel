@@ -468,6 +468,21 @@ localStorage are orphaned (single-user dev tool, no migration needed).
 
 ---
 
+## 16b. Genetics Tracking Expansion
+
+A separate PRD covers the pre-grain tracking layer:
+**`/app/PRD-genetics-tracking.md`**
+
+Contents: Ingest workflow (spore prints, swabs, LC, tissue, agar plates received),
+Agar Plate workflow, Liquid Culture workflow, filial/transfer conventions, lot ID
+formats for all pre-grain states, field visibility customization, Genetics Tracker
+module design (future), storage media (Castellani, slant), open questions.
+
+As of 2026-02-01, the workflow selector and the three pre-grain workflows
+(Ingest, Agar Plate, Liquid Culture) are implemented in `quicklabel.html`.
+
+---
+
 ## 17. Workflow Architecture (forward plan)
 
 A **workflow** is a state-change event being labeled. Today the app has one
