@@ -1,102 +1,94 @@
 # QuickLabel — Memory / Session Log
 
-**App:** Single-file HTML label printer for mushroom cultivation tracking  
-**File:** `/app/quicklabel.html`  
-**Stack:** Vanilla JS, SVG, localStorage — no backend, no build step  
-**Printer:** DYMO LabelWriter 30334 (2.25 × 1.25 in)  
-**Full PRDs:** `/app/PRD.md` (core) · `/app/PRD-genetics-tracking.md` (pre-grain)
+**App:** Label printer + cultivation tracker (in expansion).
+**Files:**
+- `/app/quicklabel.html` — frontend (still localStorage)
+- `/app/backend/` — FastAPI + SQLite cultivation tracking API (NEW, Layer 2)
+- `/app/data/quicklabel.db` — SQLite database (WAL mode)
+- `/app/data/photos/` — photo storage
+- `/app/PRD.md` — core PRD
+- `/app/PRD-genetics-tracking.md` — pre-grain workflows
+- `/app/PRD-data-model.md` — Layer 1 conceptual data model
+- `/app/PRD-cultivation-api.md` — Layer 2 API reference (NEW)
 
 ---
 
 ## Architecture
 
-Single HTML file. All state in `localStorage`:
-- `ql_cfg` — settings (prefix, codes, grain types, ingest types, agar formulas, fieldVis)
-- `ql_lots` — lot ID counters keyed `[PREFIX]_[CODE]_[YYMMDD]`
-- `ql_form` — form field state restored on reload
+- **Frontend (today):** Single HTML file, vanilla JS, localStorage. Served on :3000.
+- **Backend (NEW):** FastAPI on :8001 with `/api/*` routes. SQLite at `/app/data/`.
+- **DB:** UUIDs as PKs, soft-delete tombstones, append-only events table, dual-date model
+  (`event_date` for physical, `recorded_at` for system), `client_id` for future merge.
+- **Photos:** filesystem under `/app/data/photos/<uuid>.<ext>`, referenced by event UUID.
 
-SVG label template: `grain-spawn-9x5` (shared by all workflows, different data per workflow).
-
----
-
-## Workflows Implemented
-
-| Workflow | Header tag | Lot prefix | Details field |
-|----------|-----------|------------|---------------|
-| Ingest New Genetic | INGEST NEW GENETIC ▾ | dynamic (SP, SS, LI, GT, AP, SN, CT…) | Media/Source Type + Provenance |
-| Create Agar Plate | CREATE AGAR PLATE ▾ | AL | Agar Formula |
-| Create Liquid Culture | CREATE LIQUID CULTURE ▾ | LC | Vessel Type |
-| Make Grain Spawn | MAKE GRAIN SPAWN ▾ | GL | Grain Type |
-| Generate a Batch | (disabled) | BL | — deferred — |
-| Create Storage Media | (disabled) | — | — deferred — |
+The frontend hasn't been migrated yet. Both stacks run side by side.
 
 ---
 
-## Label Layout (SVG lines, top→bottom)
+## Entities & events (Layer 2)
 
-1. Cultivar (large, bold)
-2. Genus species (italic) + ACTIVE/GOURMET chip
-3. Horizontal rule
-4. Lot ID (monospace, large)
-5. Lineage notation (e.g. F0.T0, F0.C1_A.T2) — **on its own line, new as of 2026-02-01**
-6. Destination | Src: source (e.g. "Agar Plate | Src: SP-SL192-260201-01")
-7. Media line (e.g. "Media: MEA", "Vessel: JAR") — omitted if empty
-8. Date (left) + Notes (right)
+Per `/app/PRD-data-model.md`. Implemented and smoke-tested:
 
----
+**Entities:** GeneticCode, IngestRecord, AgarPlate, LiquidCulture, GrainLot
+(unified sterile + inoculated phases), BulkSubstrateRecipe, Batch,
+HarvestLot (state ∈ {wet, dried}). Registries: GrainType, AgarFormula,
+SubstrateComponent, IngestType.
 
-## Settings Sections
+**Events:** IngestEvent, PlateAgar, DrawAgar, PlateLC, DrawLC, SterilizeGrain,
+InoculateGrain, SpawnToBulk, Harvest, Dry, BreakAndShake, ContaminationFlag,
+ContaminationLift, WeightMeasurement, MoveLocation, ConsumePartial, NoteAttach,
+Archive, Destroy, MarkGifted, MarkConsumed.
 
-- **Lab** — prefix (lab code, e.g. SL)
-- **Lineage Fields** — show/hide: Source, Filial, Clone/Isolation (3 toggles)
-- **Genetic Codes** — CRUD: code → genus/species/cultivar
-- **Grain Types** — CRUD: code + desc (for grain spawn workflow)
-- **Ingest Types** — CRUD: code + label (code = lot prefix, e.g. SP = Spore Print)
-- **Agar Formulas** — CRUD: code + desc (for agar plate workflow)
-
----
-
-## Filial / Transfer Conventions
-
-- **F0** = unknown/lab-default for incoming genetics; True F0 = wild spores
-- Known generation = use provided F#
-- **T0** = first transfer into lab media (spore/swab/LC → agar = T0)
-- T increments within same media state; does NOT increment across state changes
-- **C** only present for clone derivations (tissue/gill). Omit for spore-origin plates.
-- Isolation letter (A/B/C) appended as `C1_A` suffix
+**Key designs:**
+- Hierarchical partial consumption: parent + child lots, both consumable
+  (`parent_lot_id` on AgarPlate and LiquidCulture; `DrawAgar` / `DrawLC` events).
+- Multi-genetic batches: HARD ERROR at SpawnToBulk.
+- Auto-derivative lots for ingest types (AP → AgarPlate, LC → LiquidCulture).
+- Recipe versioning by snapshot at SpawnToBulk time.
+- Contamination quarantine: subject lot only; downstream exposed via walk, not mutated.
 
 ---
 
-## What Was Built (Session 2026-02-01)
+## What's done
 
-- New PRD: `/app/PRD-genetics-tracking.md` — full genetics tracking spec
-- Workflow selector dropdown in header (clickable workflow tag → dropdown)
-- 3 new pre-grain workflows: Ingest New Genetic, Create Agar Plate, Create Liquid Culture
-- Notation line added to SVG template (own line between lot ID and source line)
-- Field visibility toggles in settings (Source, Filial, Clone/Isolation)
-- Ingest Types CRUD in settings (with lot prefix customization)
-- Agar Formulas CRUD in settings
-- Vessel type datalist for LC workflow
-- Form state persistence extended for all new workflow fields
-- 100% test pass rate (16 automated tests)
+### Session 2026-05-18 (Layer 2)
+
+- New SQLite schema covering all entities + events + lineage + photos + contamination + counters.
+- FastAPI backend with 14 router modules under `/api/*`.
+- Smoke test at `/app/backend/tests/test_smoke.py` walks the full chain
+  Genetic → Ingest → Agar → wedge → LC → syringe → Sterile grain × 3 →
+  Inoculate × 3 → Recipe → SpawnToBulk → Harvest × 2 → Dry. Plus
+  BreakAndShake, ContaminationFlag/Lift, ConsumePartial, lineage walks,
+  human-lot-ID resolution, event stream. All passes.
+
+### Earlier sessions (label printer)
+
+- Cultivar auto-shrink, Reset Lot ID button, workflow-prefix architecture,
+  live layout fiddle panel, PRD reframed around conceptual state-change model.
+- See `/app/CHANGELOG.md` for the detailed history.
 
 ---
 
-## P0 Backlog (must do next)
+## P0 Backlog (next session)
 
-- Genetics Tracker UI panel — live inventory view with progeny tree
-- Status tracking per item (active / consumed / contaminated / archived)
-- Photo attachment per lot record
+- **Frontend wire-up.** Migrate `quicklabel.html` workflows to call the new API
+  one at a time. Order: Ingest → Agar → LC → Grain → Spawn-to-Bulk → Harvest.
+  Label printing stays unchanged.
+- **localStorage migration.** One-shot importer that POSTs existing browser
+  state into the new backend on first load.
+- **Genetics catalog UI.** List + filter active lots by state and genetic.
 
 ## P1 Backlog
 
-- Bulk isolation print run (auto A/B/C labels from one clone)
-- Castellani tube and slant create workflows (storage media)
-- Sub-lot splitting for LC bulk → syringes
+- Inventory views: sterile bags, active agar plates, active LCs, colonizing batches.
+- Photo attach-to-event UI for break-and-shake, harvest, contamination.
+- "Ready for spawn-to-bulk" / "ready for fruiting" calendar views.
+- KPI dashboards: wet→dry yield ratio per cultivar, contamination rate, time-in-stage.
 
 ## P2 / Future
 
-- QR codes on labels linking to lot records
-- Import/export genetic registry
-- KPI dashboard ("N plates of SL192 approaching max transfer, review recommended")
-- Mobile-friendly form layout
+- Air-gap packaging (Tauri or PyInstaller single-file).
+- Optional sync endpoint for hosted instances (architecture supports it).
+- Space designer UI for batch fruit-room layout.
+- Operator tracking toggle (field is in the schema; UI deferred).
+- Homogenization → product lots (out of v1 scope per user direction).

@@ -1,2 +1,6 @@
-fastapi
-uvicorn
+anyio==4.13.0
+fastapi==0.110.1
+pydantic==2.13.4
+python-multipart==0.0.28
+starlette==0.37.2
+uvicorn==0.25.0
