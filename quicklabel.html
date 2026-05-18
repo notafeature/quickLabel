@@ -260,6 +260,193 @@ textarea { resize: vertical; min-height: 56px; }
   display: flex; flex-direction: column;
 }
 #settings-panel.open { transform: translateX(0); }
+
+/* ── GENETICS LIBRARY MODAL ── */
+#genetics-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 200;
+}
+#genetics-overlay.open { display: flex; align-items: center; justify-content: center; }
+#genetics-panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  width: min(960px, 92vw); max-height: 86vh; display: flex; flex-direction: column;
+}
+#genetics-panel .g-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+#genetics-panel .g-header h2 { font-size: 14px; font-weight: 600; }
+#genetics-panel .g-toolbar {
+  padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px;
+  flex-shrink: 0;
+}
+#genetics-panel .g-toolbar input {
+  flex: 1; padding: 7px 10px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-size: 13px;
+}
+#genetics-panel .g-body { flex: 1; overflow: auto; padding: 0; }
+#genetics-panel table { width: 100%; border-collapse: collapse; font-size: 12px; }
+#genetics-panel thead th {
+  position: sticky; top: 0; background: var(--surface);
+  text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border);
+  font-weight: 600; color: var(--muted); font-size: 11px; text-transform: uppercase;
+  letter-spacing: .03em;
+}
+#genetics-panel tbody td {
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+}
+#genetics-panel tbody tr:hover { background: rgba(255,255,255,.03); }
+#genetics-panel .g-empty {
+  padding: 32px 16px; text-align: center; color: var(--muted); font-size: 12px;
+}
+#genetics-panel .g-footer {
+  padding: 8px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
+  font-size: 11px; color: var(--muted); display: flex; justify-content: space-between;
+}
+#genetics-panel .row-actions { display: flex; gap: 4px; }
+#genetics-panel .row-actions button {
+  font-size: 10px; padding: 3px 8px; background: var(--bg);
+  border: 1px solid var(--border); color: var(--text); border-radius: 3px; cursor: pointer;
+}
+#genetics-panel .row-actions button:hover { background: var(--surface); border-color: #666; }
+#genetics-panel .row-actions .danger { color: #f88; }
+#genetics-panel .row-actions .danger:hover { background: rgba(255,80,80,.12); border-color: #f55; }
+
+/* ── IMPORT GENETICS ── */
+#gimport-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 250;
+}
+#gimport-overlay.open { display: flex; align-items: center; justify-content: center; }
+#gimport-panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  width: min(1000px, 94vw); max-height: 90vh; display: flex; flex-direction: column;
+}
+#gimport-panel .gi-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+#gimport-panel .gi-header h2 { font-size: 14px; font-weight: 600; }
+#gimport-panel .gi-tabs {
+  display: flex; gap: 4px; padding: 10px 16px 0; border-bottom: 1px solid var(--border);
+}
+#gimport-panel .gi-tab {
+  padding: 6px 14px; font-size: 12px; cursor: pointer; border: 1px solid transparent;
+  border-bottom: none; border-radius: 5px 5px 0 0; color: var(--muted);
+  background: transparent;
+}
+#gimport-panel .gi-tab.active {
+  background: var(--bg); color: var(--text);
+  border-color: var(--border); margin-bottom: -1px;
+}
+#gimport-panel .gi-body { flex: 1; overflow-y: auto; padding: 14px 16px; }
+#gimport-panel .gi-input-row { display: flex; flex-direction: column; gap: 8px; }
+#gimport-panel .gi-input-row textarea {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 10px; font-size: 12px; border-radius: 4px; font-family: ui-monospace, monospace;
+  min-height: 120px; resize: vertical;
+}
+#gimport-panel .gi-input-row input[type=file] { font-size: 12px; }
+#gimport-panel .gi-mapping {
+  font-size: 11px; color: var(--muted); padding: 8px 12px; border: 1px dashed var(--border);
+  border-radius: 5px; line-height: 1.6;
+}
+#gimport-panel .gi-mapping strong { color: var(--text); }
+#gimport-panel table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+#gimport-panel thead th {
+  position: sticky; top: 0; background: var(--surface); padding: 6px 8px;
+  border-bottom: 1px solid var(--border); text-align: left; color: var(--muted);
+  font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: .04em;
+}
+#gimport-panel tbody td { padding: 5px 8px; border-bottom: 1px solid var(--border); }
+#gimport-panel tr.gi-new    td:first-child { border-left: 3px solid #4caf50; }
+#gimport-panel tr.gi-update td:first-child { border-left: 3px solid #ffc107; }
+#gimport-panel tr.gi-skip   td:first-child { border-left: 3px solid #666; opacity: 0.55; }
+#gimport-panel .gi-action {
+  font-size: 10px; padding: 2px 6px; border-radius: 3px;
+}
+#gimport-panel .gi-action.new    { background: rgba(76,175,80,.18);  color: #9dd99f; }
+#gimport-panel .gi-action.update { background: rgba(255,193,7,.18);  color: #ffd86b; }
+#gimport-panel .gi-action.skip   { background: rgba(160,160,160,.18); color: #999; }
+#gimport-panel .gi-footer {
+  padding: 10px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+}
+#gimport-panel .gi-footer button {
+  font-size: 12px; padding: 6px 14px;
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  border-radius: 4px; cursor: pointer;
+}
+#gimport-panel .gi-footer button.primary { background: #2d6a3f; border-color: #2d6a3f; color: white; }
+#gimport-panel .gi-footer button.primary:disabled { background: #333; border-color: #444; color: #777; cursor: not-allowed; }
+#gimport-panel .gi-summary { font-size: 11px; color: var(--muted); }
+
+/* ── LOGIN ── */
+#login-overlay {
+  display: none; position: fixed; inset: 0; background: var(--bg); z-index: 500;
+  align-items: center; justify-content: center;
+}
+#login-overlay.open { display: flex; }
+#login-panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 28px 32px; width: min(360px, 92vw); display: flex; flex-direction: column; gap: 16px;
+}
+#login-panel h1 { font-size: 18px; font-weight: 600; margin: 0; }
+#login-panel p  { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.5; }
+#login-panel input {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  padding: 10px 12px; font-size: 14px; border-radius: 5px; font-family: inherit;
+}
+#login-panel input:focus { outline: 1px solid #555; }
+#login-panel button {
+  background: #2d6a3f; border: 1px solid #2d6a3f; color: white;
+  padding: 9px 14px; font-size: 13px; font-weight: 600;
+  border-radius: 5px; cursor: pointer;
+}
+#login-panel button:hover { background: #348749; }
+#login-error { color: #f88; font-size: 11px; min-height: 14px; }
+
+/* ── EDIT GENETIC MODAL ── */
+#gedit-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 300;
+}
+#gedit-overlay.open { display: flex; align-items: center; justify-content: center; }
+#gedit-panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  width: min(560px, 92vw); max-height: 86vh; display: flex; flex-direction: column;
+}
+#gedit-panel .ge-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+#gedit-panel .ge-header h2 { font-size: 14px; font-weight: 600; }
+#gedit-panel .ge-body {
+  flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
+}
+#gedit-panel .ge-row { display: flex; gap: 8px; }
+#gedit-panel .ge-row > .ge-field { flex: 1; }
+#gedit-panel .ge-field { display: flex; flex-direction: column; gap: 3px; }
+#gedit-panel .ge-field label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+#gedit-panel .ge-field input, #gedit-panel .ge-field select, #gedit-panel .ge-field textarea {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  padding: 6px 9px; font-size: 12px; border-radius: 4px; font-family: inherit;
+}
+#gedit-panel .ge-field textarea { min-height: 60px; resize: vertical; }
+#gedit-panel .ge-section {
+  border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;
+  font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em;
+}
+#gedit-panel .ge-inat { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+#gedit-panel .ge-footer {
+  padding: 10px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
+  display: flex; justify-content: space-between; gap: 8px;
+}
+#gedit-panel .ge-footer button {
+  font-size: 12px; padding: 6px 14px;
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  border-radius: 4px; cursor: pointer;
+}
+#gedit-panel .ge-footer button.primary { background: #2d6a3f; border-color: #2d6a3f; color: white; }
+#gedit-panel .ge-footer button.danger  { color: #f88; border-color: #553; }
+#gedit-panel .ge-footer button.danger:hover { background: rgba(255,80,80,.12); border-color: #f55; }
 .s-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 13px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
@@ -347,6 +534,7 @@ textarea { resize: vertical; min-height: 56px; }
 .fp-footer .copy-status { font-size: 10px; color: var(--green); font-family: 'SF Mono', Menlo, monospace; min-width: 40px; }
 
 @media print {
+  .lbl-qr-reserve { display: none !important; }
   @page { size: 2.25in 1.25in; margin: 0; }
   html, body { width: 2.25in; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; background: #fff !important; overflow: hidden !important; }
   body > *:not(#print-area) { display: none !important; }
@@ -537,14 +725,24 @@ textarea { resize: vertical; min-height: 56px; }
 
       <!-- Ingest: Identity -->
       <div class="card" data-wf="ingest" style="display:none">
-        <div class="card-label">Identity</div>
+        <div class="card-label" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>Identity
+            <span id="ingest-editing-tag"
+                  style="display:none;font-size:10px;font-weight:500;color:#ffd86b;
+                         background:rgba(255,193,7,.12);padding:2px 6px;border-radius:3px;margin-left:6px;
+                         text-transform:none;letter-spacing:0">—</span>
+          </span>
+          <button class="btn-inline" style="font-size:10px;padding:2px 8px"
+                  onclick="openImportGenetics()" title="Bulk import from CSV / paste">Import…</button>
+        </div>
 
         <!-- Lab Code with auto-generate -->
         <div class="field">
           <span class="fl">Lab Code</span>
           <div class="row" style="gap:6px">
             <input type="text" id="ingest-code" placeholder="SL176" maxlength="12"
-                   oninput="updatePreview()" style="flex:1" data-testid="ingest-code-input">
+                   oninput="onIngestCodeChange()" onchange="onIngestCodeChange()"
+                   list="code-dl" style="flex:1" data-testid="ingest-code-input">
             <button class="btn-inline" onclick="autoGenIngestCode()"
                     title="Auto-assign next sequential code" data-testid="auto-gen-btn">Auto</button>
           </div>
@@ -606,6 +804,38 @@ textarea { resize: vertical; min-height: 56px; }
       <div class="card" data-wf="ingest" style="display:none">
         <div class="card-label">Origin</div>
 
+        <!-- Lineage (opt-in) -->
+        <div class="field">
+          <label class="inline-toggle">
+            <input type="checkbox" id="ingest-lineage-enabled" onchange="onIngestSectionToggle('lineage')">
+            <span>Lineage info</span>
+          </label>
+          <div id="ingest-lineage-fields" style="display:none">
+            <div class="row" style="margin-top:6px">
+              <div class="field w56">
+                <span class="fl">Filial</span>
+                <input type="text" id="ingest-filial" placeholder="F0" maxlength="6"
+                       value="F0" oninput="updatePreview()">
+              </div>
+              <div class="field w72">
+                <span class="fl">Clone</span>
+                <input type="text" id="ingest-clone" placeholder="C1" maxlength="5"
+                       oninput="updatePreview()">
+              </div>
+              <div class="field w56">
+                <span class="fl">Isolation</span>
+                <input type="text" id="ingest-iso" placeholder="A" maxlength="2"
+                       oninput="updatePreview()">
+              </div>
+              <div class="field w72">
+                <span class="fl">Transfer</span>
+                <input type="text" id="ingest-transfer" placeholder="T0" maxlength="4"
+                       oninput="updatePreview()">
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Media Type -->
         <div class="field">
           <span class="fl">Received as</span>
@@ -615,51 +845,32 @@ textarea { resize: vertical; min-height: 56px; }
           </select>
         </div>
 
-        <!-- Filial + lineage (clone/transfer shown only for complex types) -->
-        <div class="row">
-          <div class="field w56">
-            <span class="fl">Filial</span>
-            <input type="text" id="ingest-filial" placeholder="F0" maxlength="6"
-                   value="F0" oninput="updatePreview()">
-          </div>
-          <div class="field w72" id="ingest-clone-field" style="display:none">
-            <span class="fl">Clone</span>
-            <input type="text" id="ingest-clone" placeholder="C1" maxlength="5"
-                   oninput="updatePreview()">
-          </div>
-          <div class="field w56" id="ingest-iso-field" style="display:none">
-            <span class="fl">Isolation</span>
-            <input type="text" id="ingest-iso" placeholder="A" maxlength="2"
-                   oninput="updatePreview()">
-          </div>
-          <div class="field w72" id="ingest-transfer-field" style="display:none">
-            <span class="fl">Transfer</span>
-            <input type="text" id="ingest-transfer" placeholder="T0" maxlength="4"
-                   oninput="updatePreview()">
-          </div>
-        </div>
-
-        <!-- Vendor + Originator -->
-        <div class="row">
-          <div class="field">
-            <span class="fl">From (vendor / sender)</span>
+        <!-- Source (opt-in) -->
+        <div class="field">
+          <label class="inline-toggle">
+            <input type="checkbox" id="ingest-source-enabled" onchange="onIngestSectionToggle('source')">
+            <span>Source</span>
+          </label>
+          <div id="ingest-source-fields" style="display:none;margin-top:6px">
             <input type="text" id="ingest-vendor"
                    placeholder="e.g. FungusHead, Bacon"
                    oninput="updatePreview()" data-testid="ingest-vendor-input">
           </div>
-          <div class="field">
-            <span class="fl">Originator <span style="color:var(--muted);font-weight:400">— if different</span></span>
+        </div>
+
+        <!-- Origin (opt-in) -->
+        <div class="field">
+          <label class="inline-toggle">
+            <input type="checkbox" id="ingest-origin-enabled" onchange="onIngestSectionToggle('origin')">
+            <span>Known Progeny</span>
+          </label>
+          <div id="ingest-origin-fields" style="display:none;margin-top:6px">
             <input type="text" id="ingest-originator"
                    placeholder="e.g. Raj, original cultivator"
                    oninput="updatePreview()">
           </div>
         </div>
 
-        <!-- Origin Date -->
-        <div class="field">
-          <span class="fl">Origin Date <span style="color:var(--muted);font-weight:400">— when item was made / collected</span></span>
-          <input type="date" id="ingest-origin-date">
-        </div>
 
         <!-- iNaturalist observation -->
         <div class="field">
@@ -691,17 +902,23 @@ textarea { resize: vertical; min-height: 56px; }
           </div>
         </div>
 
-        <!-- Family Associations -->
+        <!-- Family or Association (opt-in) -->
         <div class="field">
-          <span class="fl">Family Associations <span style="color:var(--muted);font-weight:400">— optional</span></span>
-          <input type="text" id="ingest-family"
-                 placeholder="e.g. Tidal Wave, Melmac, B+ cross">
+          <label class="inline-toggle">
+            <input type="checkbox" id="ingest-family-enabled" onchange="onIngestSectionToggle('family')">
+            <span>Family or Association</span>
+          </label>
+          <div id="ingest-family-fields" style="display:none;margin-top:6px">
+            <input type="text" id="ingest-family"
+                   placeholder="e.g. Tidal Wave, Melmac, B+ cross"
+                   oninput="updatePreview()">
+          </div>
         </div>
 
         <!-- Date Ingested -->
         <div class="field">
           <span class="fl">Date Ingested</span>
-          <input type="date" id="ingest-date">
+          <input type="date" id="ingest-date" onchange="updatePreview()" oninput="updatePreview()">
         </div>
 
         <!-- Extended notes (stored only, NOT on label) -->
@@ -712,12 +929,17 @@ textarea { resize: vertical; min-height: 56px; }
         </div>
       </div>
 
-      <!-- Ingest: Label Notes (brief, appears on label) -->
+      <!-- Ingest: Label Notes (brief, appears on label, opt-in) -->
       <div class="card" data-wf="ingest" style="display:none">
         <div class="field">
-          <span class="fl">Label Notes <span style="color:var(--muted);font-weight:400">— brief, printed on label</span></span>
-          <input type="text" id="ingest-label-notes" placeholder="~40 chars max" maxlength="60"
-                 oninput="updatePreview()" data-testid="ingest-label-notes-input">
+          <label class="inline-toggle">
+            <input type="checkbox" id="ingest-notes-enabled" onchange="onIngestSectionToggle('notes')">
+            <span>Label Notes</span>
+          </label>
+          <div id="ingest-notes-fields" style="display:none;margin-top:6px">
+            <input type="text" id="ingest-label-notes" placeholder="brief — appears on label"
+                   maxlength="40" oninput="updatePreview()" data-testid="ingest-label-notes-input">
+          </div>
         </div>
       </div>
 
@@ -732,10 +954,12 @@ textarea { resize: vertical; min-height: 56px; }
           <span style="font-size:11px;color:var(--muted);padding-bottom:8px">labels for this item</span>
         </div>
         <div class="row print-row-end">
+          <button class="print-btn" onclick="saveIngest()" title="Save without printing">Save</button>
           <button class="primary print-btn" id="ingest-print-btn"
                   onclick="printIngestLabel()" data-testid="ingest-print-btn">Save &amp; Print</button>
           <button class="reset-btn" onclick="resetForm()" title="Clear form">↺</button>
         </div>
+        <div id="ingest-save-banner" style="font-size:11px;color:var(--muted);opacity:0;transition:opacity .25s;padding:4px 2px 0">&nbsp;</div>
       </div>
 
     </div><!-- /form-panel -->
@@ -778,6 +1002,20 @@ textarea { resize: vertical; min-height: 56px; }
   </div>
   <div class="s-body">
 
+    <!-- Account -->
+    <div class="s-section">
+      <h3>Account</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px">
+          Logged in as <strong id="current-user-label">—</strong>
+        </span>
+        <button style="font-size:11px;padding:4px 10px" onclick="doLogout()">Log out</button>
+      </div>
+      <p style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:6px">
+        Your data is stored under this name. Logging out preserves it. To start fresh, log in as a different name.
+      </p>
+    </div>
+
     <!-- Lab -->
     <div class="s-section">
       <h3>Lab</h3>
@@ -794,8 +1032,14 @@ textarea { resize: vertical; min-height: 56px; }
       <h3>Genetics Library</h3>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <span style="font-size:12px"><span id="genetics-count">0</span> genetics in library</span>
-        <button style="font-size:11px;padding:4px 10px"
-                onclick="switchWorkflow('ingest');closeSettings()">+ Ingest New</button>
+        <div style="display:flex;gap:6px">
+          <button style="font-size:11px;padding:4px 10px"
+                  onclick="openGeneticsTable()">View All</button>
+          <button style="font-size:11px;padding:4px 10px"
+                  onclick="openImportGenetics()">Import</button>
+          <button style="font-size:11px;padding:4px 10px"
+                  onclick="switchWorkflow('ingest');closeSettings()">+ Ingest New</button>
+        </div>
       </div>
       <p style="font-size:11px;color:var(--muted);line-height:1.5">
         Add genetics via the Ingest workflow. CSV import coming soon.
@@ -915,6 +1159,167 @@ textarea { resize: vertical; min-height: 56px; }
   </div>
 </div>
 
+<!-- Login Modal -->
+<div id="login-overlay">
+  <div id="login-panel">
+    <h1>QuickLabel</h1>
+    <p>Who's using this lab today? Pick a name. Your data is stored under that name; switching names gives you a clean slate.</p>
+    <input id="login-name" type="text" placeholder="e.g. pSi:L" autocomplete="off"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">Log in</button>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<!-- Import Genetics Modal -->
+<div id="gimport-overlay" onclick="if(event.target===this)closeImportGenetics()">
+  <div id="gimport-panel">
+    <div class="gi-header">
+      <h2>Import Genetics</h2>
+      <button class="icon ghost" onclick="closeImportGenetics()">✕</button>
+    </div>
+    <div class="gi-tabs">
+      <button class="gi-tab active" id="gi-tab-paste" onclick="setImportTab('paste')">Paste from spreadsheet</button>
+      <button class="gi-tab" id="gi-tab-file" onclick="setImportTab('file')">Upload CSV</button>
+    </div>
+    <div class="gi-body">
+      <div id="gi-pane-paste" class="gi-input-row">
+        <p style="font-size:11px;color:var(--muted);margin:0">
+          In Excel, select your rows (including the header row), copy (⌘C), paste below. Tab-separated paste is detected automatically.
+        </p>
+        <textarea id="gi-paste" placeholder="Genus&#9;Species&#9;Avail&#9;Classification&#9;Origin&#9;Catalog ID&#9;VENDOR/ Source&#9;Culture&#9;Family / association&#9;Notes&#10;Psilocybe&#9;Cubensis&#9;LC&#9;Active&#9;&#9;SL043&#9;TBG&#9;Enigma&#9;Tidal Wave&#9;TW3"
+                  oninput="parseImport()"></textarea>
+      </div>
+      <div id="gi-pane-file" class="gi-input-row" style="display:none">
+        <p style="font-size:11px;color:var(--muted);margin:0">
+          From Excel: File → Save As → CSV UTF-8. Then choose the file below.
+        </p>
+        <input type="file" id="gi-file" accept=".csv,text/csv" onchange="onImportFile()">
+      </div>
+      <div class="gi-mapping" id="gi-mapping" style="display:none"></div>
+      <div id="gi-preview"></div>
+    </div>
+    <div class="gi-footer">
+      <span class="gi-summary" id="gi-summary">Paste or upload to preview.</span>
+      <div style="display:flex;gap:8px">
+        <button onclick="closeImportGenetics()">Cancel</button>
+        <button class="primary" id="gi-commit" onclick="commitImport()" disabled>Import 0 records</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Genetic Modal -->
+<div id="gedit-overlay" onclick="if(event.target===this)closeEditGenetic()">
+  <div id="gedit-panel">
+    <div class="ge-header">
+      <h2 id="gedit-title">Edit Genetic</h2>
+      <button class="icon ghost" onclick="closeEditGenetic()">✕</button>
+    </div>
+    <div class="ge-body">
+      <input type="hidden" id="ge-id">
+      <div class="ge-row">
+        <div class="ge-field" style="flex:0 0 130px">
+          <label>Lab Code</label>
+          <input type="text" id="ge-code" maxlength="12" placeholder="SL192">
+        </div>
+        <div class="ge-field">
+          <label>Category</label>
+          <select id="ge-cat">
+            <option value="actives">Actives</option>
+            <option value="gourmet">Gourmet / Functional</option>
+          </select>
+        </div>
+      </div>
+      <div class="ge-row">
+        <div class="ge-field"><label>Genus</label><input type="text" id="ge-genus"></div>
+        <div class="ge-field"><label>Species</label><input type="text" id="ge-species"></div>
+      </div>
+      <div class="ge-field">
+        <label>Cultivar</label>
+        <input type="text" id="ge-cultivar">
+      </div>
+
+      <div class="ge-section">Ingest data</div>
+      <div class="ge-row">
+        <div class="ge-field"><label>Media Type</label><input type="text" id="ge-media-type" placeholder="SP / LC / AG / GR"></div>
+        <div class="ge-field"><label>Ingest Date</label><input type="date" id="ge-ingest-date"></div>
+      </div>
+      <div class="ge-row">
+        <div class="ge-field"><label>Vendor</label><input type="text" id="ge-vendor"></div>
+        <div class="ge-field"><label>Originator</label><input type="text" id="ge-originator"></div>
+      </div>
+      <div class="ge-row">
+        <div class="ge-field"><label>Origin Date</label><input type="date" id="ge-origin-date"></div>
+        <div class="ge-field"><label>Family</label><input type="text" id="ge-family"></div>
+      </div>
+
+      <div class="ge-section">iNaturalist (optional)</div>
+      <label class="ge-inat">
+        <input type="checkbox" id="ge-inat-enabled">
+        <span>iNat record present</span>
+      </label>
+      <div class="ge-row">
+        <div class="ge-field"><label>iNat #</label><input type="text" id="ge-inat-number"></div>
+        <div class="ge-field"><label>Collector</label><input type="text" id="ge-inat-collector"></div>
+      </div>
+      <div class="ge-row">
+        <div class="ge-field"><label>iNat Date</label><input type="date" id="ge-inat-date"></div>
+        <div class="ge-field"><label>Location</label><input type="text" id="ge-inat-location"></div>
+      </div>
+
+      <div class="ge-section">Notes</div>
+      <div class="ge-field">
+        <label>Extended notes</label>
+        <textarea id="ge-ext-notes" placeholder="Phenotype observations, provenance notes, anything you'd lose without writing down…"></textarea>
+      </div>
+    </div>
+    <div class="ge-footer">
+      <button class="danger" onclick="deleteGeneticFromEdit()">Delete</button>
+      <div style="display:flex;gap:8px">
+        <button onclick="closeEditGenetic()">Cancel</button>
+        <button class="primary" onclick="saveEditGenetic()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Genetics Library Modal -->
+<div id="genetics-overlay" onclick="if(event.target===this)closeGeneticsTable()">
+  <div id="genetics-panel">
+    <div class="g-header">
+      <h2>Genetics Library</h2>
+      <button class="icon ghost" onclick="closeGeneticsTable()">✕</button>
+    </div>
+    <div class="g-toolbar">
+      <input id="genetics-search" type="text" placeholder="Search by code, cultivar, genus, species…"
+             oninput="renderGeneticsTable(this.value)">
+    </div>
+    <div class="g-body">
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Cultivar</th>
+            <th>Genus / Species</th>
+            <th>Category</th>
+            <th>Vendor</th>
+            <th>Ingest Date</th>
+            <th style="width:120px"></th>
+          </tr>
+        </thead>
+        <tbody id="genetics-tbody"></tbody>
+      </table>
+      <div id="genetics-empty" class="g-empty" style="display:none">No genetics match.</div>
+    </div>
+    <div class="g-footer">
+      <span id="genetics-footer-count">0 records</span>
+      <span>Click a row to load its code into the form.</span>
+    </div>
+  </div>
+</div>
+
+<script src="db.js"></script>
 <script>
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 
@@ -1033,6 +1438,41 @@ function fitText(textEl, maxLen) {
   }
 }
 
+// One body line for the slot-based ingest layout. `slot` is
+// {kind, text, [source]}; kinds: 'notation', 'destination', 'origin',
+// 'family'. `fs` is the line's font size (caller chooses regular vs small).
+function renderBodySlot(slot, L, y, maxW, monoFam, fs) {
+  if (!slot || !slot.text) return '';
+  switch (slot.kind) {
+    case 'notation':
+      return `<text class="lbl-notation" x="${L.padL}" y="${y}"
+              font-size="${fs}" font-family="${monoFam}" fill="#555">${svgEsc(slot.text)}</text>`;
+    case 'destination': {
+      // Destination always; source piggybacks on the same line when present.
+      const src = slot.source && slot.source.trim();
+      if (!src) {
+        return `<text x="${L.padL}" y="${y}" font-size="${fs}" fill="#000">${svgEsc(slot.text)}</text>`;
+      }
+      return `<text x="${L.padL}" y="${y}" font-size="${fs}" fill="#000">
+              <tspan>${svgEsc(slot.text)}</tspan>
+              <tspan dx="14">|</tspan>
+              <tspan dx="14" font-size="${L.dimFS}" fill="#555">Src:</tspan>
+              <tspan class="lbl-src" dx="8" font-family="${monoFam}">${svgEsc(src)}</tspan>
+            </text>`;
+    }
+    case 'origin':
+    case 'family': {
+      const label = { origin: 'Origin:', family: 'Fam:' }[slot.kind];
+      return `<text x="${L.padL}" y="${y}" font-size="${fs}" fill="#000">
+              <tspan font-size="${Math.round(fs * 0.85)}" fill="#555">${label}</tspan>
+              <tspan class="lbl-${slot.kind}" dx="10" font-family="${monoFam}">${svgEsc(slot.text)}</tspan>
+            </text>`;
+    }
+    default:
+      return `<text x="${L.padL}" y="${y}" font-size="${fs}" fill="#000">${svgEsc(slot.text)}</text>`;
+  }
+}
+
 const LABEL_TEMPLATES = {
   'grain-spawn-9x5': {
     viewBox: { w: 900, h: 500 },
@@ -1045,7 +1485,13 @@ const LABEL_TEMPLATES = {
       cultivarSpeciesGap: 62, speciesRuleGap: 20,
       ruleLotGap: 50, lotNotationGap: 44, notationSrcGap: 44,
       lotSourceGap: 52, lineGap: 44,
-      ruleStroke: 2, ruleColor: '#d8d8d8'
+      ruleStroke: 2, ruleColor: '#d8d8d8',
+      // QR reserve: top-right of the body area. Real QR comes later;
+      // body lines clamp their right edge to leave this space clear.
+      qrSize: 150, qrGap: 14,
+      // Font shrink for the bottom two body lines (creates breathing room
+      // above the footer).
+      lineFSSmall: 28
     },
 
     render(d) {
@@ -1063,28 +1509,78 @@ const LABEL_TEMPLATES = {
       const ruleY      = speciesY + L.speciesRuleGap;
       const monoFam    = "'SF Mono', Menlo, Monaco, Consolas, monospace";
       const lotY       = ruleY + L.ruleLotGap;
-      const notationY  = lotY + L.lotNotationGap;
-      const srcY       = d.notation ? notationY + L.notationSrcGap : lotY + L.lotSourceGap;
-      const grainY     = srcY + L.lineGap;
       const bottomY    = VB.h - L.padBot;
 
       const cultivarText = d.cultivar || '—';
       const speciesText  = [d.genus, d.species].filter(Boolean).join(' ');
-      const destLabel    = d.destination || '';
 
-      const sourceLine = (destLabel || d.source) ? `
-  <text x="${L.padL}" y="${srcY}" font-size="${L.lineFS}" fill="#000">
-    ${destLabel ? svgEsc(destLabel) : ''}
-    ${destLabel && d.source ? `<tspan dx="12">|</tspan>` : ''}
-    ${d.source ? `<tspan dx="12" font-size="${L.dimFS}">Src:</tspan>` : ''}
-    ${d.source ? `<tspan class="lbl-src" dx="8" font-family="${monoFam}">${svgEsc(d.source)}</tspan>` : ''}
-  </text>` : '';
+      // QR reserve sits top-right of the body, just below the rule.
+      const qrX = VB.w - L.padR - L.qrSize;
+      const qrY = ruleY + L.qrGap;
+      // Body lines clamp their right edge to leave the QR clear when their
+      // y-band overlaps the QR vertically.
+      const qrBandTop = qrY;
+      const qrBandBot = qrY + L.qrSize;
 
-      const mediaLabel = d.mediaLabel || 'Media';
-      const grainLine  = d.sub ? `
-  <text x="${L.padL}" y="${grainY}" font-size="${L.lineFS}" fill="#000">
-    <tspan>${svgEsc(mediaLabel)}:</tspan><tspan class="lbl-grain" dx="10">${svgEsc(d.sub)}</tspan>
-  </text>` : '';
+      // ── Build body lines from d.bodySlots (set by buildIngestLabelData
+      //    for ingest; absent for legacy callers — fall back to the old
+      //    flat fields). Each slot becomes one <text> line spaced by
+      //    lineGap, starting at lotY + lotNotationGap.
+      const slots = Array.isArray(d.bodySlots) ? d.bodySlots : null;
+      const bodyStartY = lotY + L.lotNotationGap;
+      const bodyEls = [];
+      if (slots) {
+        let cursorY = bodyStartY;
+        for (let i = 0; i < slots.length; i++) {
+          // Bottom two body lines (index ≥ 2) use the smaller font and a
+          // slightly tighter step so the run-up to the footer breathes.
+          const isSmall = i >= 2;
+          const fs   = isSmall ? L.lineFSSmall : L.lineFS;
+          const step = i === 0 ? 0 : (isSmall ? Math.round(L.lineGap * 0.82) : L.lineGap);
+          cursorY += step;
+          const clampQR = cursorY >= qrBandTop - L.lineGap * 0.4 && cursorY <= qrBandBot;
+          const rightX  = clampQR ? qrX - 12 : VB.w - L.padR;
+          const maxW    = rightX - L.padL;
+          bodyEls.push(renderBodySlot(slots[i], L, cursorY, maxW, monoFam, fs));
+        }
+      } else {
+        // Legacy path — keep the non-ingest workflows rendering as before.
+        const notationY  = lotY + L.lotNotationGap;
+        const srcY       = d.notation ? notationY + L.notationSrcGap : lotY + L.lotSourceGap;
+        const grainY     = srcY + L.lineGap;
+        const destLabel  = d.destination || '';
+        if (d.notation) bodyEls.push(`<text class="lbl-notation" x="${L.padL}" y="${notationY}"
+              font-size="${L.lineFS}" font-family="${monoFam}" fill="#555">${svgEsc(d.notation)}</text>`);
+        if (destLabel || d.source) bodyEls.push(`<text x="${L.padL}" y="${srcY}" font-size="${L.lineFS}" fill="#000">
+              ${destLabel ? svgEsc(destLabel) : ''}
+              ${destLabel && d.source ? `<tspan dx="12">|</tspan>` : ''}
+              ${d.source ? `<tspan dx="12" font-size="${L.dimFS}">Src:</tspan>` : ''}
+              ${d.source ? `<tspan class="lbl-src" dx="8" font-family="${monoFam}">${svgEsc(d.source)}</tspan>` : ''}
+            </text>`);
+        const mediaLabel = d.mediaLabel || 'Media';
+        if (d.sub) bodyEls.push(`<text x="${L.padL}" y="${grainY}" font-size="${L.lineFS}" fill="#000">
+              <tspan>${svgEsc(mediaLabel)}:</tspan><tspan class="lbl-grain" dx="10">${svgEsc(d.sub)}</tspan>
+            </text>`);
+      }
+
+      // Footer: date left, center (e.g. iNat), right (notes or iNat).
+      const footer = d.footer || { left: d.date || '', center: '', right: d.notes || '' };
+      const footerEls = [];
+      if (footer.left) footerEls.push(`<text x="${L.padL}" y="${bottomY}"
+            font-size="${L.dateFS}" font-family="${monoFam}" fill="#000">${svgEsc(fmtDate(footer.left))}</text>`);
+      if (footer.center) footerEls.push(`<text x="${VB.w/2}" y="${bottomY}"
+            font-size="${L.notesFS}" text-anchor="middle" fill="#000">${svgEsc(footer.center)}</text>`);
+      if (footer.right) footerEls.push(`<text class="lbl-notes" x="${VB.w-L.padR}" y="${bottomY}"
+            font-size="${L.notesFS}" font-style="italic" text-anchor="end" fill="#000">${svgEsc(footer.right)}</text>`);
+
+      // QR reserve marker — invisible in print, visible in preview as a
+      // light dashed box so the user sees the held space.
+      const qrMarker = `<g class="lbl-qr-reserve">
+          <rect x="${qrX}" y="${qrY}" width="${L.qrSize}" height="${L.qrSize}"
+                fill="none" stroke="#bbb" stroke-dasharray="6 5" stroke-width="1.5"/>
+          <text x="${qrX + L.qrSize/2}" y="${qrY + L.qrSize/2 + 6}" font-size="18"
+                text-anchor="middle" fill="#bbb">QR</text>
+        </g>`;
 
       return `<svg xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 ${VB.w} ${VB.h}"
@@ -1106,15 +1602,9 @@ const LABEL_TEMPLATES = {
   ${d.lotId ? `<text class="lbl-lot" x="${L.padL}" y="${lotY}"
         font-size="${L.lotFS}" font-weight="600"
         font-family="${monoFam}" fill="#000">${svgEsc(d.lotId)}</text>` : ''}
-  ${d.notation ? `<text class="lbl-notation" x="${L.padL}" y="${notationY}"
-        font-size="${L.lineFS}" font-family="${monoFam}" fill="#555">${svgEsc(d.notation)}</text>` : ''}
-  ${sourceLine}
-  ${grainLine}
-  ${d.date ? `<text x="${L.padL}" y="${bottomY}" font-size="${L.dateFS}"
-        font-family="${monoFam}" fill="#000">${svgEsc(fmtDate(d.date))}</text>` : ''}
-  ${d.notes ? `<text class="lbl-notes" x="${VB.w-L.padR}" y="${bottomY}"
-        font-size="${L.notesFS}" font-style="italic" text-anchor="end"
-        fill="#000">${svgEsc(d.notes)}</text>` : ''}
+  ${bodyEls.join('\n  ')}
+  ${footerEls.join('\n  ')}
+  ${qrMarker}
 </svg>`.trim();
     },
 
@@ -1301,12 +1791,12 @@ function nextSeq(code, date) {
 
 // ─── STORAGE / MIGRATION ──────────────────────────────────────────────────────
 
-function loadStorage() {
+async function loadStorage() {
   try {
-    const c = localStorage.getItem('ql_cfg');
-    if (c) cfg = { ...cfg, ...JSON.parse(c) };
-    const l = localStorage.getItem('ql_lots');
-    if (l) lotCounters = JSON.parse(l);
+    const c = await db.config.get();
+    if (c) cfg = { ...cfg, ...c };
+    const counters = await db.lots._loadCounters();
+    if (counters) lotCounters = counters;
   } catch(_) {}
   migrateCfg();
 }
@@ -1342,12 +1832,12 @@ function migrateCfg() {
   }
 }
 
-function persistCfg()  { localStorage.setItem('ql_cfg',  JSON.stringify(cfg)); }
-function persistLots() { localStorage.setItem('ql_lots', JSON.stringify(lotCounters)); }
+function persistCfg()  { db.config.set(cfg); }
+function persistLots() { db.lots._saveCounters(lotCounters); }
 
 function saveFormState() {
   if (initializing) return;
-  localStorage.setItem('ql_form', JSON.stringify({
+  db.form.save({
     workflowId:    currentWorkflowId,
     cat, ingestCat,
     genus:         $('genus').value,
@@ -1374,7 +1864,6 @@ function saveFormState() {
     ingestTransfer:   ($('ingest-transfer')       || {}).value || '',
     ingestVendor:     ($('ingest-vendor')         || {}).value || '',
     ingestOriginator: ($('ingest-originator')     || {}).value || '',
-    ingestOriginDate: ($('ingest-origin-date')    || {}).value || '',
     ingestGenus:      ($('ingest-genus')          || {}).value || '',
     ingestSpecies:    ($('ingest-species')        || {}).value || '',
     ingestCultivar:   ($('ingest-cultivar')       || {}).value || '',
@@ -1382,14 +1871,16 @@ function saveFormState() {
     ingestDate:       ($('ingest-date')           || {}).value || '',
     ingestLabelNotes: ($('ingest-label-notes')    || {}).value || '',
     ingestQuantity:   ($('ingest-quantity')       || {}).value || '1',
-  }));
+    ingestToggles: Object.fromEntries(
+      INGEST_SECTIONS.map(n => [n, isIngestSectionOn(n)])
+    ),
+  });
 }
 
-function restoreFormState() {
+async function restoreFormState() {
   try {
-    const raw = localStorage.getItem('ql_form');
-    if (!raw) return false;
-    const s = JSON.parse(raw);
+    const s = await db.form.restore();
+    if (!s) return false;
 
     if (s.workflowId && WORKFLOWS[s.workflowId]) {
       currentWorkflowId = s.workflowId;
@@ -1430,11 +1921,20 @@ function restoreFormState() {
     if (s.ingestTransfer)   $('ingest-transfer').value   = s.ingestTransfer;
     if (s.ingestVendor)     $('ingest-vendor').value     = s.ingestVendor;
     if (s.ingestOriginator) $('ingest-originator').value = s.ingestOriginator;
-    if (s.ingestOriginDate) $('ingest-origin-date').value= s.ingestOriginDate;
     if (s.ingestFamily)     $('ingest-family').value     = s.ingestFamily;
     if (s.ingestDate)       $('ingest-date').value       = s.ingestDate;
     if (s.ingestLabelNotes) $('ingest-label-notes').value= s.ingestLabelNotes;
     if (s.ingestQuantity)   $('ingest-quantity').value   = s.ingestQuantity;
+    if (s.ingestToggles) {
+      for (const name of INGEST_SECTIONS) {
+        const ids = ingestSectionIds(name);
+        const box = $(ids.check);
+        if (box) {
+          box.checked = !!s.ingestToggles[name];
+          onIngestSectionToggle(name);
+        }
+      }
+    }
 
     onLineage();
     rebuildLot();
@@ -1457,6 +1957,468 @@ function openSettings() {
 function closeSettings() {
   $('settings-overlay').classList.remove('open');
   $('settings-panel').classList.remove('open');
+}
+
+// ─── GENETICS LIBRARY MODAL ──────────────────────────────────────────────────
+
+function openGeneticsTable() {
+  closeSettings();
+  $('genetics-overlay').classList.add('open');
+  $('genetics-search').value = '';
+  renderGeneticsTable('');
+  setTimeout(() => $('genetics-search').focus(), 50);
+}
+
+function closeGeneticsTable() {
+  $('genetics-overlay').classList.remove('open');
+}
+
+async function renderGeneticsTable(query) {
+  const rows = await db.genetics.list(query ? { q: query } : {});
+  const tbody = $('genetics-tbody');
+  const empty = $('genetics-empty');
+  const footer = $('genetics-footer-count');
+  tbody.innerHTML = '';
+  if (!rows.length) {
+    empty.style.display = 'block';
+    footer.textContent = '0 records';
+    return;
+  }
+  empty.style.display = 'none';
+  const sorted = rows.slice().sort((a, b) => (a.code || '￿').localeCompare(b.code || '￿'));
+  for (const r of sorted) {
+    const tr = document.createElement('tr');
+    const cat = (r.cat || '').toLowerCase();
+    const catLabel = cat === 'actives' ? 'Actives' : cat === 'gourmet' ? 'Gourmet' : (r.cat || '—');
+    const ingestDate = (r.ingestData && r.ingestData.ingestDate) || '—';
+    const vendor     = (r.ingestData && r.ingestData.vendor) || '—';
+    const id = escapeHtml(r._id || '');
+    tr.innerHTML = `
+      <td><strong>${escapeHtml(r.code || '—')}</strong></td>
+      <td>${escapeHtml(r.cultivar || '—')}</td>
+      <td><em>${escapeHtml(r.genus || '')} ${escapeHtml(r.species || '')}</em></td>
+      <td>${escapeHtml(catLabel)}</td>
+      <td>${escapeHtml(vendor)}</td>
+      <td>${escapeHtml(ingestDate)}</td>
+      <td>
+        <div class="row-actions">
+          <button onclick="event.stopPropagation();openEditGenetic('${id}')">Edit</button>
+          <button class="danger" onclick="event.stopPropagation();deleteGeneticFromTable('${id}')">×</button>
+        </div>
+      </td>
+    `;
+    // Click anywhere else on the row → load code into form
+    tr.style.cursor = r.code ? 'pointer' : 'default';
+    if (r.code) tr.onclick = () => loadGeneticIntoForm(r.code);
+    tbody.appendChild(tr);
+  }
+  footer.textContent = `${sorted.length} record${sorted.length === 1 ? '' : 's'}`;
+}
+
+function loadGeneticIntoForm(code) {
+  // Route to whichever workflow's primary code field is active.
+  if (currentWorkflowId === 'ingest') {
+    const el = $('ingest-code');
+    if (el) {
+      el.value = code;
+      onIngestCodeChange();
+    }
+  } else {
+    const el = $('gen-code');
+    if (el) {
+      el.value = code;
+      if (typeof onCodeChange === 'function') onCodeChange();
+    }
+  }
+  closeGeneticsTable();
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ─── EDIT GENETIC MODAL ──────────────────────────────────────────────────────
+
+async function openEditGenetic(id) {
+  const all = await db.genetics.list();
+  const r = all.find(x => x._id === id);
+  if (!r) { alert('Genetic record not found.'); return; }
+  const ing = r.ingestData || {};
+  const inat = ing.inat || {};
+  $('ge-id').value             = r._id;
+  $('ge-code').value           = r.code || '';
+  $('ge-cat').value            = r.cat || 'actives';
+  $('ge-genus').value          = r.genus || '';
+  $('ge-species').value        = r.species || '';
+  $('ge-cultivar').value       = r.cultivar || '';
+  $('ge-media-type').value     = ing.mediaType || '';
+  $('ge-ingest-date').value    = ing.ingestDate || '';
+  $('ge-vendor').value         = ing.vendor || '';
+  $('ge-originator').value     = ing.originator || '';
+  $('ge-origin-date').value    = ing.originDate || '';
+  $('ge-family').value         = ing.family || '';
+  $('ge-inat-enabled').checked = !!inat.enabled;
+  $('ge-inat-number').value    = inat.number || '';
+  $('ge-inat-collector').value = inat.collector || '';
+  $('ge-inat-date').value      = inat.date || '';
+  $('ge-inat-location').value  = inat.location || '';
+  $('ge-ext-notes').value      = ing.extNotes || '';
+  $('gedit-title').textContent = r.code ? `Edit ${r.code}` : 'Edit Genetic';
+  $('gedit-overlay').classList.add('open');
+  setTimeout(() => $('ge-code').focus(), 50);
+}
+
+function closeEditGenetic() {
+  $('gedit-overlay').classList.remove('open');
+}
+
+async function saveEditGenetic() {
+  const id = $('ge-id').value;
+  if (!id) return;
+  const patch = {
+    code:     ($('ge-code').value || '').trim().toUpperCase(),
+    cat:      $('ge-cat').value,
+    genus:    ($('ge-genus').value || '').trim(),
+    species:  ($('ge-species').value || '').trim(),
+    cultivar: ($('ge-cultivar').value || '').trim(),
+    ingestData: {
+      mediaType:  ($('ge-media-type').value || '').trim(),
+      vendor:     ($('ge-vendor').value || '').trim(),
+      originator: ($('ge-originator').value || '').trim(),
+      originDate: $('ge-origin-date').value || '',
+      family:     ($('ge-family').value || '').trim(),
+      inat: {
+        enabled:   $('ge-inat-enabled').checked,
+        number:    ($('ge-inat-number').value || '').trim(),
+        collector: ($('ge-inat-collector').value || '').trim(),
+        date:      $('ge-inat-date').value || '',
+        location:  ($('ge-inat-location').value || '').trim(),
+      },
+      extNotes:   ($('ge-ext-notes').value || '').trim(),
+      ingestDate: $('ge-ingest-date').value || '',
+    },
+  };
+  const res = await db.genetics.update(id, patch);
+  if (!res.ok) { alert('Save failed: ' + (res.reason || 'unknown')); return; }
+  // Mirror into cfg.codes so legacy code paths (datalists, count) stay in sync.
+  syncCfgCodesFromGenetics();
+  closeEditGenetic();
+  renderGeneticsTable($('genetics-search').value);
+}
+
+async function deleteGeneticFromEdit() {
+  const id = $('ge-id').value;
+  if (!id) return;
+  if (!confirm('Delete this genetic record? This cannot be undone.')) return;
+  await db.genetics.remove(id);
+  syncCfgCodesFromGenetics();
+  closeEditGenetic();
+  renderGeneticsTable($('genetics-search').value);
+}
+
+async function deleteGeneticFromTable(id) {
+  if (!id) return;
+  if (!confirm('Delete this genetic record? This cannot be undone.')) return;
+  await db.genetics.remove(id);
+  syncCfgCodesFromGenetics();
+  renderGeneticsTable($('genetics-search').value);
+}
+
+// ─── IMPORT GENETICS (CSV / paste) ───────────────────────────────────────────
+
+// Column-header aliases → canonical QuickLabel field. Header matching is
+// case-insensitive and whitespace-tolerant.
+const IMPORT_HEADER_MAP = {
+  'genus':                  'genus',
+  'species':                'species',
+  'avail':                  'mediaType',
+  'available':              'mediaType',
+  'classification':         'cat',
+  'category':               'cat',
+  'origin':                 'originator',
+  'originator':             'originator',
+  'catalog id':             'code',
+  'catalog':                'code',
+  'code':                   'code',
+  'lab code':               'code',
+  'vendor':                 'vendor',
+  'source':                 'vendor',
+  'vendor/source':          'vendor',
+  'vendor / source':        'vendor',
+  'vendor/ source':         'vendor',
+  'culture':                'cultivar',
+  'cultivar':               'cultivar',
+  'family':                 'family',
+  'family/association':     'family',
+  'family / association':   'family',
+  'association':            'family',
+  'notes':                  'extNotes',
+  'note':                   'extNotes',
+  'ext notes':              'extNotes',
+  'media':                  'mediaType',
+  'media type':             'mediaType',
+  'ingest date':            'ingestDate',
+  'date':                   'ingestDate',
+};
+
+let importParsed = null;  // { headers, rows, mapping, actions }
+
+function openImportGenetics() {
+  $('gimport-overlay').classList.add('open');
+  $('gi-paste').value = '';
+  $('gi-file').value = '';
+  $('gi-preview').innerHTML = '';
+  $('gi-mapping').style.display = 'none';
+  $('gi-summary').textContent = 'Paste or upload to preview.';
+  $('gi-commit').disabled = true;
+  $('gi-commit').textContent = 'Import 0 records';
+  setImportTab('paste');
+  setTimeout(() => $('gi-paste').focus(), 50);
+}
+
+function closeImportGenetics() {
+  $('gimport-overlay').classList.remove('open');
+  importParsed = null;
+}
+
+function setImportTab(tab) {
+  $('gi-tab-paste').classList.toggle('active', tab === 'paste');
+  $('gi-tab-file').classList.toggle('active', tab === 'file');
+  $('gi-pane-paste').style.display = tab === 'paste' ? 'flex' : 'none';
+  $('gi-pane-file').style.display  = tab === 'file'  ? 'flex' : 'none';
+}
+
+function onImportFile() {
+  const f = $('gi-file').files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => parseImport(r.result);
+  r.readAsText(f);
+}
+
+function parseImport(textOverride) {
+  const text = textOverride != null ? textOverride : $('gi-paste').value;
+  if (!text || !text.trim()) {
+    $('gi-preview').innerHTML = '';
+    $('gi-mapping').style.display = 'none';
+    $('gi-summary').textContent = 'Paste or upload to preview.';
+    $('gi-commit').disabled = true;
+    return;
+  }
+  const rows = parseDelimited(text);
+  if (!rows.length || rows[0].length < 2) {
+    $('gi-summary').textContent = 'Could not parse — need a header row and at least one data row.';
+    $('gi-commit').disabled = true;
+    return;
+  }
+  const headers = rows[0].map(h => String(h || '').trim());
+  const dataRows = rows.slice(1).filter(r => r.some(c => String(c || '').trim() !== ''));
+
+  // Map each header to a canonical field
+  const mapping = headers.map(h => IMPORT_HEADER_MAP[h.toLowerCase().replace(/\s+/g, ' ')] || null);
+
+  // Build candidate records and compute actions against existing genetics
+  buildImportPreview(headers, mapping, dataRows);
+}
+
+function parseDelimited(text) {
+  // Detect tab vs comma based on first line.
+  const firstLine = text.split(/\r?\n/, 1)[0] || '';
+  const sep = firstLine.indexOf('\t') >= 0 ? '\t' : ',';
+  return parseCSV(text, sep);
+}
+
+// Minimal RFC-4180-ish CSV/TSV parser. Handles quoted fields, embedded
+// separators, escaped quotes, and \r\n / \n line endings.
+function parseCSV(text, sep) {
+  const out = [];
+  let row = [], cell = '', inQuotes = false, i = 0;
+  while (i < text.length) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { cell += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      }
+      cell += ch; i++; continue;
+    }
+    if (ch === '"') { inQuotes = true; i++; continue; }
+    if (ch === sep) { row.push(cell); cell = ''; i++; continue; }
+    if (ch === '\r') { i++; continue; }
+    if (ch === '\n') {
+      row.push(cell); out.push(row); row = []; cell = ''; i++; continue;
+    }
+    cell += ch; i++;
+  }
+  if (cell !== '' || row.length) { row.push(cell); out.push(row); }
+  return out;
+}
+
+async function buildImportPreview(headers, mapping, dataRows) {
+  const existing = await db.genetics.list();
+  const byCode = new Map();
+  for (const r of existing) {
+    if (r.code) byCode.set(String(r.code).toUpperCase(), r);
+  }
+
+  // Render the column-mapping summary
+  const mapHtml = headers.map((h, i) => {
+    const m = mapping[i];
+    return m
+      ? `<strong>${escapeHtml(h)}</strong> → ${escapeHtml(humanField(m))}`
+      : `<span style="text-decoration:line-through;opacity:.6">${escapeHtml(h)}</span> → (ignored)`;
+  }).join(' · ');
+  $('gi-mapping').innerHTML = `Column mapping: ${mapHtml}`;
+  $('gi-mapping').style.display = 'block';
+
+  // Convert rows to candidate records with action labels
+  const actions = dataRows.map(cells => {
+    const rec = recordFromRow(cells, headers, mapping);
+    let action = 'skip', reason = '';
+    if (!rec.code && !rec.cultivar && !rec.genus) {
+      action = 'skip'; reason = 'empty row';
+    } else if (rec.code && byCode.has(rec.code.toUpperCase())) {
+      action = 'update';
+    } else {
+      action = 'new';
+    }
+    return { rec, action, reason };
+  });
+
+  importParsed = { headers, mapping, actions };
+
+  // Render preview table
+  const fields = ['code', 'cultivar', 'genus', 'species', 'cat', 'mediaType', 'vendor', 'originator', 'family', 'extNotes'];
+  const head = `<thead><tr><th>Action</th>${fields.map(f => `<th>${escapeHtml(humanField(f))}</th>`).join('')}</tr></thead>`;
+  const body = actions.map(({ rec, action }) => {
+    const cls = action === 'new' ? 'gi-new' : action === 'update' ? 'gi-update' : 'gi-skip';
+    const cells = fields.map(f => {
+      const v = f === 'mediaType' || f === 'vendor' || f === 'originator' || f === 'family' || f === 'extNotes'
+        ? (rec.ingestData || {})[f] || ''
+        : rec[f] || '';
+      return `<td>${escapeHtml(v)}</td>`;
+    }).join('');
+    return `<tr class="${cls}"><td><span class="gi-action ${action}">${action.toUpperCase()}</span></td>${cells}</tr>`;
+  }).join('');
+  $('gi-preview').innerHTML = `<table>${head}<tbody>${body}</tbody></table>`;
+
+  // Footer summary
+  const counts = actions.reduce((a, x) => (a[x.action]++, a), { new: 0, update: 0, skip: 0 });
+  $('gi-summary').textContent =
+    `${dataRows.length} row${dataRows.length === 1 ? '' : 's'} parsed — ` +
+    `${counts.new} new · ${counts.update} update · ${counts.skip} skip`;
+  const importable = counts.new + counts.update;
+  $('gi-commit').disabled = importable === 0;
+  $('gi-commit').textContent = `Import ${importable} record${importable === 1 ? '' : 's'}`;
+}
+
+function humanField(f) {
+  return ({
+    code: 'Code', cultivar: 'Cultivar', genus: 'Genus', species: 'Species',
+    cat: 'Category', mediaType: 'Media', vendor: 'Vendor',
+    originator: 'Origin', family: 'Family', extNotes: 'Notes',
+    ingestDate: 'Ingest date',
+  })[f] || f;
+}
+
+function recordFromRow(cells, headers, mapping) {
+  const flat = {};
+  for (let i = 0; i < headers.length; i++) {
+    const field = mapping[i];
+    if (!field) continue;
+    const raw = String(cells[i] == null ? '' : cells[i]).trim();
+    if (!raw) continue;
+    flat[field] = raw;
+  }
+  // Normalize
+  const rec = {
+    code:     (flat.code || '').toUpperCase(),
+    cultivar:  flat.cultivar || '',
+    genus:     flat.genus    || '',
+    species:  (flat.species  || '').toLowerCase(),
+    cat:       normalizeCategory(flat.cat),
+    ingestData: {
+      mediaType:  (flat.mediaType || '').toUpperCase(),
+      vendor:      flat.vendor     || '',
+      originator:  flat.originator || '',
+      family:      flat.family     || '',
+      extNotes:    flat.extNotes   || '',
+      ingestDate:  flat.ingestDate || '',
+      originDate:  '',
+      inat: { enabled: false, number: '', collector: '', date: '', location: '' },
+    },
+  };
+  return rec;
+}
+
+function normalizeCategory(raw) {
+  const s = (raw || '').toLowerCase().trim();
+  if (!s) return 'actives';
+  if (s.startsWith('active') || s === 'psilocybin' || s === 'psilocybe') return 'actives';
+  if (s.startsWith('gourmet') || s === 'functional' || s === 'medicinal') return 'gourmet';
+  return 'actives'; // fallback; user can edit
+}
+
+async function commitImport() {
+  if (!importParsed) return;
+  const { actions } = importParsed;
+  let created = 0, updated = 0;
+  for (const { rec, action } of actions) {
+    if (action === 'new') {
+      const res = await db.genetics.create(rec);
+      if (res.ok) created++;
+    } else if (action === 'update') {
+      // Find by code, merge ingestData so we don't clobber fields the import doesn't carry.
+      const existing = await db.genetics.get(rec.code);
+      if (!existing) continue;
+      const merged = {
+        code:     rec.code     || existing.code,
+        cultivar: rec.cultivar || existing.cultivar,
+        genus:    rec.genus    || existing.genus,
+        species:  rec.species  || existing.species,
+        cat:      rec.cat      || existing.cat,
+        ingestData: {
+          ...(existing.ingestData || {}),
+          ...Object.fromEntries(
+            Object.entries(rec.ingestData).filter(([k, v]) => {
+              if (k === 'inat') return false;
+              return v !== '' && v != null;
+            })
+          ),
+          inat: (existing.ingestData && existing.ingestData.inat) || rec.ingestData.inat,
+        },
+      };
+      await db.genetics.update(existing._id, merged);
+      updated++;
+    }
+  }
+  await syncCfgCodesFromGenetics();
+  closeImportGenetics();
+  // If the View All modal is open, refresh it.
+  if ($('genetics-overlay').classList.contains('open')) {
+    renderGeneticsTable($('genetics-search').value || '');
+  }
+  alert(`Imported ${created} new, updated ${updated}.`);
+}
+
+// After an edit/delete, rebuild cfg.codes from db.genetics so the form
+// datalist and the Settings count reflect reality.
+async function syncCfgCodesFromGenetics() {
+  const all = await db.genetics.list();
+  cfg.codes = all.map(r => ({
+    code:       r.code,
+    cat:        r.cat,
+    genus:      r.genus,
+    species:    r.species,
+    cultivar:   r.cultivar,
+    ingestData: r.ingestData,
+  }));
+  persistCfg();
+  refreshCodeDl();
+  const countEl = $('genetics-count');
+  if (countEl) countEl.textContent = cfg.codes.length;
 }
 
 function saveSettings() {
@@ -1779,11 +2741,8 @@ function onIngestGenus() {
 }
 
 function onIngestMediaTypeChange() {
-  const mediaType = $('ingest-media-type').value;
-  const isComplex = COMPLEX_INGEST_TYPES.has(mediaType);
-  $('ingest-clone-field').style.display    = isComplex ? '' : 'none';
-  $('ingest-iso-field').style.display      = isComplex ? '' : 'none';
-  $('ingest-transfer-field').style.display = isComplex ? '' : 'none';
+  // Lineage sub-fields are no longer gated by media type — the lineage
+  // toggle controls visibility of the whole block.
   updatePreview();
 }
 
@@ -1832,85 +2791,194 @@ function saveNewSpecies() {
 }
 
 function buildIngestNotation() {
-  const mediaType = $('ingest-media-type').value;
-  const isComplex = COMPLEX_INGEST_TYPES.has(mediaType);
+  // Lineage is opt-in. When the toggle is off, no notation. When on, all
+  // four sub-fields contribute (no media-type gating).
+  if (!isIngestSectionOn('lineage')) return '';
   const parts = [];
-  let f = ($('ingest-filial').value || 'F0').trim().toUpperCase();
+  let f = ($('ingest-filial').value || '').trim().toUpperCase();
   if (f) parts.push(f.startsWith('F') ? f : 'F' + f);
-  if (isComplex) {
-    let c = ($('ingest-clone').value || '').trim().toUpperCase();
-    const iso = ($('ingest-iso').value || '').trim().toUpperCase();
-    if (c) { if (!c.startsWith('C')) c = 'C' + c; parts.push(iso ? `${c}_${iso}` : c); }
-    let t = ($('ingest-transfer').value || '').trim().toUpperCase();
-    if (t) parts.push(t.startsWith('T') ? t : 'T' + t);
-  }
+  let c = ($('ingest-clone').value || '').trim().toUpperCase();
+  const iso = ($('ingest-iso').value || '').trim().toUpperCase();
+  if (c) { if (!c.startsWith('C')) c = 'C' + c; parts.push(iso ? `${c}_${iso}` : c); }
+  let t = ($('ingest-transfer').value || '').trim().toUpperCase();
+  if (t) parts.push(t.startsWith('T') ? t : 'T' + t);
   return parts.join('.');
+}
+
+// Generic opt-in section toggle for the Ingest panel. Each section has a
+// `${name}-enabled` checkbox and a `${name}-fields` container.
+const INGEST_SECTIONS = ['lineage', 'source', 'origin', 'family', 'notes'];
+
+// Body-line budget (slots after the lot ID, before the footer). Source
+// shares the destination line — it does NOT claim its own slot. Optional
+// body fields compete for whatever's left after lineage+destination.
+const LABEL_BODY_BUDGET = 4;
+const OPTIONAL_BODY_FIELDS = ['origin', 'family'];
+
+function ingestSectionIds(name) {
+  const slug = name.replace(/[A-Z]/g, m => '-' + m.toLowerCase());
+  return { check: `ingest-${slug}-enabled`, wrap: `ingest-${slug}-fields` };
+}
+
+function isIngestSectionOn(name) {
+  const ids = ingestSectionIds(name);
+  const box = $(ids.check);
+  return !!(box && box.checked);
+}
+
+// How many body slots are committed regardless of S/O/F: destination (1)
+// plus lineage notation if its toggle is on.
+function reservedBodySlots() {
+  return 1 + (isIngestSectionOn('lineage') ? 1 : 0);
+}
+
+// Apply the budget: walk S/O/F in priority order; once we exceed the
+// remaining budget, disable that and subsequent unchecked toggles.
+function applySlotBudget() {
+  const remaining = LABEL_BODY_BUDGET - reservedBodySlots();
+  let used = 0;
+  for (const name of OPTIONAL_BODY_FIELDS) {
+    const ids = ingestSectionIds(name);
+    const box = $(ids.check);
+    if (!box) continue;
+    if (box.checked) {
+      used++;
+      box.disabled = false;
+      box.title = '';
+    } else {
+      const full = used >= remaining;
+      box.disabled = full;
+      box.title = full ? 'No room on the label — turn off another field to enable this.' : '';
+    }
+  }
+}
+
+function onIngestSectionToggle(name) {
+  const ids = ingestSectionIds(name);
+  const box = $(ids.check), wrap = $(ids.wrap);
+  if (!box || !wrap) return;
+  wrap.style.display = box.checked ? 'block' : 'none';
+  applySlotBudget();
+  saveFormState();
+  updatePreview();
 }
 
 function buildIngestLabelData() {
   const mediaType  = $('ingest-media-type').value;
   const ingestType = cfg.ingestTypes.find(t => t.code === mediaType);
-  const vendor     = ($('ingest-vendor').value || '').trim();
-  const originator = ($('ingest-originator').value || '').trim();
+  // Toggle-gated values: if a section is off, treat as empty.
+  const vendor     = isIngestSectionOn('source') ? ($('ingest-vendor').value     || '').trim() : '';
+  const originator = isIngestSectionOn('origin') ? ($('ingest-originator').value || '').trim() : '';
+  const family     = isIngestSectionOn('family') ? ($('ingest-family').value     || '').trim() : '';
+  const notesText  = isIngestSectionOn('notes')  ? ($('ingest-label-notes').value|| '').trim() : '';
+  const inatNum    = $('ingest-inat-enabled').checked
+                       ? ($('ingest-inat-number').value || '').trim()
+                       : '';
 
   const destination = ingestType ? ingestType.label : (mediaType || 'Ingest');
-  let source = vendor;
-  if (originator && originator !== vendor) source = vendor ? `${vendor} / ${originator}` : originator;
+
+  // Build the body-slot array. Order: lineage (if on) → destination
+  // (carries source inline) → origin/family in priority order.
+  const bodySlots = [];
+  if (isIngestSectionOn('lineage')) {
+    const n = buildIngestNotation();
+    if (n) bodySlots.push({ kind: 'notation', text: n });
+  }
+  // Destination always; source piggybacks on the same line when present.
+  bodySlots.push({ kind: 'destination', text: destination, source: vendor });
+  const remaining = LABEL_BODY_BUDGET - bodySlots.length;
+  const candidates = [
+    { kind: 'origin',  text: originator },
+    { kind: 'family',  text: family },
+  ].filter(s => s.text);
+  for (const s of candidates.slice(0, Math.max(0, remaining))) bodySlots.push(s);
+
+  // Footer parts: date (left), iNat (center), notes (right). When iNat
+  // is on but notes is off, iNat takes the right slot.
+  const footer = {
+    left:   $('ingest-date').value || '',
+    center: '',
+    right:  '',
+  };
+  if (notesText && inatNum) { footer.center = `iNat ${inatNum}`; footer.right = notesText; }
+  else if (notesText)       { footer.right  = notesText; }
+  else if (inatNum)         { footer.right  = `iNat ${inatNum}`; }
 
   return {
     cat:         ingestCat,
     genus:       ($('ingest-genus').value || ''),
     species:     ($('ingest-species').value || ''),
     cultivar:    ($('ingest-cultivar').value || '').trim() || '—',
-    destination,
-    source,
-    date:        $('ingest-date').value || todayISO(),
-    sub:         null,
-    mediaLabel:  null,
-    notes:       ($('ingest-label-notes').value || '').trim(),
-    notation:    buildIngestNotation(),
-    lotId:       ($('ingest-code').value || '').trim().toUpperCase()
+    bodySlots,
+    footer,
+    lotId:       ($('ingest-code').value || '').trim().toUpperCase(),
+    // kept for legacy callers that still read these flat fields
+    date:        $('ingest-date').value,
+    notation:    isIngestSectionOn('lineage') ? buildIngestNotation() : '',
+    notes:       notesText,
   };
 }
 
-function printIngestLabel() {
-  const code     = ($('ingest-code').value || '').trim().toUpperCase();
-  const cultivar = ($('ingest-cultivar').value || '').trim();
-  if (!code || !cultivar) {
-    alert('Please fill in Lab Code and Cultivar before printing.');
-    return;
-  }
+// Read the current ingest form into a genetics record (no side effects).
+function gatherIngestRecord() {
+  return {
+    code:     ($('ingest-code').value || '').trim().toUpperCase(),
+    cat:      ingestCat,
+    genus:    $('ingest-genus').value,
+    species:  $('ingest-species').value,
+    cultivar: ($('ingest-cultivar').value || '').trim(),
+    ingestData: {
+      mediaType:  $('ingest-media-type').value,
+      vendor:     ($('ingest-vendor').value || '').trim(),
+      originator: ($('ingest-originator').value || '').trim(),
+      originDate: (($('ingest-origin-date') || {}).value) || '',
+      family:     ($('ingest-family').value || '').trim(),
+      inat: {
+        enabled:   $('ingest-inat-enabled').checked,
+        number:    ($('ingest-inat-number').value || '').trim(),
+        collector: ($('ingest-inat-collector').value || '').trim(),
+        date:      $('ingest-inat-date').value,
+        location:  ($('ingest-inat-location').value || '').trim(),
+      },
+      extNotes:   ($('ingest-ext-notes').value || '').trim(),
+      ingestDate: $('ingest-date').value,
+    },
+  };
+}
 
-  // Save genetic to library if not already present
-  if (!cfg.codes.find(r => (r.code||'').toUpperCase() === code)) {
-    cfg.codes.push({
-      code,
-      cat:     ingestCat,
-      genus:   $('ingest-genus').value,
-      species: $('ingest-species').value,
-      cultivar,
-      ingestData: {
-        mediaType:     $('ingest-media-type').value,
-        vendor:        ($('ingest-vendor').value || '').trim(),
-        originator:    ($('ingest-originator').value || '').trim(),
-        originDate:    $('ingest-origin-date').value,
-        family:        ($('ingest-family').value || '').trim(),
-        inat: {
-          enabled:   $('ingest-inat-enabled').checked,
-          number:    ($('ingest-inat-number').value || '').trim(),
-          collector: ($('ingest-inat-collector').value || '').trim(),
-          date:      $('ingest-inat-date').value,
-          location:  ($('ingest-inat-location').value || '').trim()
-        },
-        extNotes:   ($('ingest-ext-notes').value || '').trim(),
-        ingestDate: $('ingest-date').value || todayISO()
-      }
-    });
-    persistCfg();
-    refreshCodeDl();
-    const countEl = $('genetics-count');
-    if (countEl) countEl.textContent = cfg.codes.length;
+// Save the ingest form. Creates if the code is new; updates the existing
+// record (matched by code) otherwise. Returns the saved record, or null
+// if validation failed.
+async function saveIngestRecord({ silent = false } = {}) {
+  const rec = gatherIngestRecord();
+  if (!rec.code || !rec.cultivar) {
+    if (!silent) alert('Please fill in Lab Code and Cultivar before saving.');
+    return null;
   }
+  const existing = await db.genetics.get(rec.code);
+  if (existing) {
+    await db.genetics.update(existing._id, rec);
+  } else {
+    await db.genetics.create(rec);
+  }
+  await syncCfgCodesFromGenetics();
+  return rec;
+}
+
+async function saveIngest() {
+  const rec = await saveIngestRecord();
+  if (!rec) return;
+  const banner = $('ingest-save-banner');
+  if (banner) {
+    banner.textContent = `Saved ${rec.code} at ${new Date().toLocaleTimeString()}`;
+    banner.style.opacity = '1';
+    setTimeout(() => { banner.style.opacity = '0'; }, 2500);
+  }
+}
+
+async function printIngestLabel() {
+  const rec = await saveIngestRecord();
+  if (!rec) return;
 
   const d   = buildIngestLabelData();
   const qty = Math.max(1, Math.min(20, parseInt($('ingest-quantity').value, 10) || 1));
@@ -1924,6 +2992,65 @@ function printIngestLabel() {
     renderLabel(host, d, { physical: 'print' });
   }
   window.print();
+}
+
+// When the user types a code that matches an existing genetic, load
+// every saved field into the ingest form so they can review/edit/print.
+async function onIngestCodeChange() {
+  updatePreview();
+  const code = ($('ingest-code').value || '').trim().toUpperCase();
+  const tag = $('ingest-editing-tag');
+  if (!code) { if (tag) tag.style.display = 'none'; return; }
+  const rec = await db.genetics.get(code);
+  if (!rec) { if (tag) tag.style.display = 'none'; return; }
+  loadGeneticIntoIngest(rec);
+}
+
+function loadGeneticIntoIngest(rec) {
+  const ing  = rec.ingestData || {};
+  const inat = ing.inat || {};
+  if (rec.cat) setIngestCategory(rec.cat);
+  fillIngestGenus();
+  setSelectValueLoose($('ingest-genus'), rec.genus);
+  onIngestGenus();
+  setSelectValueLoose($('ingest-species'), rec.species);
+  $('ingest-cultivar').value = rec.cultivar || '';
+  if (ing.mediaType) {
+    $('ingest-media-type').value = ing.mediaType;
+    if (typeof onIngestMediaTypeChange === 'function') onIngestMediaTypeChange();
+  }
+  // Populate fields and auto-toggle their parent section if data is present.
+  setIngestField('vendor',     ing.vendor,     'source');
+  setIngestField('originator', ing.originator, 'origin');
+  setIngestField('family',     ing.family,     'family');
+  // Notes (label-printed) auto-checks if the record has a label-note value.
+  // (Currently the genetics record doesn't store the label note — this is a
+  // no-op until that's added; placeholder keeps the contract simple.)
+
+  // iNat
+  $('ingest-inat-enabled').checked = !!inat.enabled;
+  if (typeof onInatToggle === 'function') onInatToggle();
+  $('ingest-inat-number').value    = inat.number    || '';
+  $('ingest-inat-collector').value = inat.collector || '';
+  $('ingest-inat-date').value      = inat.date      || '';
+  $('ingest-inat-location').value  = inat.location  || '';
+  $('ingest-ext-notes').value      = ing.extNotes   || '';
+  $('ingest-date').value           = ing.ingestDate || '';
+
+  updatePreview();
+  const tag = $('ingest-editing-tag');
+  if (tag) { tag.textContent = `editing ${rec.code}`; tag.style.display = 'inline'; }
+}
+
+function setIngestField(slug, value, sectionName) {
+  const el = $(`ingest-${slug}`);
+  if (el) el.value = value || '';
+  const ids = ingestSectionIds(sectionName);
+  const box = $(ids.check);
+  if (box) {
+    box.checked = !!(value && String(value).trim());
+    onIngestSectionToggle(sectionName);
+  }
 }
 
 // ─── STANDARD FORM ────────────────────────────────────────────────────────────
@@ -2003,12 +3130,28 @@ function onCodeChange() {
   if (rec) {
     const newCat = rec.cat || categoryForGenus(rec.genus) || 'actives';
     if (newCat !== cat) setCategory(newCat);
-    $('genus').value = rec.genus;
+    setSelectValueLoose($('genus'), rec.genus);
     onGenus();
-    $('species').value  = rec.species;
-    $('cultivar').value = rec.cultivar;
+    setSelectValueLoose($('species'), rec.species);
+    $('cultivar').value = rec.cultivar || '';
   }
   rebuildLot();
+}
+
+// Set a <select>'s value; if no matching option exists, inject one so the
+// stored genus/species shows up even when it's not in the seeded taxa.
+function setSelectValueLoose(sel, val) {
+  const v = (val || '').trim();
+  if (!sel) return;
+  if (!v) { sel.value = ''; return; }
+  const has = Array.from(sel.options).some(o => o.value === v);
+  if (!has) {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    sel.appendChild(opt);
+  }
+  sel.value = v;
 }
 
 function onDateChange()     { rebuildLot(); }
@@ -2054,7 +3197,7 @@ function resetForm() {
   const af = $('source-autofill');
   if (af) af.style.display = 'none';
   // ingest fields
-  ['ingest-code','ingest-cultivar','ingest-vendor','ingest-originator','ingest-origin-date',
+  ['ingest-code','ingest-cultivar','ingest-vendor','ingest-originator',
    'ingest-family','ingest-label-notes','ingest-clone','ingest-iso','ingest-transfer',
    'ingest-ext-notes','ingest-inat-number','ingest-inat-collector','ingest-inat-date','ingest-inat-location']
     .forEach(id => { const el = $(id); if (el) el.value = ''; });
@@ -2137,6 +3280,31 @@ function printLabel() {
   window.print();
 
   if (key) { lotCounters[key] = start + qty - 1; persistLots(); }
+
+  // Persist the print run as a lot record + capture source as a lineage edge.
+  const firstLabel = buildLabelData(start);
+  if (firstLabel.lotId) {
+    db.lots.create({
+      lotId:        firstLabel.lotId,
+      workflowId:   currentWorkflowId,
+      geneticCode:  code,
+      cultivar:     firstLabel.cultivar,
+      genus:        firstLabel.genus,
+      species:      firstLabel.species,
+      cat:          firstLabel.cat,
+      notation:     firstLabel.notation,
+      destination:  firstLabel.destination,
+      source:       firstLabel.source,
+      sub:          firstLabel.sub,
+      notes:        firstLabel.notes,
+      date:         firstLabel.date,
+      qty,
+    });
+    if (firstLabel.source) {
+      db.lineage.addEdge(firstLabel.source, firstLabel.lotId);
+    }
+  }
+
   rebuildLot();
 }
 
@@ -2164,8 +3332,8 @@ function setupSplitter() {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 
-function init() {
-  loadStorage();
+async function init() {
+  await loadStorage();
   applySettings();
   applyFieldVisibility();
   applyTransferRules();
@@ -2173,12 +3341,54 @@ function init() {
   $('settings-btn').onclick = openSettings;
   setupSplitter();
   updateFormForWorkflow(currentWorkflowId);
-  if (!restoreFormState()) setCategory('actives');
+  if (!(await restoreFormState())) setCategory('actives');
   initializing = false;
   rebuildLot();
+  updateUserDisplay();
 }
 
-init();
+// ─── LOGIN / LOGOUT ──────────────────────────────────────────────────────────
+
+function showLogin() {
+  $('login-overlay').classList.add('open');
+  $('login-error').textContent = '';
+  $('login-name').value = '';
+  setTimeout(() => $('login-name').focus(), 50);
+}
+
+function hideLogin() {
+  $('login-overlay').classList.remove('open');
+}
+
+async function doLogin() {
+  const name = ($('login-name').value || '').trim();
+  if (!name) { $('login-error').textContent = 'Pick a name.'; return; }
+  await db.session.login(name);
+  // Full reload so the namespaced data loads cleanly into a fresh in-memory state.
+  location.reload();
+}
+
+async function doLogout() {
+  if (!confirm('Log out? Your data stays saved under your name.')) return;
+  await db.session.logout();
+  location.reload();
+}
+
+function updateUserDisplay() {
+  const u = db.session.currentUser();
+  const el = $('current-user-label');
+  if (el) el.textContent = u || '—';
+}
+
+async function boot() {
+  if (!db.session.isLoggedIn()) {
+    showLogin();
+    return;
+  }
+  await init();
+}
+
+boot();
 </script>
 </body>
 </html>
