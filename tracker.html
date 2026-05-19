@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickLabel · Tracker</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1e1e1e;
+  --surface3: #262626;
+  --border: #2a2a2a;
+  --border-strong: #3a3a3a;
+  --text: #e0e0e0;
+  --muted: #777;
+  --dim: #555;
+  --green: #4ade80;
+  --teal: #22d3ee;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --violet: #a78bfa;
+  --r: 6px;
+  --mono: 'SF Mono', Monaco, 'Inconsolata', 'Menlo', monospace;
+}
+
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px; height: 100vh; overflow: hidden;
+}
+
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ── HEADER ── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; height: 48px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.logo {
+  font-size: 17px; font-weight: 600; letter-spacing: -0.3px;
+  display: flex; align-items: baseline; gap: 10px;
+}
+.logo em { color: var(--green); font-style: normal; }
+.logo .tag {
+  font-size: 9px; font-weight: 500; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 3px 8px; border: 1px solid var(--border); border-radius: 10px;
+}
+.header-right { display: flex; align-items: center; gap: 12px; }
+.header-right a {
+  font-size: 11px; color: var(--muted); text-decoration: none;
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--r);
+  transition: color .12s, border-color .12s;
+}
+.header-right a:hover { color: var(--text); border-color: var(--border-strong); }
+.status-pill {
+  font-size: 10px; color: var(--green); padding: 4px 10px;
+  border: 1px solid var(--border); border-radius: 10px; font-family: var(--mono);
+}
+.status-pill.bad { color: var(--red); }
+
+/* ── BODY ── */
+main { display: flex; flex: 1; overflow: hidden; }
+
+nav {
+  width: 200px; background: var(--surface); border-right: 1px solid var(--border);
+  padding: 16px 8px; display: flex; flex-direction: column; gap: 2px;
+  overflow-y: auto; flex-shrink: 0;
+}
+nav .nav-section {
+  font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 1.2px;
+  padding: 12px 12px 4px;
+}
+nav button {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; background: transparent; border: 1px solid transparent;
+  color: var(--muted); cursor: pointer; border-radius: var(--r);
+  font-family: inherit; font-size: 13px; text-align: left; gap: 8px;
+}
+nav button:hover { color: var(--text); background: var(--surface2); }
+nav button.active { background: var(--surface2); color: var(--text); border-color: var(--border-strong); }
+nav button .badge {
+  font-size: 10px; font-family: var(--mono); color: var(--muted);
+  padding: 2px 6px; background: var(--bg); border-radius: 8px;
+}
+
+#content { flex: 1; overflow-y: auto; padding: 24px 32px; }
+
+/* ── PANELS ── */
+.panel { display: none; }
+.panel.active { display: block; }
+.panel-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 16px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-header h1 { font-size: 20px; font-weight: 500; letter-spacing: -0.3px; }
+.panel-header .hint { font-size: 11px; color: var(--dim); font-family: var(--mono); }
+
+/* ── DASHBOARD CARDS ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.kpi-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 16px;
+}
+.kpi-card .lbl {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--muted); margin-bottom: 8px;
+}
+.kpi-card .val { font-size: 28px; font-weight: 600; font-family: var(--mono); }
+.kpi-card .val.green { color: var(--green); }
+.kpi-card .val.amber { color: var(--amber); }
+.kpi-card .val.red { color: var(--red); }
+.kpi-card .sub { font-size: 11px; color: var(--dim); margin-top: 6px; font-family: var(--mono); }
+
+/* ── SUB-TABS ── */
+.tabs {
+  display: flex; gap: 2px; margin-bottom: 18px;
+  border-bottom: 1px solid var(--border); padding-bottom: 0;
+}
+.tabs button {
+  padding: 8px 16px; background: transparent; border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted); cursor: pointer; font-family: inherit; font-size: 12px;
+  transition: color .12s, border-color .12s;
+}
+.tabs button:hover { color: var(--text); }
+.tabs button.active { color: var(--green); border-bottom-color: var(--green); }
+
+.subpanel { display: none; }
+.subpanel.active { display: block; }
+
+/* ── FORMS ── */
+.form-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 18px; margin-bottom: 18px; max-width: 720px;
+}
+.form-card h3 {
+  font-size: 13px; font-weight: 500; color: var(--green);
+  margin-bottom: 14px; letter-spacing: -0.2px;
+}
+.form-card .hint { font-size: 11px; color: var(--dim); margin-bottom: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.field .lbl {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted);
+}
+.field .lbl .req { color: var(--red); margin-left: 2px; }
+.field input, .field select, .field textarea {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 10px; font-size: 13px; border-radius: var(--r);
+  font-family: inherit; transition: border-color .12s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: var(--green);
+}
+.field input[disabled] { color: var(--dim); }
+.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.field-row .field { margin-bottom: 0; }
+
+.btn-row { display: flex; gap: 8px; margin-top: 8px; }
+button.primary {
+  background: var(--green); color: #001; border: 1px solid var(--green);
+  padding: 8px 16px; border-radius: var(--r); cursor: pointer; font-size: 12px;
+  font-weight: 600; font-family: inherit; transition: opacity .12s;
+}
+button.primary:hover { opacity: 0.85; }
+button.primary[disabled] { opacity: 0.4; cursor: not-allowed; }
+button.secondary {
+  background: transparent; color: var(--muted); border: 1px solid var(--border);
+  padding: 8px 16px; border-radius: var(--r); cursor: pointer; font-size: 12px;
+  font-family: inherit; transition: color .12s, border-color .12s;
+}
+button.secondary:hover { color: var(--text); border-color: var(--border-strong); }
+button.danger {
+  background: transparent; color: var(--red); border: 1px solid var(--red);
+  padding: 6px 12px; border-radius: var(--r); cursor: pointer; font-size: 11px;
+  font-family: inherit;
+}
+
+/* ── TABLES ── */
+table.lot-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.lot-tbl th {
+  text-align: left; padding: 8px 10px; font-size: 10px; text-transform: uppercase;
+  letter-spacing: .8px; color: var(--muted); border-bottom: 1px solid var(--border);
+}
+table.lot-tbl td {
+  padding: 8px 10px; border-bottom: 1px solid var(--border); font-family: var(--mono);
+}
+table.lot-tbl tr:hover td { background: var(--surface); }
+table.lot-tbl .pill {
+  display: inline-block; padding: 2px 8px; font-size: 10px;
+  border-radius: 8px; font-family: var(--mono); text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.pill.active { background: rgba(74,222,128,.12); color: var(--green); }
+.pill.contaminated { background: rgba(248,113,113,.12); color: var(--red); }
+.pill.archived, .pill.consumed { background: rgba(120,120,120,.12); color: var(--muted); }
+.pill.sterile { background: rgba(34,211,238,.12); color: var(--teal); }
+.pill.inoculated { background: rgba(74,222,128,.12); color: var(--green); }
+.pill.wet { background: rgba(34,211,238,.12); color: var(--teal); }
+.pill.dried { background: rgba(251,191,36,.12); color: var(--amber); }
+
+/* ── TOAST ── */
+#toast-stack {
+  position: fixed; bottom: 20px; right: 20px; z-index: 100;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.toast {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 12px 16px; font-size: 12px; min-width: 240px; max-width: 380px;
+  border-left: 3px solid var(--green); animation: slidein .2s ease-out;
+}
+.toast.error { border-left-color: var(--red); }
+.toast.warn { border-left-color: var(--amber); }
+.toast .ttl { font-weight: 500; margin-bottom: 4px; }
+.toast .msg { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+@keyframes slidein { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ── BANNER ── */
+.banner {
+  background: rgba(251,191,36,.08); border: 1px solid var(--amber);
+  border-radius: var(--r); padding: 14px 18px; margin-bottom: 18px;
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+}
+.banner .b-msg { font-size: 12px; color: var(--text); }
+.banner .b-msg strong { color: var(--amber); }
+
+/* ── EMPTY STATE ── */
+.empty {
+  text-align: center; padding: 48px 16px; color: var(--dim); font-size: 12px;
+}
+.empty .big { font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+
+/* ── SCROLL ── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* ── DETAIL ── */
+.detail {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 16px; margin-bottom: 14px;
+}
+.detail h4 { font-size: 12px; color: var(--green); margin-bottom: 8px; letter-spacing: .3px; }
+.detail .kv { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; font-size: 12px; }
+.detail .kv .k { color: var(--muted); font-size: 11px; }
+.detail .kv .v { font-family: var(--mono); }
+.tree { padding-left: 14px; border-left: 1px solid var(--border); margin-top: 8px; }
+.tree-node {
+  font-family: var(--mono); font-size: 11px; padding: 2px 0;
+}
+.tree-node .arrow { color: var(--dim); margin-right: 6px; }
+.tree-node .kind { color: var(--teal); }
+.tree-node .lot { color: var(--text); }
+
+/* ── DATALIST workaround styling ── */
+input[list]::-webkit-calendar-picker-indicator { opacity: 0.4; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div class="logo">
+      <span>Quick<em>Label</em></span>
+      <span class="tag">Tracker</span>
+    </div>
+    <div class="header-right">
+      <span class="status-pill" id="status">API…</span>
+      <a href="/quicklabel" data-testid="link-to-printer">Label Printer →</a>
+    </div>
+  </header>
+
+  <main>
+    <nav>
+      <button onclick="show('dashboard')" data-nav="dashboard" data-testid="nav-dashboard">Dashboard</button>
+      <button onclick="show('genetics')" data-nav="genetics" data-testid="nav-genetics">Genetics<span class="badge" id="badge-genetics">·</span></button>
+
+      <div class="nav-section">Workflows</div>
+      <button onclick="show('ingest')" data-nav="ingest" data-testid="nav-ingest">Ingest</button>
+      <button onclick="show('agar')" data-nav="agar" data-testid="nav-agar">Agar Plate</button>
+      <button onclick="show('lc')" data-nav="lc" data-testid="nav-lc">Liquid Culture</button>
+      <button onclick="show('grain')" data-nav="grain" data-testid="nav-grain">Grain</button>
+      <button onclick="show('batch')" data-nav="batch" data-testid="nav-batch">Spawn → Bulk</button>
+      <button onclick="show('harvest')" data-nav="harvest" data-testid="nav-harvest">Harvest</button>
+
+      <div class="nav-section">Browse</div>
+      <button onclick="show('inventory')" data-nav="inventory" data-testid="nav-inventory">Inventory</button>
+      <button onclick="show('lineage')" data-nav="lineage" data-testid="nav-lineage">Lineage</button>
+      <button onclick="show('recipes')" data-nav="recipes" data-testid="nav-recipes">Recipes</button>
+      <button onclick="show('migrate')" data-nav="migrate" data-testid="nav-migrate">Migrate</button>
+    </nav>
+
+    <div id="content">
+      <!-- panels rendered here -->
+    </div>
+  </main>
+</div>
+
+<div id="toast-stack"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// API CLIENT
+// ═══════════════════════════════════════════════════════════════════════════
+const API_BASE = (() => {
+  // In the Emergent preview environment, API is served on same origin under /api
+  return location.origin;
+})();
+
+const api = {
+  async _call(method, path, body) {
+    const url = `${API_BASE}/api${path}`;
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body !== undefined) opts.body = JSON.stringify(body);
+    const r = await fetch(url, opts);
+    if (!r.ok) {
+      const txt = await r.text();
+      throw new Error(`${r.status} ${r.statusText}: ${txt}`);
+    }
+    if (r.status === 204) return null;
+    return r.json();
+  },
+  get(p)        { return this._call('GET',    p); },
+  post(p, b)    { return this._call('POST',   p, b ?? {}); },
+  put(p, b)     { return this._call('PUT',    p, b ?? {}); },
+  patch(p, b)   { return this._call('PATCH',  p, b ?? {}); },
+  del(p)        { return this._call('DELETE', p); },
+
+  health()             { return this.get('/health'); },
+  dashboard()          { return this.get('/dashboard/summary'); },
+  genetics()           { return this.get('/genetics'); },
+  createGenetic(b)     { return this.post('/genetics', b); },
+  ingests()            { return this.get('/ingest'); },
+  createIngest(b)      { return this.post('/ingest', b); },
+  agar()               { return this.get('/agar'); },
+  plateAgar(b)         { return this.post('/agar/plate', b); },
+  drawAgar(b)          { return this.post('/agar/draw', b); },
+  lcs()                { return this.get('/lc'); },
+  plateLC(b)           { return this.post('/lc/plate', b); },
+  drawLC(b)            { return this.post('/lc/draw', b); },
+  grain(phase)         { return this.get('/grain' + (phase ? '?phase='+phase : '')); },
+  sterilizeGrain(b)    { return this.post('/grain/sterilize', b); },
+  inoculateGrain(b)    { return this.post('/grain/inoculate', b); },
+  recipes()            { return this.get('/recipes'); },
+  createRecipe(b)      { return this.post('/recipes', b); },
+  batches()            { return this.get('/batches'); },
+  spawnToBulk(b)       { return this.post('/batches/spawn-to-bulk', b); },
+  harvests()           { return this.get('/harvests'); },
+  harvest(b)           { return this.post('/harvests/harvest', b); },
+  dry(b)               { return this.post('/harvests/dry', b); },
+  registries: {
+    grainTypes()       { return api.get('/registries/grain-types'); },
+    agarFormulas()     { return api.get('/registries/agar-formulas'); },
+    ingestTypes()      { return api.get('/registries/ingest-types'); },
+    subComponents()    { return api.get('/registries/substrate-components'); },
+    putGrainType(c,d)  { return api.put(`/registries/grain-types/${c}`, {code:c, description:d}); },
+    putAgarFormula(c,d){ return api.put(`/registries/agar-formulas/${c}`, {code:c, description:d}); },
+    putIngestType(c,l,d){ return api.put(`/registries/ingest-types/${c}`, {code:c, label:l, derivative_kind:d}); },
+  },
+  resolveLotId(lotId)  { return this.get(`/lineage/by-lot-id/${encodeURIComponent(lotId)}`); },
+  walkBack(kind, id)   { return this.get(`/lineage/${kind}/${id}/backward`); },
+  walkFwd(kind, id)    { return this.get(`/lineage/${kind}/${id}/forward`); },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const el = (tag, props = {}, ...children) => {
+  const e = document.createElement(tag);
+  for (const [k,v] of Object.entries(props)) {
+    if (k === 'class') e.className = v;
+    else if (k === 'style') Object.assign(e.style, v);
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'html') e.innerHTML = v;
+    else if (v !== undefined && v !== null) e.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (c == null) continue;
+    e.append(c.nodeType ? c : document.createTextNode(c));
+  }
+  return e;
+};
+
+function toast(msg, kind = 'ok', title) {
+  const t = el('div', { class: 'toast ' + (kind === 'error' ? 'error' : kind === 'warn' ? 'warn' : '') },
+    el('div', { class: 'ttl' }, title || (kind === 'error' ? 'Error' : kind === 'warn' ? 'Notice' : 'Done')),
+    el('div', { class: 'msg' }, msg),
+  );
+  $('toast-stack').appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function lineageStr(o) {
+  const parts = [];
+  if (o.f != null && o.f !== '') parts.push('F' + o.f);
+  if (o.c != null && o.c !== '') parts.push('C' + o.c + (o.iso ? '_' + o.iso : ''));
+  else if (o.iso) parts.push('_' + o.iso);
+  if (o.t != null && o.t !== '') parts.push('T' + o.t);
+  return parts.join('.');
+}
+
+function readLineage(formEl) {
+  const v = name => {
+    const i = formEl.querySelector(`[name="${name}"]`);
+    return i ? (i.value || '').trim() : '';
+  };
+  const num = s => s === '' ? null : Number(s);
+  return {
+    f: num(v('f')),
+    c: num(v('c')),
+    iso: v('iso') || null,
+    t: num(v('t')),
+  };
+}
+
+function lineageInputs() {
+  return el('div', { class: 'field-row' },
+    el('div', { class: 'field' },
+      el('span', { class: 'lbl' }, 'Filial (F)'),
+      el('input', { name: 'f', type: 'number', placeholder: '0' }),
+    ),
+    el('div', { class: 'field' },
+      el('span', { class: 'lbl' }, 'Clone (C)'),
+      el('input', { name: 'c', type: 'number', placeholder: '' }),
+    ),
+    el('div', { class: 'field' },
+      el('span', { class: 'lbl' }, 'Isolation'),
+      el('input', { name: 'iso', placeholder: 'A' }),
+    ),
+    el('div', { class: 'field' },
+      el('span', { class: 'lbl' }, 'Transfer (T)'),
+      el('input', { name: 't', type: 'number', placeholder: '0' }),
+    ),
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE + ROUTER
+// ═══════════════════════════════════════════════════════════════════════════
+const state = {
+  genetics: [],
+  grainTypes: [],
+  agarFormulas: [],
+  ingestTypes: [],
+  subComponents: [],
+  recipes: [],
+};
+
+async function refreshState() {
+  try {
+    const [g, gt, af, it, sc, rec] = await Promise.all([
+      api.genetics(), api.registries.grainTypes(), api.registries.agarFormulas(),
+      api.registries.ingestTypes(), api.registries.subComponents(), api.recipes(),
+    ]);
+    state.genetics = g;
+    state.grainTypes = gt;
+    state.agarFormulas = af;
+    state.ingestTypes = it;
+    state.subComponents = sc;
+    state.recipes = rec;
+    $('badge-genetics').textContent = g.length;
+  } catch (e) {
+    toast(e.message, 'error', 'State refresh failed');
+  }
+}
+
+const VIEWS = {};
+
+function show(name) {
+  document.querySelectorAll('nav button[data-nav]').forEach(b =>
+    b.classList.toggle('active', b.dataset.nav === name));
+  // Ensure the panel exists before toggling .active (panel created lazily by VIEWS[name])
+  ensurePanel(name);
+  if (VIEWS[name]) VIEWS[name]();
+  document.querySelectorAll('#content .panel').forEach(p =>
+    p.classList.toggle('active', p.dataset.view === name));
+  location.hash = name;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PANEL BUILDERS
+// ═══════════════════════════════════════════════════════════════════════════
+function ensurePanel(name) {
+  let p = document.querySelector(`#content .panel[data-view="${name}"]`);
+  if (!p) {
+    p = el('div', { class: 'panel', 'data-view': name });
+    $('content').appendChild(p);
+  }
+  return p;
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────────────────────
+VIEWS.dashboard = async () => {
+  const p = ensurePanel('dashboard');
+  p.innerHTML = '';
+  p.appendChild(el('div', { class: 'panel-header' },
+    el('h1', {}, 'Dashboard'),
+    el('span', { class: 'hint', id: 'dash-time' }, '—'),
+  ));
+  const grid = el('div', { class: 'kpi-grid' });
+  p.appendChild(grid);
+
+  try {
+    const d = await api.dashboard();
+    const card = (lbl, val, sub, tone) => el('div', { class: 'kpi-card' },
+      el('div', { class: 'lbl' }, lbl),
+      el('div', { class: 'val ' + (tone || '') }, String(val)),
+      sub ? el('div', { class: 'sub' }, sub) : null,
+    );
+    grid.appendChild(card('Genetics', d.genetics.total));
+    grid.appendChild(card('Ingest records', d.ingest.active));
+    grid.appendChild(card('Agar plates · active', d.agar.active,
+      `${d.agar.exhausted} exhausted · ${d.agar.contaminated} contam`));
+    grid.appendChild(card('LC · active', d.lc.active,
+      `${Math.round(d.lc.remaining_ml).toLocaleString()} mL on hand · ${d.lc.contaminated} contam`));
+    grid.appendChild(card('Sterile grain bags', d.grain.sterile, 'awaiting inoculation', 'amber'));
+    grid.appendChild(card('Inoculated grain', d.grain.inoculated,
+      `${d.grain.contaminated} contam`, 'green'));
+    grid.appendChild(card('Batches colonizing', d.batches.colonizing));
+    grid.appendChild(card('Batches fruiting', d.batches.fruiting));
+    grid.appendChild(card('Harvest · wet', d.harvests.wet.count,
+      `${Math.round(d.harvests.wet.total_g)} g total`, 'teal'));
+    grid.appendChild(card('Harvest · dried', d.harvests.dried.count,
+      `${Math.round(d.harvests.dried.total_g)} g total`, 'amber'));
+    grid.appendChild(card('Active contamination flags', d.contamination.active_flags,
+      d.contamination.active_flags > 0 ? 'review!' : null,
+      d.contamination.active_flags > 0 ? 'red' : 'green'));
+    $('dash-time').textContent = new Date().toLocaleString();
+  } catch (e) {
+    p.appendChild(el('div', { class: 'empty' },
+      el('div', { class: 'big' }, 'Could not load dashboard'),
+      el('div', {}, e.message)));
+  }
+};
+
+// ── GENETICS ───────────────────────────────────────────────────────────────
+VIEWS.genetics = async () => {
+  const p = ensurePanel('genetics');
+  p.innerHTML = '';
+  p.appendChild(el('div', { class: 'panel-header' },
+    el('h1', {}, 'Genetic codes'),
+    el('span', { class: 'hint' }, 'lab-scoped registry · code is the entry point'),
+  ));
+
+  const form = el('form', { class: 'form-card', onsubmit: async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    try {
+      await api.createGenetic({
+        code: fd.get('code').trim(),
+        genus: fd.get('genus').trim(),
+        species: fd.get('species').trim(),
+        cultivar: fd.get('cultivar').trim() || null,
+        colonization_window_days: fd.get('window') ? Number(fd.get('window')) : null,
+        notes: fd.get('notes').trim() || null,
+      });
+      toast(`Created ${fd.get('code')}`);
+      ev.target.reset();
+      await refreshState();
+      show('genetics');
+    } catch (e) { toast(e.message, 'error'); }
+  }});
+  form.appendChild(el('h3', {}, 'New genetic code'));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Code', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'code', required: true, placeholder: 'SL192' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Genus', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'genus', required: true, placeholder: 'Psilocybe' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Species', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'species', required: true, placeholder: 'cubensis' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Cultivar'),
+      el('input', { name: 'cultivar', placeholder: 'Enigma' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Coloniz. days'),
+      el('input', { name: 'window', type: 'number', placeholder: '14' })),
+  ));
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Notes'),
+    el('input', { name: 'notes', placeholder: 'optional' })));
+  form.appendChild(el('div', { class: 'btn-row' },
+    el('button', { class: 'primary', type: 'submit', 'data-testid': 'create-genetic-btn' }, 'Create')));
+  p.appendChild(form);
+
+  if (state.genetics.length === 0) {
+    p.appendChild(el('div', { class: 'empty' },
+      el('div', { class: 'big' }, 'No genetic codes yet'),
+      el('div', {}, 'Add one above, or run the migration to import from your label printer.')));
+  } else {
+    const tbl = el('table', { class: 'lot-tbl' });
+    tbl.appendChild(el('thead', {}, el('tr', {},
+      el('th', {}, 'Code'), el('th', {}, 'Genus'), el('th', {}, 'Species'),
+      el('th', {}, 'Cultivar'), el('th', {}, 'Coloniz. days'), el('th', {}, 'Notes'))));
+    const tbody = el('tbody');
+    state.genetics.forEach(g => {
+      tbody.appendChild(el('tr', {},
+        el('td', { style: { color: 'var(--green)' } }, g.code),
+        el('td', {}, g.genus || ''),
+        el('td', { style: { fontStyle: 'italic' } }, g.species || ''),
+        el('td', {}, g.cultivar || ''),
+        el('td', {}, g.colonization_window_days || ''),
+        el('td', { style: { fontFamily: 'inherit' } }, g.notes || ''),
+      ));
+    });
+    tbl.appendChild(tbody);
+    p.appendChild(tbl);
+  }
+};
+
+// ── INGEST ─────────────────────────────────────────────────────────────────
+VIEWS.ingest = async () => {
+  const p = ensurePanel('ingest');
+  p.innerHTML = '';
+  p.appendChild(el('div', { class: 'panel-header' },
+    el('h1', {}, 'Ingest a new genetic'),
+    el('span', { class: 'hint' }, 'origin of every provenance chain')));
+
+  const form = el('form', { class: 'form-card', onsubmit: async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const itype = fd.get('ingest_type');
+    const body = {
+      genetic_code_id: fd.get('genetic_code_id'),
+      ingest_type: itype,
+      external_source: fd.get('external_source').trim() || null,
+      received_date: fd.get('received_date'),
+      lineage: readLineage(ev.target),
+      notes: fd.get('notes').trim() || null,
+    };
+    const it = state.ingestTypes.find(x => x.code === itype);
+    if (it && it.derivative_kind === 'agar') {
+      body.plate_size = fd.get('plate_size') || '100mm';
+      body.agar_formula = fd.get('agar_formula') || null;
+    } else if (it && it.derivative_kind === 'lc') {
+      body.vessel_type = fd.get('vessel_type') || null;
+      body.initial_volume_ml = fd.get('initial_volume_ml') ? Number(fd.get('initial_volume_ml')) : 10;
+    }
+    try {
+      const r = await api.createIngest(body);
+      toast(`${r.ingest.lot_id} created` + (r.derivative_lot_id ? ' (+ derivative lot)' : ''));
+      ev.target.reset();
+    } catch (e) { toast(e.message, 'error'); }
+  }});
+
+  const geneticOpts = state.genetics.map(g =>
+    el('option', { value: g.id }, `${g.code} — ${g.genus} ${g.species}${g.cultivar ? ' · '+g.cultivar : ''}`));
+  const ingestOpts = state.ingestTypes.map(t =>
+    el('option', { value: t.code, 'data-deriv': t.derivative_kind || '' }, `${t.code} — ${t.label}`));
+
+  form.appendChild(el('h3', {}, 'Ingest record'));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Genetic', el('span', { class: 'req' }, '*')),
+      el('select', { name: 'genetic_code_id', required: true },
+        el('option', { value: '' }, '— select —'), ...geneticOpts)),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Ingest type', el('span', { class: 'req' }, '*')),
+      el('select', { name: 'ingest_type', required: true, onchange: e => updateIngestSub(e.target.form) },
+        el('option', { value: '' }, '— select —'), ...ingestOpts)),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Received date', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'received_date', type: 'date', required: true, value: new Date().toISOString().split('T')[0] })),
+  ));
+  form.appendChild(el('div', { class: 'field' },
+    el('span', { class: 'lbl' }, 'External source / provenance'),
+    el('input', { name: 'external_source', placeholder: 'Vendor: FungusHead · Trade: Bob · Wild: Mt Hood' })));
+  form.appendChild(lineageInputs());
+
+  // Derivative sub-section (shown for AP/LC ingest types)
+  const sub = el('div', { id: 'ingest-deriv', style: { display: 'none', borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '6px' } });
+  sub.appendChild(el('h3', { style: { color: 'var(--teal)' } }, 'Derivative lot details'));
+  sub.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field', 'data-deriv-only': 'agar' }, el('span', { class: 'lbl' }, 'Plate size'),
+      el('input', { name: 'plate_size', placeholder: '100mm' })),
+    el('div', { class: 'field', 'data-deriv-only': 'agar' }, el('span', { class: 'lbl' }, 'Agar formula'),
+      el('select', { name: 'agar_formula' },
+        el('option', { value: '' }, '— select —'),
+        ...state.agarFormulas.map(a => el('option', { value: a.code }, `${a.code} — ${a.description}`)))),
+    el('div', { class: 'field', 'data-deriv-only': 'lc' }, el('span', { class: 'lbl' }, 'Vessel type'),
+      el('input', { name: 'vessel_type', placeholder: '10mL' })),
+    el('div', { class: 'field', 'data-deriv-only': 'lc' }, el('span', { class: 'lbl' }, 'Initial mL'),
+      el('input', { name: 'initial_volume_ml', type: 'number', step: '0.1', placeholder: '10' })),
+  ));
+  form.appendChild(sub);
+
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Notes'),
+    el('input', { name: 'notes' })));
+  form.appendChild(el('div', { class: 'btn-row' },
+    el('button', { class: 'primary', type: 'submit', 'data-testid': 'create-ingest-btn' }, 'Record ingest')));
+  p.appendChild(form);
+
+  // List of recent ingests
+  try {
+    const ings = await api.ingests();
+    if (ings.length) {
+      p.appendChild(el('h3', { style: { marginTop: '20px', marginBottom: '8px', fontSize: '12px', color: 'var(--muted)' } }, 'Recent ingests'));
+      const tbl = el('table', { class: 'lot-tbl' });
+      tbl.appendChild(el('thead', {}, el('tr', {},
+        el('th', {}, 'Lot ID'), el('th', {}, 'Type'), el('th', {}, 'Genetic'),
+        el('th', {}, 'Received'), el('th', {}, 'Lineage'), el('th', {}, 'Source'))));
+      const tbody = el('tbody');
+      ings.slice(0, 30).forEach(i => {
+        const g = state.genetics.find(x => x.id === i.genetic_code_id);
+        tbody.appendChild(el('tr', {},
+          el('td', { style: { color: 'var(--green)' } }, i.lot_id),
+          el('td', {}, i.ingest_type),
+          el('td', {}, g ? g.code : '—'),
+          el('td', {}, i.received_date?.slice(0,10) || ''),
+          el('td', {}, lineageStr({ f: i.lineage_f, c: i.lineage_c, iso: i.lineage_iso, t: i.lineage_t })),
+          el('td', { style: { fontFamily: 'inherit', color: 'var(--muted)' } }, i.external_source || ''),
+        ));
+      });
+      tbl.appendChild(tbody);
+      p.appendChild(tbl);
+    }
+  } catch (e) { /* no list, no big deal */ }
+};
+
+function updateIngestSub(form) {
+  const sel = form.querySelector('[name="ingest_type"]');
+  const deriv = sel.selectedOptions[0]?.dataset.deriv || '';
+  const sub = form.querySelector('#ingest-deriv');
+  sub.style.display = deriv ? '' : 'none';
+  sub.querySelectorAll('[data-deriv-only]').forEach(fld => {
+    fld.style.display = (fld.dataset.derivOnly === deriv) ? '' : 'none';
+  });
+}
+
+// ── AGAR ───────────────────────────────────────────────────────────────────
+VIEWS.agar = async () => {
+  const p = ensurePanel('agar');
+  p.innerHTML = '';
+  p.appendChild(el('div', { class: 'panel-header' },
+    el('h1', {}, 'Agar plate'),
+    el('span', { class: 'hint' }, 'plate fresh · or draw wedge from existing')));
+
+  // Tabs: Plate / Draw
+  const tabs = el('div', { class: 'tabs' });
+  const plateBtn = el('button', { class: 'active', onclick: () => switchTab('plate') }, 'Plate (new)');
+  const drawBtn  = el('button', { onclick: () => switchTab('draw') }, 'Draw wedge');
+  tabs.append(plateBtn, drawBtn);
+  p.appendChild(tabs);
+
+  const platePanel = await buildAgarPlateForm();
+  const drawPanel  = await buildAgarDrawForm();
+  drawPanel.style.display = 'none';
+  p.append(platePanel, drawPanel);
+
+  function switchTab(name) {
+    plateBtn.classList.toggle('active', name === 'plate');
+    drawBtn.classList.toggle('active', name === 'draw');
+    platePanel.style.display = name === 'plate' ? '' : 'none';
+    drawPanel.style.display  = name === 'draw'  ? '' : 'none';
+  }
+
+  // Inventory
+  try {
+    const plates = await api.agar();
+    if (plates.length) {
+      p.appendChild(el('h3', { style: { marginTop: '20px', marginBottom: '8px', fontSize: '12px', color: 'var(--muted)' } }, 'Active agar plates'));
+      p.appendChild(buildLotTable(plates, 'agar'));
+    }
+  } catch (e) {}
+};
+
+async function buildAgarPlateForm() {
+  const form = el('form', { class: 'form-card', onsubmit: async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const body = {
+      genetic_code_id: fd.get('genetic_code_id'),
+      lineage: readLineage(ev.target),
+      agar_formula: fd.get('agar_formula') || null,
+      plate_size: fd.get('plate_size') || null,
+      notes: fd.get('notes').trim() || null,
+    };
+    const sLotId = (fd.get('source_lot_id') || '').trim();
+    const sAmt = fd.get('source_amount');
+    if (sLotId) {
+      try {
+        const resolved = await api.resolveLotId(sLotId);
+        body.source = {
+          lot_kind: resolved.lot_kind, lot_id: resolved.id,
+          amount: sAmt ? Number(sAmt) : null,
+          amount_unit: resolved.lot_kind === 'lc' ? 'ml' : 'fraction',
+        };
+      } catch (e) { toast(`Source lot ID '${sLotId}' not found`, 'error'); return; }
+    }
+    try {
+      const r = await api.plateAgar(body);
+      toast(`Plate ${r.agar.lot_id} created`);
+      ev.target.reset();
+    } catch (e) { toast(e.message, 'error'); }
+  }});
+  form.appendChild(el('h3', {}, 'Plate new agar'));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Genetic', el('span', { class: 'req' }, '*')),
+      el('select', { name: 'genetic_code_id', required: true },
+        el('option', { value: '' }, '— select —'),
+        ...state.genetics.map(g => el('option', { value: g.id }, `${g.code} — ${g.genus} ${g.species}`)))),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Formula'),
+      el('select', { name: 'agar_formula' }, el('option', { value: '' }, '—'),
+        ...state.agarFormulas.map(a => el('option', { value: a.code }, `${a.code} — ${a.description}`)))),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Plate size'),
+      el('input', { name: 'plate_size', placeholder: '100mm' })),
+  ));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Source lot ID'),
+      el('input', { name: 'source_lot_id', placeholder: 'e.g. SP-SL192-260518-01' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Source amount'),
+      el('input', { name: 'source_amount', type: 'number', step: '0.01', placeholder: 'fraction or mL' })),
+  ));
+  form.appendChild(lineageInputs());
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Notes'),
+    el('input', { name: 'notes' })));
+  form.appendChild(el('div', { class: 'btn-row' },
+    el('button', { class: 'primary', type: 'submit', 'data-testid': 'plate-agar-btn' }, 'Plate it')));
+  return form;
+}
+
+async function buildAgarDrawForm() {
+  const form = el('form', { class: 'form-card', onsubmit: async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const parentLotId = (fd.get('parent_lot_id') || '').trim();
+    let parentId;
+    try {
+      const resolved = await api.resolveLotId(parentLotId);
+      if (resolved.lot_kind !== 'agar') throw new Error('not an agar plate');
+      parentId = resolved.id;
+    } catch (e) { toast(`Parent '${parentLotId}' not found or not agar`, 'error'); return; }
+    try {
+      const r = await api.drawAgar({
+        parent_agar_id: parentId,
+        fraction: Number(fd.get('fraction')),
+        plate_size: fd.get('plate_size') || null,
+        notes: fd.get('notes').trim() || null,
+      });
+      toast(`Wedge ${r.agar.lot_id} drawn from parent`);
+      ev.target.reset();
+    } catch (e) { toast(e.message, 'error'); }
+  }});
+  form.appendChild(el('h3', {}, 'Draw wedge from existing plate'));
+  form.appendChild(el('div', { class: 'hint' }, 'Creates a child agar lot from a parent. Parent.remaining decrements by the fraction. Both remain independently consumable.'));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Parent lot ID', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'parent_lot_id', required: true, placeholder: 'AL-SL192-260518-01' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Fraction', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'fraction', type: 'number', step: '0.01', min: '0.01', max: '1', required: true, placeholder: '0.25' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Plate size'),
+      el('input', { name: 'plate_size', placeholder: 'inherits' })),
+  ));
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Notes'),
+    el('input', { name: 'notes' })));
+  form.appendChild(el('div', { class: 'btn-row' },
+    el('button', { class: 'primary', type: 'submit', 'data-testid': 'draw-agar-btn' }, 'Draw wedge')));
+  return form;
+}
+
+// ── LC ─────────────────────────────────────────────────────────────────────
+VIEWS.lc = async () => {
+  const p = ensurePanel('lc');
+  p.innerHTML = '';
+  p.appendChild(el('div', { class: 'panel-header' },
+    el('h1', {}, 'Liquid culture'),
+    el('span', { class: 'hint' }, 'plate fresh · or draw syringe from existing')));
+
+  const tabs = el('div', { class: 'tabs' });
+  const plateBtn = el('button', { class: 'active', onclick: () => switchTab('plate') }, 'Plate (new)');
+  const drawBtn  = el('button', { onclick: () => switchTab('draw') }, 'Draw');
+  tabs.append(plateBtn, drawBtn);
+  p.appendChild(tabs);
+
+  const platePanel = buildLCPlateForm();
+  const drawPanel  = buildLCDrawForm();
+  drawPanel.style.display = 'none';
+  p.append(platePanel, drawPanel);
+
+  function switchTab(name) {
+    plateBtn.classList.toggle('active', name === 'plate');
+    drawBtn.classList.toggle('active', name === 'draw');
+    platePanel.style.display = name === 'plate' ? '' : 'none';
+    drawPanel.style.display  = name === 'draw'  ? '' : 'none';
+  }
+
+  try {
+    const lcs = await api.lcs();
+    if (lcs.length) {
+      p.appendChild(el('h3', { style: { marginTop: '20px', marginBottom: '8px', fontSize: '12px', color: 'var(--muted)' } }, 'Active LCs'));
+      p.appendChild(buildLotTable(lcs, 'lc'));
+    }
+  } catch (e) {}
+};
+
+function buildLCPlateForm() {
+  const form = el('form', { class: 'form-card', onsubmit: async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const body = {
+      genetic_code_id: fd.get('genetic_code_id'),
+      lineage: readLineage(ev.target),
+      vessel_type: fd.get('vessel_type') || null,
+      initial_volume_ml: Number(fd.get('initial_volume_ml')),
+      notes: fd.get('notes').trim() || null,
+    };
+    const sLotId = (fd.get('source_lot_id') || '').trim();
+    const sAmt = fd.get('source_amount');
+    if (sLotId) {
+      try {
+        const resolved = await api.resolveLotId(sLotId);
+        body.source = { lot_kind: resolved.lot_kind, lot_id: resolved.id,
+          amount: sAmt ? Number(sAmt) : null,
+          amount_unit: resolved.lot_kind === 'lc' ? 'ml' : 'fraction' };
+      } catch (e) { toast(`Source '${sLotId}' not found`, 'error'); return; }
+    }
+    try {
+      const r = await api.plateLC(body);
+      toast(`LC ${r.lc.lot_id} created`);
+      ev.target.reset();
+    } catch (e) { toast(e.message, 'error'); }
+  }});
+  form.appendChild(el('h3', {}, 'Plate new LC'));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Genetic', el('span', { class: 'req' }, '*')),
+      el('select', { name: 'genetic_code_id', required: true },
+        el('option', { value: '' }, '— select —'),
+        ...state.genetics.map(g => el('option', { value: g.id }, `${g.code} — ${g.genus} ${g.species}`)))),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Vessel'),
+      el('input', { name: 'vessel_type', placeholder: 'JAR · 10mL · GAL' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Initial mL', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'initial_volume_ml', type: 'number', step: '0.1', required: true, placeholder: '500' })),
+  ));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Source lot ID'),
+      el('input', { name: 'source_lot_id', placeholder: 'AL-SL192-260518-01' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Source amount'),
+      el('input', { name: 'source_amount', type: 'number', step: '0.01', placeholder: 'fraction or mL' })),
+  ));
+  form.appendChild(lineageInputs());
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Notes'), el('input', { name: 'notes' })));
+  form.appendChild(el('div', { class: 'btn-row' },
+    el('button', { class: 'primary', type: 'submit', 'data-testid': 'plate-lc-btn' }, 'Plate LC')));
+  return form;
+}
+
+function buildLCDrawForm() {
+  const form = el('form', { class: 'form-card', onsubmit: async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const parentLotId = (fd.get('parent_lot_id') || '').trim();
+    let parentId;
+    try {
+      const resolved = await api.resolveLotId(parentLotId);
+      if (resolved.lot_kind !== 'lc') throw new Error('not an LC');
+      parentId = resolved.id;
+    } catch (e) { toast(`Parent '${parentLotId}' not found or not LC`, 'error'); return; }
+    try {
+      const r = await api.drawLC({
+        parent_lc_id: parentId,
+        amount_ml: Number(fd.get('amount_ml')),
+        vessel_type: fd.get('vessel_type') || null,
+        notes: fd.get('notes').trim() || null,
+      });
+      toast(`Drew ${r.lc.lot_id} (${r.lc.remaining_ml} mL)`);
+      ev.target.reset();
+    } catch (e) { toast(e.message, 'error'); }
+  }});
+  form.appendChild(el('h3', {}, 'Draw from parent LC'));
+  form.appendChild(el('div', { class: 'hint' }, 'Pulls a child LC (syringe etc.) from a parent. Both stay independently partially-consumable.'));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Parent lot ID', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'parent_lot_id', required: true, placeholder: 'LC-SL192-260518-01' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Amount (mL)', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'amount_ml', type: 'number', step: '0.1', required: true, placeholder: '10' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Vessel'),
+      el('input', { name: 'vessel_type', placeholder: '10mL · syringe · jar' })),
+  ));
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Notes'), el('input', { name: 'notes' })));
+  form.appendChild(el('div', { class: 'btn-row' },
+    el('button', { class: 'primary', type: 'submit', 'data-testid': 'draw-lc-btn' }, 'Draw')));
+  return form;
+}
+
+// ── GRAIN ──────────────────────────────────────────────────────────────────
+VIEWS.grain = async () => {
+  const p = ensurePanel('grain');
+  p.innerHTML = '';
+  p.appendChild(el('div', { class: 'panel-header' },
+    el('h1', {}, 'Grain'),
+    el('span', { class: 'hint' }, 'sterilize bags · then inoculate them')));
+
+  const tabs = el('div', { class: 'tabs' });
+  const sterBtn = el('button', { class: 'active', onclick: () => switchTab('ster') }, 'Sterilize bags');
+  const inocBtn = el('button', { onclick: () => switchTab('inoc') }, 'Inoculate');
+  tabs.append(sterBtn, inocBtn);
+  p.appendChild(tabs);
+
+  const sterPanel = buildSterilizeForm();
+  const inocPanel = buildInoculateForm();
+  inocPanel.style.display = 'none';
+  p.append(sterPanel, inocPanel);
+
+  function switchTab(name) {
+    sterBtn.classList.toggle('active', name === 'ster');
+    inocBtn.classList.toggle('active', name === 'inoc');
+    sterPanel.style.display = name === 'ster' ? '' : 'none';
+    inocPanel.style.display = name === 'inoc' ? '' : 'none';
+  }
+
+  try {
+    const bags = await api.grain();
+    if (bags.length) {
+      p.appendChild(el('h3', { style: { marginTop: '20px', marginBottom: '8px', fontSize: '12px', color: 'var(--muted)' } }, 'Grain bags'));
+      p.appendChild(buildLotTable(bags, 'grain'));
+    }
+  } catch (e) {}
+};
+
+function buildSterilizeForm() {
+  const form = el('form', { class: 'form-card', onsubmit: async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    try {
+      const r = await api.sterilizeGrain({
+        grain_type: fd.get('grain_type'),
+        prep_size: fd.get('prep_size') || null,
+        count: Number(fd.get('count')),
+        notes: fd.get('notes').trim() || null,
+      });
+      toast(`${r.count} sterile bags created`);
+      ev.target.reset();
+    } catch (e) { toast(e.message, 'error'); }
+  }});
+  form.appendChild(el('h3', {}, 'Sterilize grain bags'));
+  form.appendChild(el('div', { class: 'hint' }, 'Creates N sterile GrainLots in phase=sterile. They get SG-<grain>-… lot IDs and become inventory.'));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Grain type', el('span', { class: 'req' }, '*')),
+      el('select', { name: 'grain_type', required: true },
+        el('option', { value: '' }, '— select —'),
+        ...state.grainTypes.map(g => el('option', { value: g.code }, `${g.code} — ${g.description}`)))),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Prep size'),
+      el('input', { name: 'prep_size', placeholder: '1.2 lb' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Count', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'count', type: 'number', min: '1', value: '1', required: true })),
+  ));
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Notes'), el('input', { name: 'notes' })));
+  form.appendChild(el('div', { class: 'btn-row' },
+    el('button', { class: 'primary', type: 'submit', 'data-testid': 'sterilize-btn' }, 'Sterilize')));
+  return form;
+}
+
+function buildInoculateForm() {
+  const form = el('form', { class: 'form-card', onsubmit: async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const grainLotInput = (fd.get('grain_lot_id') || '').trim();
+    const sourceInput = (fd.get('source_lot_id') || '').trim();
+    let grainId, source;
+    try {
+      const r = await api.resolveLotId(grainLotInput);
+      if (r.lot_kind !== 'grain') throw new Error('not a grain lot');
+      grainId = r.id;
+    } catch (e) { toast(`Sterile bag '${grainLotInput}' not found`, 'error'); return; }
+    try {
+      const r = await api.resolveLotId(sourceInput);
+      source = { lot_kind: r.lot_kind, lot_id: r.id,
+        amount: Number(fd.get('source_amount')),
+        amount_unit: r.lot_kind === 'lc' ? 'ml' : 'fraction' };
+    } catch (e) { toast(`Inoculant '${sourceInput}' not found`, 'error'); return; }
+    try {
+      const r = await api.inoculateGrain({
+        grain_lot_id: grainId,
+        genetic_code_id: fd.get('genetic_code_id'),
+        source,
+        lineage: readLineage(ev.target),
+        notes: fd.get('notes').trim() || null,
+      });
+      toast(`Inoculated ${r.grain.inoculated_lot_id}`);
+      ev.target.reset();
+    } catch (e) { toast(e.message, 'error'); }
+  }});
+  form.appendChild(el('h3', {}, 'Inoculate a sterile bag'));
+  form.appendChild(el('div', { class: 'hint' }, 'Bag transitions sterile→inoculated (same lot row, gains a GL-… ID). Inoculant source is decremented.'));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Sterile bag lot ID', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'grain_lot_id', required: true, placeholder: 'SG-RYE-260518-01' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Genetic', el('span', { class: 'req' }, '*')),
+      el('select', { name: 'genetic_code_id', required: true },
+        el('option', { value: '' }, '— select —'),
+        ...state.genetics.map(g => el('option', { value: g.id }, `${g.code} — ${g.genus} ${g.species}`)))),
+  ));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Inoculant lot ID', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'source_lot_id', required: true, placeholder: 'LC-SL192-260518-02' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Amount', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'source_amount', type: 'number', step: '0.01', required: true, placeholder: '2 (mL) or 0.25 (frac)' })),
+  ));
+  form.appendChild(lineageInputs());
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Notes'), el('input', { name: 'notes' })));
+  form.appendChild(el('div', { class: 'btn-row' },
+    el('button', { class: 'primary', type: 'submit', 'data-testid': 'inoculate-btn' }, 'Inoculate')));
+  return form;
+}
+
+// ── BATCH (Spawn to Bulk) ──────────────────────────────────────────────────
+VIEWS.batch = async () => {
+  const p = ensurePanel('batch');
+  p.innerHTML = '';
+  p.appendChild(el('div', { class: 'panel-header' },
+    el('h1', {}, 'Spawn to Bulk'),
+    el('span', { class: 'hint' }, 'fan-in: N inoculated grain lots + 1 recipe → 1 batch')));
+
+  const form = el('form', { class: 'form-card', onsubmit: async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const lotList = (fd.get('grain_lot_ids') || '').split(/[,\s\n]+/).map(s => s.trim()).filter(Boolean);
+    if (lotList.length === 0) return toast('At least one grain lot required', 'error');
+    const grain_inputs = [];
+    for (const lid of lotList) {
+      try {
+        const r = await api.resolveLotId(lid);
+        if (r.lot_kind !== 'grain') throw new Error(`${lid} is not a grain lot`);
+        grain_inputs.push({ grain_lot_id: r.id, fraction: 1.0 });
+      } catch (e) { return toast(`${lid}: ${e.message}`, 'error'); }
+    }
+    try {
+      const r = await api.spawnToBulk({
+        grain_inputs,
+        recipe_id: fd.get('recipe_id'),
+        bulk_mass: fd.get('bulk_mass') ? Number(fd.get('bulk_mass')) : null,
+        bulk_mass_unit: fd.get('bulk_mass_unit') || null,
+        container_count: fd.get('container_count') ? Number(fd.get('container_count')) : null,
+        location: fd.get('location') || null,
+        notes: fd.get('notes').trim() || null,
+      });
+      toast(`Batch ${r.batch.lot_id} created`);
+      ev.target.reset();
+    } catch (e) { toast(e.message, 'error'); }
+  }});
+  form.appendChild(el('h3', {}, 'Create batch'));
+  form.appendChild(el('div', { class: 'field' },
+    el('span', { class: 'lbl' }, 'Grain lot IDs · comma- or space-separated', el('span', { class: 'req' }, '*')),
+    el('textarea', { name: 'grain_lot_ids', required: true, rows: '3', placeholder: 'GL-SL192-260518-01, GL-SL192-260518-02, GL-SL192-260518-03' })));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Recipe', el('span', { class: 'req' }, '*')),
+      el('select', { name: 'recipe_id', required: true },
+        el('option', { value: '' }, '— select —'),
+        ...state.recipes.map(r => el('option', { value: r.id }, `${r.code} — ${r.name}`)))),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Bulk mass'),
+      el('input', { name: 'bulk_mass', type: 'number', step: '0.1' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Unit'),
+      el('select', { name: 'bulk_mass_unit' },
+        ['', 'lb', 'kg', 'g', 'L'].map(u => el('option', { value: u }, u || '—')))),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Containers'),
+      el('input', { name: 'container_count', type: 'number', min: '1' })),
+  ));
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Location'),
+    el('input', { name: 'location', placeholder: 'Fruit Room A · Shelf 2' })));
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Notes'),
+    el('input', { name: 'notes' })));
+  form.appendChild(el('div', { class: 'btn-row' },
+    el('button', { class: 'primary', type: 'submit', 'data-testid': 'spawn-to-bulk-btn' }, 'Spawn to bulk')));
+  p.appendChild(form);
+
+  try {
+    const batches = await api.batches();
+    if (batches.length) {
+      p.appendChild(el('h3', { style: { marginTop: '20px', marginBottom: '8px', fontSize: '12px', color: 'var(--muted)' } }, 'Active batches'));
+      p.appendChild(buildLotTable(batches, 'batch'));
+    }
+  } catch (e) {}
+};
+
+// ── HARVEST ────────────────────────────────────────────────────────────────
+VIEWS.harvest = async () => {
+  const p = ensurePanel('harvest');
+  p.innerHTML = '';
+  p.appendChild(el('div', { class: 'panel-header' },
+    el('h1', {}, 'Harvest & Dry'),
+    el('span', { class: 'hint' }, 'record a flush · then dry it')));
+
+  const tabs = el('div', { class: 'tabs' });
+  const hBtn = el('button', { class: 'active', onclick: () => switchTab('h') }, 'Harvest (wet)');
+  const dBtn = el('button', { onclick: () => switchTab('d') }, 'Dry');
+  tabs.append(hBtn, dBtn);
+  p.appendChild(tabs);
+
+  const hPanel = buildHarvestForm();
+  const dPanel = buildDryForm();
+  dPanel.style.display = 'none';
+  p.append(hPanel, dPanel);
+
+  function switchTab(name) {
+    hBtn.classList.toggle('active', name === 'h');
+    dBtn.classList.toggle('active', name === 'd');
+    hPanel.style.display = name === 'h' ? '' : 'none';
+    dPanel.style.display = name === 'd' ? '' : 'none';
+  }
+
+  try {
+    const harvests = await api.harvests();
+    if (harvests.length) {
+      p.appendChild(el('h3', { style: { marginTop: '20px', marginBottom: '8px', fontSize: '12px', color: 'var(--muted)' } }, 'Harvests'));
+      p.appendChild(buildLotTable(harvests, 'harvest'));
+    }
+  } catch (e) {}
+};
+
+function buildHarvestForm() {
+  const form = el('form', { class: 'form-card', onsubmit: async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const batchLotId = (fd.get('batch_lot_id') || '').trim();
+    let batchId;
+    try {
+      const r = await api.resolveLotId(batchLotId);
+      if (r.lot_kind !== 'batch') throw new Error('not a batch');
+      batchId = r.id;
+    } catch (e) { toast(`Batch '${batchLotId}' not found`, 'error'); return; }
+    try {
+      const r = await api.harvest({
+        batch_id: batchId,
+        wet_weight: fd.get('wet_weight') ? Number(fd.get('wet_weight')) : null,
+        wet_weight_unit: fd.get('wet_weight_unit') || 'g',
+        notes: fd.get('notes').trim() || null,
+      });
+      toast(`Harvest ${r.harvest.lot_id} · flush ${r.harvest.flush_number}`);
+      ev.target.reset();
+    } catch (e) { toast(e.message, 'error'); }
+  }});
+  form.appendChild(el('h3', {}, 'Record a flush'));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Batch lot ID', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'batch_lot_id', required: true, placeholder: 'BL-SL192-260518-01' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Wet weight'),
+      el('input', { name: 'wet_weight', type: 'number', step: '0.1', placeholder: '800' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Unit'),
+      el('select', { name: 'wet_weight_unit' }, ...['g','kg','oz','lb'].map(u => el('option', { value: u }, u)))),
+  ));
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Notes'), el('input', { name: 'notes' })));
+  form.appendChild(el('div', { class: 'btn-row' },
+    el('button', { class: 'primary', type: 'submit', 'data-testid': 'harvest-btn' }, 'Record harvest')));
+  return form;
+}
+
+function buildDryForm() {
+  const form = el('form', { class: 'form-card', onsubmit: async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const lid = (fd.get('harvest_lot_id') || '').trim();
+    let hid;
+    try {
+      const r = await api.resolveLotId(lid);
+      if (r.lot_kind !== 'harvest') throw new Error('not a harvest');
+      hid = r.id;
+    } catch (e) { toast(`Harvest '${lid}' not found`, 'error'); return; }
+    try {
+      const r = await api.dry({
+        harvest_lot_id: hid,
+        dry_weight: Number(fd.get('dry_weight')),
+        dry_weight_unit: fd.get('dry_weight_unit') || 'g',
+        notes: fd.get('notes').trim() || null,
+      });
+      const ratio = r.harvest.wet_weight ? (r.harvest.dry_weight / r.harvest.wet_weight) : null;
+      toast(`Dried · ${r.harvest.lot_id}` + (ratio ? ` · yield ${(ratio*100).toFixed(1)}%` : ''));
+      ev.target.reset();
+    } catch (e) { toast(e.message, 'error'); }
+  }});
+  form.appendChild(el('h3', {}, 'Mark a harvest as dried'));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Harvest lot ID', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'harvest_lot_id', required: true, placeholder: 'HL-SL192-260518-01' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Dry weight', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'dry_weight', type: 'number', step: '0.1', required: true, placeholder: '76' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Unit'),
+      el('select', { name: 'dry_weight_unit' }, ...['g','kg','oz','lb'].map(u => el('option', { value: u }, u)))),
+  ));
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Notes'), el('input', { name: 'notes' })));
+  form.appendChild(el('div', { class: 'btn-row' },
+    el('button', { class: 'primary', type: 'submit', 'data-testid': 'dry-btn' }, 'Mark dried')));
+  return form;
+}
+
+// ── INVENTORY ──────────────────────────────────────────────────────────────
+VIEWS.inventory = async () => {
+  const p = ensurePanel('inventory');
+  p.innerHTML = '';
+  p.appendChild(el('div', { class: 'panel-header' },
+    el('h1', {}, 'Inventory'),
+    el('span', { class: 'hint' }, 'all active lots by kind')));
+
+  const sections = [
+    { key: 'agar',    title: 'Agar plates', fn: () => api.agar() },
+    { key: 'lc',      title: 'Liquid cultures', fn: () => api.lcs() },
+    { key: 'grain',   title: 'Grain (sterile)', fn: () => api.grain('sterile') },
+    { key: 'grain2',  title: 'Grain (inoculated)', fn: () => api.grain('inoculated'), kind: 'grain' },
+    { key: 'batch',   title: 'Batches', fn: () => api.batches() },
+    { key: 'harvest', title: 'Harvests', fn: () => api.harvests() },
+  ];
+
+  for (const s of sections) {
+    try {
+      const rows = await s.fn();
+      const activeRows = rows.filter(r => r.lifecycle_status !== 'destroyed' && r.lifecycle_status !== 'archived');
+      p.appendChild(el('h3', { style: { marginTop: '14px', marginBottom: '6px', color: 'var(--green)', fontSize: '12px' } },
+        `${s.title}  · ${activeRows.length}`));
+      if (activeRows.length === 0) {
+        p.appendChild(el('div', { class: 'empty', style: { padding: '14px', textAlign: 'left', color: 'var(--dim)' } }, 'none'));
+      } else {
+        p.appendChild(buildLotTable(activeRows, s.kind || s.key));
+      }
+    } catch (e) { /* skip */ }
+  }
+};
+
+function buildLotTable(rows, kind) {
+  const tbl = el('table', { class: 'lot-tbl' });
+  const head = el('tr');
+  ['Lot ID', 'Genetic', 'State', 'Lineage', 'Remaining', 'Detail'].forEach(h => head.appendChild(el('th', {}, h)));
+  tbl.appendChild(el('thead', {}, head));
+  const tbody = el('tbody');
+  rows.slice(0, 50).forEach(r => {
+    const g = state.genetics.find(x => x.id === r.genetic_code_id);
+    let stateLabel = r.lifecycle_status;
+    if (kind === 'grain') stateLabel = r.phase + (r.lifecycle_status !== 'active' ? ' · ' + r.lifecycle_status : '');
+    if (kind === 'harvest') stateLabel = r.state + (r.lifecycle_status !== 'active' ? ' · ' + r.lifecycle_status : '');
+    const lotId = (kind === 'grain'
+      ? (r.inoculated_lot_id || r.sterile_lot_id)
+      : r.lot_id);
+    let remaining = '';
+    if (kind === 'agar') remaining = (r.remaining * 100).toFixed(0) + '%';
+    else if (kind === 'lc') remaining = `${r.remaining_ml ?? '—'} mL`;
+    else if (kind === 'grain' && r.phase === 'inoculated') remaining = (r.remaining * 100).toFixed(0) + '%';
+    else if (kind === 'harvest') remaining = r.state === 'dried' ? `${r.dry_weight || '?'}g dry` : `${r.wet_weight || '?'}g wet`;
+    let detail = '';
+    if (kind === 'agar') detail = r.agar_formula + (r.parent_lot_id ? ' · wedge' : '');
+    if (kind === 'lc') detail = (r.vessel_type || '') + (r.parent_lot_id ? ' · drawn' : '');
+    if (kind === 'grain') detail = r.grain_type + ' · ' + (r.prep_size || '');
+    if (kind === 'batch') detail = r.location || '';
+    if (kind === 'harvest') detail = `flush ${r.flush_number}`;
+    const pillCls = ['active','contaminated','archived','consumed','sterile','inoculated','wet','dried'].find(c => stateLabel.includes(c)) || '';
+    tbody.appendChild(el('tr', {},
+      el('td', { style: { color: 'var(--green)', cursor: 'pointer' },
+                 onclick: () => { $('lineage-lot-id').value = lotId; show('lineage'); } }, lotId || '—'),
+      el('td', {}, g ? g.code : (r.grain_type || '—')),
+      el('td', {}, el('span', { class: 'pill ' + pillCls }, stateLabel)),
+      el('td', {}, lineageStr({ f: r.lineage_f, c: r.lineage_c, iso: r.lineage_iso, t: r.lineage_t })),
+      el('td', {}, remaining),
+      el('td', { style: { color: 'var(--muted)' } }, detail),
+    ));
+  });
+  tbl.appendChild(tbody);
+  return tbl;
+}
+
+// ── LINEAGE ────────────────────────────────────────────────────────────────
+VIEWS.lineage = async () => {
+  const p = ensurePanel('lineage');
+  p.innerHTML = '';
+  p.appendChild(el('div', { class: 'panel-header' },
+    el('h1', {}, 'Lineage walk'),
+    el('span', { class: 'hint' }, 'enter any lot ID · trace its provenance and progeny')));
+
+  const form = el('div', { class: 'form-card' });
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Lot ID'),
+      el('input', { id: 'lineage-lot-id', placeholder: 'HL-SL192-260518-01' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, ' '),
+      el('button', { class: 'primary', 'data-testid': 'walk-btn',
+        onclick: async () => {
+          const lid = $('lineage-lot-id').value.trim();
+          if (!lid) return;
+          try {
+            const r = await api.resolveLotId(lid);
+            const [back, fwd] = await Promise.all([
+              api.walkBack(r.lot_kind, r.id),
+              api.walkFwd(r.lot_kind, r.id),
+            ]);
+            renderLineage($('lineage-out'), back, fwd);
+          } catch (e) { toast(e.message, 'error'); }
+        }
+      }, 'Walk')),
+  ));
+  p.appendChild(form);
+
+  const out = el('div', { id: 'lineage-out' });
+  p.appendChild(out);
+};
+
+function renderLineage(host, back, fwd) {
+  host.innerHTML = '';
+  const lotInfo = el('div', { class: 'detail' });
+  lotInfo.appendChild(el('h4', {}, `${back.lot_kind} · ${back.lot.lot_id || back.lot.inoculated_lot_id || back.lot.sterile_lot_id || ''}`));
+  const kv = el('div', { class: 'kv' });
+  if (back.genetic) {
+    kv.appendChild(el('span', { class: 'k' }, 'Genetic')); kv.appendChild(el('span', { class: 'v' }, `${back.genetic.code} · ${back.genetic.genus} ${back.genetic.species}`));
+  }
+  kv.appendChild(el('span', { class: 'k' }, 'Lineage')); kv.appendChild(el('span', { class: 'v' }, lineageStr({ f: back.lot.lineage_f, c: back.lot.lineage_c, iso: back.lot.lineage_iso, t: back.lot.lineage_t }) || '—'));
+  kv.appendChild(el('span', { class: 'k' }, 'Status')); kv.appendChild(el('span', { class: 'v' }, back.lot.lifecycle_status));
+  lotInfo.appendChild(kv);
+  host.appendChild(lotInfo);
+
+  // Backward
+  const backWrap = el('div', { class: 'detail' });
+  backWrap.appendChild(el('h4', {}, 'Provenance (backward)'));
+  if (back.sources && back.sources.length) {
+    back.sources.forEach(s => backWrap.appendChild(renderTreeNode(s, true)));
+  } else {
+    backWrap.appendChild(el('div', { style: { color: 'var(--dim)', fontSize: '11px' } },
+      back.create_event ? 'No in-system predecessor (terminal/ingest root).' : 'No create-event found.'));
+  }
+  host.appendChild(backWrap);
+
+  // Forward
+  const fwdWrap = el('div', { class: 'detail' });
+  fwdWrap.appendChild(el('h4', {}, 'Progeny (forward)'));
+  if (fwd.children && fwd.children.length) {
+    fwd.children.forEach(c => fwdWrap.appendChild(renderTreeNode(c, false)));
+  } else {
+    fwdWrap.appendChild(el('div', { style: { color: 'var(--dim)', fontSize: '11px' } }, 'No downstream derivatives yet.'));
+  }
+  host.appendChild(fwdWrap);
+}
+
+function renderTreeNode(node, isBack) {
+  const wrap = el('div', { class: 'tree' });
+  const lot = node.lot || {};
+  const lid = lot.lot_id || lot.inoculated_lot_id || lot.sterile_lot_id || node.lot_id || '?';
+  wrap.appendChild(el('div', { class: 'tree-node' },
+    el('span', { class: 'arrow' }, isBack ? '↑' : '↓'),
+    el('span', { class: 'kind' }, node.lot_kind),
+    ' ',
+    el('span', { class: 'lot' }, lid),
+    node.consumed && node.consumed.amount != null ? ` · consumed ${node.consumed.amount} ${node.consumed.unit || ''}` : '',
+  ));
+  const kids = isBack ? node.sources : node.children;
+  if (kids && kids.length) kids.forEach(k => wrap.appendChild(renderTreeNode(k, isBack)));
+  return wrap;
+}
+
+// ── RECIPES ────────────────────────────────────────────────────────────────
+VIEWS.recipes = async () => {
+  const p = ensurePanel('recipes');
+  p.innerHTML = '';
+  p.appendChild(el('div', { class: 'panel-header' },
+    el('h1', {}, 'Bulk substrate recipes'),
+    el('span', { class: 'hint' }, 'snapshot copied onto each batch at spawn time')));
+
+  const form = el('form', { class: 'form-card', onsubmit: async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const components = (fd.get('components') || '').split('\n').map(line => {
+      const m = line.trim().match(/^([A-Z0-9_]+)\s+([\d.]+)\s*(\w*)$/);
+      return m ? { component_code: m[1], proportion: Number(m[2]), unit: m[3] || 'vol' } : null;
+    }).filter(Boolean);
+    try {
+      await api.createRecipe({
+        code: fd.get('code').trim(),
+        name: fd.get('name').trim(),
+        components,
+        hydration_target: fd.get('hydration_target') || null,
+        prep_method: fd.get('prep_method') || null,
+        notes: fd.get('notes').trim() || null,
+      });
+      toast(`Recipe ${fd.get('code')} created`);
+      ev.target.reset();
+      await refreshState();
+      show('recipes');
+    } catch (e) { toast(e.message, 'error'); }
+  }});
+  form.appendChild(el('h3', {}, 'New recipe'));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Code', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'code', required: true, placeholder: 'CVG-STD' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Name', el('span', { class: 'req' }, '*')),
+      el('input', { name: 'name', required: true, placeholder: 'Coir-Verm-Gypsum standard' })),
+  ));
+  form.appendChild(el('div', { class: 'field' },
+    el('span', { class: 'lbl' }, 'Components · one per line: CODE PROPORTION UNIT'),
+    el('textarea', { name: 'components', rows: '4', placeholder: 'COIR 0.5 vol\nVERM 0.45 vol\nGYPSUM 0.05 vol' })));
+  form.appendChild(el('div', { class: 'field-row' },
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Hydration target'),
+      el('input', { name: 'hydration_target', placeholder: 'field capacity' })),
+    el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Prep method'),
+      el('input', { name: 'prep_method', placeholder: 'pasteurized' })),
+  ));
+  form.appendChild(el('div', { class: 'field' }, el('span', { class: 'lbl' }, 'Notes'), el('input', { name: 'notes' })));
+  form.appendChild(el('div', { class: 'btn-row' },
+    el('button', { class: 'primary', type: 'submit', 'data-testid': 'create-recipe-btn' }, 'Save recipe')));
+  p.appendChild(form);
+
+  if (state.recipes.length === 0) {
+    p.appendChild(el('div', { class: 'empty' }, el('div', { class: 'big' }, 'No recipes yet')));
+  } else {
+    const tbl = el('table', { class: 'lot-tbl' });
+    tbl.appendChild(el('thead', {}, el('tr', {},
+      el('th', {}, 'Code'), el('th', {}, 'Name'), el('th', {}, 'Components'),
+      el('th', {}, 'Hydration'), el('th', {}, 'Prep'))));
+    const tbody = el('tbody');
+    state.recipes.forEach(r => {
+      const comps = (r.components || []).map(c => `${c.component_code} ${c.proportion}${c.unit}`).join(' · ');
+      tbody.appendChild(el('tr', {},
+        el('td', { style: { color: 'var(--green)' } }, r.code),
+        el('td', { style: { fontFamily: 'inherit' } }, r.name),
+        el('td', {}, comps),
+        el('td', {}, r.hydration_target || ''),
+        el('td', {}, r.prep_method || ''),
+      ));
+    });
+    tbl.appendChild(tbody);
+    p.appendChild(tbl);
+  }
+};
+
+// ── MIGRATE ────────────────────────────────────────────────────────────────
+VIEWS.migrate = async () => {
+  const p = ensurePanel('migrate');
+  p.innerHTML = '';
+  p.appendChild(el('div', { class: 'panel-header' },
+    el('h1', {}, 'Migrate from label printer'),
+    el('span', { class: 'hint' }, 'one-shot: pull localStorage data into the database')));
+
+  const cfgRaw = localStorage.getItem('ql_cfg');
+  if (!cfgRaw) {
+    p.appendChild(el('div', { class: 'empty' },
+      el('div', { class: 'big' }, 'No legacy data found'),
+      el('div', {}, 'localStorage on this browser doesn\'t carry quicklabel.html settings.')));
+    return;
+  }
+
+  let cfg;
+  try { cfg = JSON.parse(cfgRaw); } catch (e) {
+    p.appendChild(el('div', { class: 'empty' }, el('div', {}, 'localStorage payload was unreadable.')));
+    return;
+  }
+
+  const summary = el('div', { class: 'form-card' });
+  summary.appendChild(el('h3', {}, 'Detected on this browser'));
+  const counts = [];
+  if (cfg.codes?.length)        counts.push(`${cfg.codes.length} genetic codes`);
+  if (cfg.grainTypes?.length)   counts.push(`${cfg.grainTypes.length} grain types`);
+  if (cfg.agarFormulas?.length) counts.push(`${cfg.agarFormulas.length} agar formulas`);
+  if (cfg.ingestTypes?.length)  counts.push(`${cfg.ingestTypes.length} ingest types`);
+  counts.forEach(c => summary.appendChild(el('div', { class: 'hint' }, '· ' + c)));
+  if (counts.length === 0) summary.appendChild(el('div', { class: 'hint' }, 'No useful data found.'));
+
+  summary.appendChild(el('div', { class: 'btn-row', style: { marginTop: '14px' } },
+    el('button', { class: 'primary', 'data-testid': 'run-migration-btn',
+      onclick: async (e) => {
+        e.target.disabled = true;
+        e.target.textContent = 'Migrating…';
+        await runMigration(cfg);
+        e.target.textContent = 'Done';
+      }
+    }, 'Run migration'),
+    el('button', { class: 'secondary',
+      onclick: async (e) => {
+        if (!confirm('Mark legacy localStorage data as migrated? (does not delete; just stops re-prompting)')) return;
+        localStorage.setItem('ql_migrated_at', new Date().toISOString());
+        toast('Marked as migrated');
+      }
+    }, 'Mark migrated (skip)'),
+  ));
+  p.appendChild(summary);
+};
+
+async function runMigration(cfg) {
+  let ok = 0, skip = 0, err = 0;
+
+  // Grain types
+  for (const g of (cfg.grainTypes || [])) {
+    try { await api.registries.putGrainType(g.code, g.desc || g.description || g.code); ok++; }
+    catch (e) { err++; }
+  }
+  // Agar formulas
+  for (const a of (cfg.agarFormulas || [])) {
+    try { await api.registries.putAgarFormula(a.code, a.desc || a.description || a.code); ok++; }
+    catch (e) { err++; }
+  }
+  // Ingest types (with derivative_kind heuristic)
+  for (const t of (cfg.ingestTypes || [])) {
+    const deriv = t.derivative_kind ?? (t.code === 'AP' ? 'agar' : (t.code === 'LC' || t.code === 'LI') ? 'lc' : null);
+    try { await api.registries.putIngestType(t.code, t.label || t.code, deriv); ok++; }
+    catch (e) { err++; }
+  }
+  // Genetic codes
+  for (const c of (cfg.codes || [])) {
+    try {
+      await api.createGenetic({
+        code: c.code, genus: c.genus || 'Unknown', species: c.species || 'sp.',
+        cultivar: c.cultivar || null,
+      });
+      ok++;
+    } catch (e) {
+      if (String(e.message).includes('409')) skip++; else err++;
+    }
+  }
+
+  localStorage.setItem('ql_migrated_at', new Date().toISOString());
+  await refreshState();
+  toast(`Migration: ${ok} created · ${skip} already existed · ${err} errors`, err ? 'warn' : 'ok');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════════════════
+async function boot() {
+  try {
+    await api.health();
+    $('status').textContent = 'API ok';
+  } catch (e) {
+    $('status').textContent = 'API down';
+    $('status').classList.add('bad');
+    return;
+  }
+  await refreshState();
+
+  // Auto-prompt migration if local has data and remote has zero genetics
+  if (localStorage.getItem('ql_cfg') && !localStorage.getItem('ql_migrated_at')
+      && state.genetics.length === 0) {
+    toast('Legacy data detected · open Migrate panel to import', 'warn', 'First-run setup');
+  }
+
+  // Hash-based deeplink
+  const initial = (location.hash || '#dashboard').slice(1);
+  show(VIEWS[initial] ? initial : 'dashboard');
+}
+
+boot();
+</script>
+</body>
+</html>

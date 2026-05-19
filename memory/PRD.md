@@ -1,94 +1,99 @@
 # QuickLabel — Memory / Session Log
 
-**App:** Label printer + cultivation tracker (in expansion).
+**App:** Label printer + cultivation tracker.
 **Files:**
-- `/app/quicklabel.html` — frontend (still localStorage)
-- `/app/backend/` — FastAPI + SQLite cultivation tracking API (NEW, Layer 2)
+- `/app/quicklabel.html` — label printer (still localStorage; has header link to tracker)
+- `/app/tracker.html` — cultivation tracker UI (NEW, API-backed)
+- `/app/backend/` — FastAPI + SQLite cultivation tracking API
 - `/app/data/quicklabel.db` — SQLite database (WAL mode)
 - `/app/data/photos/` — photo storage
 - `/app/PRD.md` — core PRD
 - `/app/PRD-genetics-tracking.md` — pre-grain workflows
 - `/app/PRD-data-model.md` — Layer 1 conceptual data model
-- `/app/PRD-cultivation-api.md` — Layer 2 API reference (NEW)
+- `/app/PRD-cultivation-api.md` — Layer 2 API reference
 
 ---
 
 ## Architecture
 
-- **Frontend (today):** Single HTML file, vanilla JS, localStorage. Served on :3000.
-- **Backend (NEW):** FastAPI on :8001 with `/api/*` routes. SQLite at `/app/data/`.
-- **DB:** UUIDs as PKs, soft-delete tombstones, append-only events table, dual-date model
-  (`event_date` for physical, `recorded_at` for system), `client_id` for future merge.
-- **Photos:** filesystem under `/app/data/photos/<uuid>.<ext>`, referenced by event UUID.
+- **Routes (served by `/app/frontend/server.js` on :3000):**
+  - `/` and `/quicklabel` → `quicklabel.html` (the label printer, unchanged)
+  - `/tracker` → `tracker.html` (the cultivation tracker, NEW)
+- **Backend:** FastAPI on :8001 with `/api/*` routes. SQLite at `/app/data/`.
+- **DB:** UUIDs as PKs, soft-delete tombstones, append-only events, dual-date
+  (`event_date` physical, `recorded_at` system), `client_id` for future merge.
+- **Photos:** filesystem under `/app/data/photos/<uuid>.<ext>`.
 
-The frontend hasn't been migrated yet. Both stacks run side by side.
-
----
-
-## Entities & events (Layer 2)
-
-Per `/app/PRD-data-model.md`. Implemented and smoke-tested:
-
-**Entities:** GeneticCode, IngestRecord, AgarPlate, LiquidCulture, GrainLot
-(unified sterile + inoculated phases), BulkSubstrateRecipe, Batch,
-HarvestLot (state ∈ {wet, dried}). Registries: GrainType, AgarFormula,
-SubstrateComponent, IngestType.
-
-**Events:** IngestEvent, PlateAgar, DrawAgar, PlateLC, DrawLC, SterilizeGrain,
-InoculateGrain, SpawnToBulk, Harvest, Dry, BreakAndShake, ContaminationFlag,
-ContaminationLift, WeightMeasurement, MoveLocation, ConsumePartial, NoteAttach,
-Archive, Destroy, MarkGifted, MarkConsumed.
-
-**Key designs:**
-- Hierarchical partial consumption: parent + child lots, both consumable
-  (`parent_lot_id` on AgarPlate and LiquidCulture; `DrawAgar` / `DrawLC` events).
-- Multi-genetic batches: HARD ERROR at SpawnToBulk.
-- Auto-derivative lots for ingest types (AP → AgarPlate, LC → LiquidCulture).
-- Recipe versioning by snapshot at SpawnToBulk time.
-- Contamination quarantine: subject lot only; downstream exposed via walk, not mutated.
+The two frontends coexist. Both reference the same backend.
 
 ---
 
-## What's done
+## Tracker UI (`tracker.html`)
 
-### Session 2026-05-18 (Layer 2)
+Single-file vanilla JS app. Sections:
 
-- New SQLite schema covering all entities + events + lineage + photos + contamination + counters.
-- FastAPI backend with 14 router modules under `/api/*`.
-- Smoke test at `/app/backend/tests/test_smoke.py` walks the full chain
-  Genetic → Ingest → Agar → wedge → LC → syringe → Sterile grain × 3 →
-  Inoculate × 3 → Recipe → SpawnToBulk → Harvest × 2 → Dry. Plus
-  BreakAndShake, ContaminationFlag/Lift, ConsumePartial, lineage walks,
-  human-lot-ID resolution, event stream. All passes.
+| Nav | View | Purpose |
+|-----|------|---------|
+| Dashboard | counts + rollups | wired to `/api/dashboard/summary` |
+| Genetics | CRUD | list + create genetic codes |
+| Ingest | form | IngestEvent + auto-derivative |
+| Agar Plate | tabs | PlateAgar (new) + DrawAgar (wedge) |
+| Liquid Culture | tabs | PlateLC + DrawLC (hierarchical partial consumption) |
+| Grain | tabs | SterilizeGrain (N bags) + InoculateGrain |
+| Spawn → Bulk | form | fan-in N grain lots + recipe → batch |
+| Harvest | tabs | Harvest (wet) + Dry |
+| Inventory | list | active lots by kind |
+| Lineage | walker | resolve any lot ID → backward + forward tree |
+| Recipes | CRUD | bulk substrate recipes |
+| Migrate | one-shot | imports `ql_cfg` from localStorage |
 
-### Earlier sessions (label printer)
+**Source-lot fields take human-readable IDs** (e.g. `SP-SL192-260518-01`) and
+resolve to UUIDs via `/api/lineage/by-lot-id/{lot_id}`. Lineage tab also accepts
+lot IDs directly.
 
-- Cultivar auto-shrink, Reset Lot ID button, workflow-prefix architecture,
-  live layout fiddle panel, PRD reframed around conceptual state-change model.
-- See `/app/CHANGELOG.md` for the detailed history.
+**Migration:** the Migrate panel reads `localStorage.ql_cfg` from the label
+printer's settings and pushes grain types, agar formulas, ingest types, and
+genetic codes into the DB. Sets `ql_migrated_at` to suppress re-prompts.
+Toast banner on first load if `ql_cfg` exists but `ql_migrated_at` doesn't and
+`genetics` table is empty.
+
+**Smoke verified end-to-end:**
+- All 12 nav sections render and activate
+- Creating a genetic via the Genetics form → appears in table → dashboard
+  counts update (`GENETICS: 1` → `2` after add)
+- No JS errors
+
+---
+
+## Backend additions this session
+
+- `/app/backend/routers/dashboard.py` — `GET /api/dashboard/summary` returning
+  counts of (genetics, ingest, agar active/exhausted/contam, LC active +
+  remaining mL, grain sterile/inoculated/contam, batches colonizing/fruiting,
+  harvests wet/dried + total g, contamination active flags).
+
+Smoke test still passes: `cd /app/backend && python3 tests/test_smoke.py`.
 
 ---
 
 ## P0 Backlog (next session)
 
-- **Frontend wire-up.** Migrate `quicklabel.html` workflows to call the new API
-  one at a time. Order: Ingest → Agar → LC → Grain → Spawn-to-Bulk → Harvest.
-  Label printing stays unchanged.
-- **localStorage migration.** One-shot importer that POSTs existing browser
-  state into the new backend on first load.
-- **Genetics catalog UI.** List + filter active lots by state and genetic.
+- Photo upload UI (attach to any event). Backend ready.
+- Per-lot detail view: history timeline of events on a single lot, with
+  contamination flag / break-and-shake / consume actions inline.
+- Editable settings panel (operator tracking toggle, default colonization window).
 
 ## P1 Backlog
 
-- Inventory views: sterile bags, active agar plates, active LCs, colonizing batches.
-- Photo attach-to-event UI for break-and-shake, harvest, contamination.
-- "Ready for spawn-to-bulk" / "ready for fruiting" calendar views.
-- KPI dashboards: wet→dry yield ratio per cultivar, contamination rate, time-in-stage.
+- "Wedge / draw from current plate" shortcut buttons in inventory rows.
+- "Ready for spawn-to-bulk" + "Ready for fruiting" calendar views.
+- KPI graphs (wet→dry yield by cultivar, contamination rate, time-in-stage).
+- localStorage migration coverage: lot counters, in-flight form state.
 
 ## P2 / Future
 
-- Air-gap packaging (Tauri or PyInstaller single-file).
-- Optional sync endpoint for hosted instances (architecture supports it).
+- Air-gap packaging (Tauri or PyInstaller).
+- Optional sync endpoint for hosted instances.
 - Space designer UI for batch fruit-room layout.
-- Operator tracking toggle (field is in the schema; UI deferred).
-- Homogenization → product lots (out of v1 scope per user direction).
+- Operator tracking enabled-by-toggle UI.
+- Homogenization → product lots (out of v1 scope).

@@ -15,6 +15,7 @@ from seed import seed_registries
 from routers import (
     agar,
     batches,
+    dashboard,
     events,
     genetics,
     grain,
@@ -66,5 +67,6 @@ for r in (
     events.router,
     lineage.router,
     photos.router,
+    dashboard.router,
 ):
     app.include_router(r)
