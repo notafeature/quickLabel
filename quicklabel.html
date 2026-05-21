@@ -4,28 +4,50 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QuickLabel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #0a0a0a;
-  --surface: #141414;
-  --surface2: #1e1e1e;
-  --border: #2a2a2a;
-  --text: #e0e0e0;
-  --muted: #666;
-  --green: #4ade80;
-  --teal: #22d3ee;
-  --red: #f87171;
-  --amber: #fbbf24;
-  --r: 6px;
+  /* Industrial-CEA palette. Warm desaturated dark — no Tron neon.
+     Inspired by greenhouse-monitoring UIs (Argus / Priva / Climate)
+     translated to a dark theme. Single accent: sage. Earth-tone status. */
+  --bg:            #13161B;
+  --surface:       #1A1E25;
+  --surface2:      #222732;
+  --surface3:      #2A3140;
+  --border:        #262B36;
+  --border-strong: #3B4250;
+  --text:          #E5E7EB;
+  --muted:         #8B96A8;
+  --dim:           #5C6573;
+  --green:         #84A98C;   /* sage — primary accent */
+  --green-soft:    rgba(132,169,140,.14);
+  --green-deep:    #4F7C5F;   /* deep sage for primary buttons w/ white text */
+  --teal:          #6B95A8;   /* slate — secondary accent */
+  --teal-soft:     rgba(107,149,168,.14);
+  --amber:         #D4A056;   /* warm gold — alerts / fruiting */
+  --amber-soft:    rgba(212,160,86,.14);
+  --red:           #B86B6B;   /* muted brick — discard / contamination */
+  --red-soft:      rgba(184,107,107,.14);
+  --r: 5px;
+  --font-ui:       'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:     'IBM Plex Mono', 'SF Mono', Menlo, Consolas, monospace;
+  --shadow-card:   0 1px 0 rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.2);
+  --shadow-lift:   0 4px 16px rgba(0,0,0,.4);
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-ui);
   font-size: 13px;
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   height: 100vh;
   overflow: hidden;
 }
@@ -50,8 +72,28 @@ header {
   cursor: pointer; user-select: none;
   transition: color .15s, border-color .15s;
 }
-.workflow-tag:hover { color: var(--text); border-color: #444; }
-.header-right { display: flex; align-items: center; gap: 10px; }
+.workflow-tag:hover { color: var(--text); border-color: var(--border-strong); }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 11px; color: var(--muted); font-weight: 500;
+  padding: 4px 10px 4px 9px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 12px;
+  font-variant-numeric: tabular-nums; letter-spacing: .02em;
+}
+.status-pill .status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 2px rgba(132,169,140,.18);
+}
+.hdr-btn {
+  background: var(--surface2); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 5px 11px; font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: border-color .15s, background .15s;
+}
+.hdr-btn:hover { border-color: var(--green); color: var(--green); }
 
 /* ── WORKFLOW DROPDOWN ── */
 #wf-dropdown {
@@ -88,9 +130,9 @@ button {
   padding: 6px 12px; font-size: 12px; cursor: pointer;
   transition: background .15s, border-color .15s; font-family: inherit;
 }
-button:hover { background: #252525; border-color: #383838; }
+button:hover { background: var(--surface2); border-color: var(--border-strong); }
 button.primary { background: var(--green); color: #000; border-color: var(--green); font-weight: 600; }
-button.primary:hover { background: #22c55e; border-color: #22c55e; }
+button.primary:hover { background: var(--green); border-color: var(--green); color: #11161B; }
 button.icon { padding: 5px 8px; line-height: 1; }
 button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
 button.ghost:hover { color: var(--text); background: var(--surface2); border-color: var(--border); }
@@ -170,7 +212,7 @@ textarea { resize: vertical; min-height: 56px; }
   flex: 1; border: none; border-radius: 0; padding: 7px 6px;
   font-size: 12px; font-weight: 500; background: transparent;
 }
-.cat-toggle button.on-actives { background: #14532d; color: var(--green); }
+.cat-toggle button.on-actives { background: var(--green-soft); color: var(--green); border-color: var(--green); }
 .cat-toggle button.on-gourmet  { background: #164e63; color: var(--teal); }
 
 .inline-toggle {
@@ -283,6 +325,12 @@ textarea { resize: vertical; min-height: 56px; }
   flex: 1; padding: 7px 10px; background: var(--bg); border: 1px solid var(--border);
   border-radius: 4px; color: var(--text); font-size: 13px;
 }
+#genetics-panel .g-toolbar .g-tool-btn {
+  padding: 7px 12px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text); font-size: 12px; cursor: pointer;
+  white-space: nowrap;
+}
+#genetics-panel .g-toolbar .g-tool-btn:hover { border-color: var(--border-strong, #4a4a4a); }
 #genetics-panel .g-body { flex: 1; overflow: auto; padding: 0; }
 #genetics-panel table { width: 100%; border-collapse: collapse; font-size: 12px; }
 #genetics-panel thead th {
@@ -307,9 +355,9 @@ textarea { resize: vertical; min-height: 56px; }
   font-size: 10px; padding: 3px 8px; background: var(--bg);
   border: 1px solid var(--border); color: var(--text); border-radius: 3px; cursor: pointer;
 }
-#genetics-panel .row-actions button:hover { background: var(--surface); border-color: #666; }
-#genetics-panel .row-actions .danger { color: #f88; }
-#genetics-panel .row-actions .danger:hover { background: rgba(255,80,80,.12); border-color: #f55; }
+#genetics-panel .row-actions button:hover { background: var(--surface); border-color: var(--border-strong); }
+#genetics-panel .row-actions .danger { color: var(--red); }
+#genetics-panel .row-actions .danger:hover { background: var(--red-soft); border-color: var(--red); }
 
 /* ── IMPORT GENETICS ── */
 #gimport-overlay {
@@ -365,7 +413,7 @@ textarea { resize: vertical; min-height: 56px; }
 }
 #gimport-panel .gi-action.new    { background: rgba(76,175,80,.18);  color: #9dd99f; }
 #gimport-panel .gi-action.update { background: rgba(255,193,7,.18);  color: #ffd86b; }
-#gimport-panel .gi-action.skip   { background: rgba(160,160,160,.18); color: #999; }
+#gimport-panel .gi-action.skip   { background: rgba(139,150,168,.16); color: var(--muted); }
 #gimport-panel .gi-footer {
   padding: 10px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
   display: flex; justify-content: space-between; align-items: center; gap: 8px;
@@ -375,8 +423,8 @@ textarea { resize: vertical; min-height: 56px; }
   background: var(--bg); border: 1px solid var(--border); color: var(--text);
   border-radius: 4px; cursor: pointer;
 }
-#gimport-panel .gi-footer button.primary { background: #2d6a3f; border-color: #2d6a3f; color: white; }
-#gimport-panel .gi-footer button.primary:disabled { background: #333; border-color: #444; color: #777; cursor: not-allowed; }
+#gimport-panel .gi-footer button.primary { background: var(--green-deep); border-color: var(--green-deep); color: #fff; }
+#gimport-panel .gi-footer button.primary:disabled { background: var(--surface3); border-color: var(--border); color: var(--dim); cursor: not-allowed; }
 #gimport-panel .gi-summary { font-size: 11px; color: var(--muted); }
 
 /* ── LOGIN ── */
@@ -395,14 +443,14 @@ textarea { resize: vertical; min-height: 56px; }
   background: var(--bg); border: 1px solid var(--border); color: var(--text);
   padding: 10px 12px; font-size: 14px; border-radius: 5px; font-family: inherit;
 }
-#login-panel input:focus { outline: 1px solid #555; }
+#login-panel input:focus { outline: 1px solid var(--green); border-color: var(--green); }
 #login-panel button {
   background: #2d6a3f; border: 1px solid #2d6a3f; color: white;
   padding: 9px 14px; font-size: 13px; font-weight: 600;
   border-radius: 5px; cursor: pointer;
 }
 #login-panel button:hover { background: #348749; }
-#login-error { color: #f88; font-size: 11px; min-height: 14px; }
+#login-error { color: var(--red); font-size: 11px; min-height: 14px; }
 
 /* ── EDIT GENETIC MODAL ── */
 #gedit-overlay {
@@ -444,9 +492,9 @@ textarea { resize: vertical; min-height: 56px; }
   background: var(--bg); border: 1px solid var(--border); color: var(--text);
   border-radius: 4px; cursor: pointer;
 }
-#gedit-panel .ge-footer button.primary { background: #2d6a3f; border-color: #2d6a3f; color: white; }
-#gedit-panel .ge-footer button.danger  { color: #f88; border-color: #553; }
-#gedit-panel .ge-footer button.danger:hover { background: rgba(255,80,80,.12); border-color: #f55; }
+#gedit-panel .ge-footer button.primary { background: var(--green-deep); border-color: var(--green-deep); color: #fff; }
+#gedit-panel .ge-footer button.danger  { color: var(--red); border-color: var(--border-strong); }
+#gedit-panel .ge-footer button.danger:hover { background: var(--red-soft); border-color: var(--red); }
 
 /* ── DASHBOARD ── */
 #dash-overlay {
@@ -467,7 +515,7 @@ textarea { resize: vertical; min-height: 56px; }
   font-size: 11px; padding: 5px 10px; background: var(--bg);
   border: 1px solid var(--border); color: var(--text); border-radius: 4px; cursor: pointer;
 }
-#dash-panel .d-header button:hover { border-color: #666; }
+#dash-panel .d-header button:hover { border-color: var(--border-strong); }
 #dash-panel .d-summary {
   display: flex; gap: 14px; padding: 10px 16px;
   border-bottom: 1px solid var(--border); flex-shrink: 0;
@@ -481,9 +529,18 @@ textarea { resize: vertical; min-height: 56px; }
   letter-spacing: .05em;
 }
 #dash-panel .d-stat .val {
-  font-size: 22px; font-weight: 600; margin-top: 2px;
-  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 26px; font-weight: 600; margin-top: 4px;
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
+#dash-panel .d-stat .delta {
+  font-size: 10px; color: var(--muted); margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+#dash-panel .d-stat.grain     { border-left: 2px solid var(--amber); }
+#dash-panel .d-stat.fruiting  { border-left: 2px solid var(--teal); }
+#dash-panel .d-stat.harvested { border-left: 2px solid var(--green); }
+#dash-panel .d-stat.tossed    { border-left: 2px solid var(--dim); }
 #dash-panel .d-stat.grain .val     { color: var(--amber); }
 #dash-panel .d-stat.fruiting .val  { color: var(--teal); }
 #dash-panel .d-stat.harvested .val { color: var(--green); }
@@ -505,7 +562,7 @@ textarea { resize: vertical; min-height: 56px; }
   display: flex; justify-content: space-between; align-items: center;
   padding-bottom: 6px; border-bottom: 1px solid var(--border);
 }
-#dash-panel .d-col h3 .ct { color: var(--text); font-family: 'SF Mono', Menlo, monospace; }
+#dash-panel .d-col h3 .ct { color: var(--text); font-family: var(--font-mono); }
 #dash-panel .d-col.grain     h3 { color: var(--amber); }
 #dash-panel .d-col.fruiting  h3 { color: var(--teal); }
 #dash-panel .d-col.harvested h3 { color: var(--green); }
@@ -522,11 +579,11 @@ textarea { resize: vertical; min-height: 56px; }
   font-size: 12px;
 }
 #dash-panel .lot-card .lc-id {
-  font-family: 'SF Mono', Menlo, monospace; font-weight: 600;
+  font-family: var(--font-mono); font-weight: 600;
   color: var(--text); font-size: 11px;
 }
 #dash-panel .lot-card .lc-code {
-  font-size: 10px; color: var(--muted); font-family: 'SF Mono', Menlo, monospace;
+  font-size: 10px; color: var(--muted); font-family: var(--font-mono);
 }
 #dash-panel .lot-card .lc-meta {
   font-size: 10px; color: var(--muted); display: flex; gap: 8px;
@@ -541,12 +598,12 @@ textarea { resize: vertical; min-height: 56px; }
   border: 1px solid var(--border); color: var(--text);
   border-radius: 3px; cursor: pointer;
 }
-#dash-panel .lot-card .lc-actions button:hover { border-color: #666; }
+#dash-panel .lot-card .lc-actions button:hover { border-color: var(--border-strong); }
 #dash-panel .lot-card .lc-actions button.primary {
-  background: rgba(34,211,238,.12); border-color: var(--teal); color: var(--teal);
+  background: var(--teal-soft); border-color: var(--teal); color: var(--teal);
 }
 #dash-panel .lot-card .lc-actions button.go {
-  background: rgba(74,222,128,.12); border-color: var(--green); color: var(--green);
+  background: var(--green-soft); border-color: var(--green); color: var(--green);
 }
 #dash-panel .lot-card .lc-actions button.danger { color: var(--red); }
 #dash-panel .lot-card .lc-actions button.danger:hover {
@@ -601,8 +658,8 @@ textarea { resize: vertical; min-height: 56px; }
   border: 1px solid var(--border); color: var(--text);
   border-radius: 4px; cursor: pointer;
 }
-#dash-prompt-panel .dp-footer button.primary { background: #2d6a3f; border-color: #2d6a3f; color: white; }
-#dash-prompt-panel .dp-footer button.danger { color: var(--red); border-color: #553; }
+#dash-prompt-panel .dp-footer button.primary { background: var(--green-deep); border-color: var(--green-deep); color: #fff; }
+#dash-prompt-panel .dp-footer button.danger { color: var(--red); border-color: var(--border-strong); }
 .s-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 13px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
@@ -672,7 +729,7 @@ textarea { resize: vertical; min-height: 56px; }
   padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; gap: 10px;
 }
 .fp-header h2 { font-size: 13px; font-weight: 600; }
-.fp-header .hint { font-size: 9px; color: var(--muted); letter-spacing: 0.5px; margin-top: 2px; font-family: 'SF Mono', Menlo, monospace; }
+.fp-header .hint { font-size: 9px; color: var(--muted); letter-spacing: 0.5px; margin-top: 2px; font-family: var(--font-mono); }
 .fp-body { flex: 1; overflow-y: auto; padding: 12px 14px; }
 .fp-body::-webkit-scrollbar { width: 3px; }
 .fp-body::-webkit-scrollbar-thumb { background: var(--border); }
@@ -683,11 +740,11 @@ textarea { resize: vertical; min-height: 56px; }
 .fp-row input[type=range] { appearance: none; -webkit-appearance: none; background: var(--surface2); height: 4px; border-radius: 2px; outline: none; cursor: pointer; }
 .fp-row input[type=range]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--green); cursor: pointer; }
 .fp-row input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; border: 0; background: var(--green); cursor: pointer; }
-.fp-row input[type=number] { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 3px 5px; font-size: 11px; border-radius: 3px; width: 100%; font-family: 'SF Mono', Menlo, monospace; }
+.fp-row input[type=number] { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 3px 5px; font-size: 11px; border-radius: 3px; width: 100%; font-family: var(--font-mono); }
 .fp-footer { display: flex; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--border); flex-shrink: 0; align-items: center; }
 .fp-footer button { flex: 1; padding: 7px 10px; font-size: 11px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 4px; cursor: pointer; font-family: inherit; }
 .fp-footer button.primary { background: var(--green); color: #000; border-color: var(--green); font-weight: 600; }
-.fp-footer .copy-status { font-size: 10px; color: var(--green); font-family: 'SF Mono', Menlo, monospace; min-width: 40px; }
+.fp-footer .copy-status { font-size: 10px; color: var(--green); font-family: var(--font-mono); min-width: 40px; }
 
 @media print {
   .lbl-qr-reserve { display: none !important; }
@@ -712,9 +769,12 @@ textarea { resize: vertical; min-height: 56px; }
             data-testid="workflow-tag">Make Grain Spawn ▾</span>
     </div>
     <div class="header-right">
-      <button class="icon ghost" id="dash-btn" title="Dashboard"
-              onclick="openDashboard()" data-testid="dash-btn"
-              style="font-size:14px;line-height:1">▤</button>
+      <span class="status-pill" id="header-status" title="Working locally — data stays in your browser">
+        <span class="status-dot"></span>
+        <span id="header-status-text">Local</span>
+      </span>
+      <button class="hdr-btn" onclick="openDashboard()" data-testid="dash-btn"
+              title="Production dashboard">Dashboard</button>
       <button class="icon ghost" id="fiddle-btn" title="Layout Lab (⌘\)"
               onclick="toggleFiddle()" data-testid="fiddle-toggle-btn">▦</button>
       <button class="icon ghost" id="settings-btn" title="Settings">⚙</button>
@@ -1453,6 +1513,8 @@ textarea { resize: vertical; min-height: 56px; }
     <div class="g-toolbar">
       <input id="genetics-search" type="text" placeholder="Search by code, cultivar, genus, species…"
              oninput="renderGeneticsTable(this.value)">
+      <button class="g-tool-btn" onclick="openImportGenetics()" title="Import CSV / paste">Import</button>
+      <button class="g-tool-btn" onclick="exportGenetics()" title="Download all genetics as CSV">Export</button>
     </div>
     <div class="g-body">
       <table>
@@ -1484,6 +1546,7 @@ textarea { resize: vertical; min-height: 56px; }
     <div class="d-header">
       <h2>Grain → Fruiting → Harvest</h2>
       <div class="d-actions">
+        <button onclick="exportLots()" title="Download all lots as CSV">Export CSV</button>
         <button onclick="seedDemoLots()" title="Insert ~12 realistic demo lots">Seed demo</button>
         <button onclick="renderDashboard()" title="Refresh">↻</button>
         <button class="icon ghost" onclick="closeDashboard()" style="padding:4px 8px">✕</button>
@@ -3592,6 +3655,91 @@ function updateUserDisplay() {
   const u = db.session.currentUser();
   const el = $('current-user-label');
   if (el) el.textContent = u || '—';
+  const hs = $('header-status-text');
+  if (hs) hs.textContent = u ? `Local · ${u}` : 'Local';
+}
+
+// ─── CSV EXPORT ───────────────────────────────────────────────────────────────
+// Generic CSV-string builder + browser download. RFC 4180-ish quoting:
+// any field containing comma, quote, newline, or CR is wrapped in double
+// quotes; embedded quotes are doubled.
+
+function csvEscape(v) {
+  if (v == null) return '';
+  const s = String(v);
+  if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+function csvBuild(columns, rows) {
+  const head = columns.map(c => csvEscape(c.label)).join(',');
+  const lines = rows.map(r => columns.map(c => csvEscape(c.value(r))).join(','));
+  return head + '\n' + lines.join('\n') + (lines.length ? '\n' : '');
+}
+
+function csvDownload(filename, text) {
+  // Prepend BOM so Excel opens UTF-8 with accents intact.
+  const blob = new Blob(['﻿' + text], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
+}
+
+function ymdToday() {
+  const d = new Date();
+  return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+}
+
+async function exportGenetics() {
+  const rows = await db.genetics.list();
+  if (!rows.length) { alert('No genetics to export.'); return; }
+  const columns = [
+    { label: 'code',         value: r => r.code },
+    { label: 'cultivar',     value: r => r.cultivar },
+    { label: 'genus',        value: r => r.genus },
+    { label: 'species',      value: r => r.species },
+    { label: 'category',     value: r => r.cat },
+    { label: 'vendor',       value: r => (r.ingestData || {}).vendor },
+    { label: 'ingest_date',  value: r => (r.ingestData || {}).ingestDate },
+    { label: 'lineage',      value: r => (r.ingestData || {}).lineage },
+    { label: 'source',       value: r => (r.ingestData || {}).source },
+    { label: 'origin',       value: r => (r.ingestData || {}).origin },
+    { label: 'family',       value: r => (r.ingestData || {}).family },
+    { label: 'notes',        value: r => r.notes || (r.ingestData || {}).notes },
+    { label: 'archived',     value: r => r.archived ? '1' : '' },
+    { label: 'created_at',   value: r => r.createdAt },
+    { label: 'updated_at',   value: r => r.updatedAt },
+  ];
+  csvDownload(`quicklabel-genetics-${ymdToday()}.csv`, csvBuild(columns, rows));
+}
+
+async function exportLots() {
+  const rows = await db.lots.list({ includeInactive: true });
+  if (!rows.length) { alert('No lots to export.'); return; }
+  const lastStage = r => {
+    const h = Array.isArray(r.stageHistory) && r.stageHistory.length ? r.stageHistory[r.stageHistory.length - 1] : null;
+    return h || {};
+  };
+  const columns = [
+    { label: 'lot_id',       value: r => r.lotId },
+    { label: 'workflow',     value: r => r.workflowId },
+    { label: 'genetic_code', value: r => r.geneticCode },
+    { label: 'cultivar',     value: r => r.cultivar },
+    { label: 'stage',        value: r => r.stage || '' },
+    { label: 'status',       value: r => r.status || 'active' },
+    { label: 'grain_type',   value: r => r.sub || '' },
+    { label: 'qty',          value: r => r.qty },
+    { label: 'created_at',   value: r => r.createdAt },
+    { label: 'stage_entered_at', value: r => lastStage(r).at },
+    { label: 'wet_weight_g', value: r => lastStage(r).wetWeight },
+    { label: 'dry_weight_g', value: r => lastStage(r).dryWeight },
+    { label: 'notes',        value: r => r.notes || '' },
+    { label: 'stage_history_json', value: r => JSON.stringify(r.stageHistory || []) },
+    { label: 'events_json',  value: r => JSON.stringify(r.events || []) },
+  ];
+  csvDownload(`quicklabel-lots-${ymdToday()}.csv`, csvBuild(columns, rows));
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────

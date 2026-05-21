@@ -32,7 +32,8 @@ Path-1 (the architecture chosen this session) keeps everything in
 | `PRD-genetics-tracking.md` | Detailed genetics-catalog spec. |
 | `WORK_LOG.md` | Dated narrative of every change made in this session. **Read top-down for context.** |
 | `CHANGELOG.md` | High-level user-facing changelog (pre-existing). |
-| `backend/`, `frontend/` | **Do not modify.** Preview-environment plumbing only. |
+| `PRD-cultivation-api.md` | **Archived** API design reference. The "Resolved open questions" table answers 13 things `PRD-data-model.md` left open; reuse those resolutions in the client-side model. |
+| `backend/`, `frontend/` | **Do not modify.** Preview-environment plumbing only. A FastAPI/SQLite implementation was explored on `Emerget-code-changes` and rejected — see PRD-cultivation-api.md status note. |
 
 ---
 
