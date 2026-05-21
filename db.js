@@ -178,6 +178,7 @@
       localStorage.setItem(USER_KEY, u);
       const imp = importLegacyForUser(u);
       syncGeneticsAndCfg();
+      lots._migrate();
       return ok({ ok: true, user: u, legacy: imp });
     },
     logout() {
@@ -249,12 +250,27 @@
   // ─── lots ──────────────────────────────────────────────────────────────────
   // Counters live in their own key (ql_lots), the existing source. The records
   // store (ql_lot_records) is net-new and holds one row per print run.
+  //
+  // Lifecycle fields on every lot row:
+  //   stage          'grain' | 'fruiting' | 'harvested'  (only grain-spawn lots
+  //                  participate; other workflows leave stage null)
+  //   status         'active' | 'contaminated' | 'destroyed' | 'gifted' |
+  //                  'archived' — see PRD-data-model §3.12. Non-active lots
+  //                  are excluded from the dashboard's live counts but kept
+  //                  for history.
+  //   stageHistory   [{stage, at, note?, wetWeight?, dryWeight?}, …]
+  //   events         [{type, at, ...}, …]  audit trail for discard/restore
+  const STAGE_FOR_WORKFLOW = { 'grain-spawn': 'grain' };
+
   const lots = {
-    list({ code, prefix } = {}) {
+    list({ code, prefix, stage, status, includeInactive } = {}) {
       const all = storage.read(KEYS.lots, []);
       let rows = all;
       if (code)   rows = rows.filter(r => String(r.geneticCode || '').toUpperCase() === String(code).toUpperCase());
       if (prefix) rows = rows.filter(r => String(r.lotId || '').startsWith(prefix + '-'));
+      if (stage)  rows = rows.filter(r => r.stage === stage);
+      if (status) rows = rows.filter(r => (r.status || 'active') === status);
+      else if (!includeInactive) rows = rows.filter(r => (r.status || 'active') === 'active');
       return ok(rows);
     },
     get(lotId) {
@@ -272,10 +288,110 @@
     },
     create(record) {
       const all = storage.read(KEYS.lots, []);
-      const row = { ...record, createdAt: nowISO(), status: record.status || 'active' };
+      const at = nowISO();
+      const stage = record.stage || STAGE_FOR_WORKFLOW[record.workflowId] || null;
+      const row = {
+        ...record,
+        createdAt: at,
+        status: record.status || 'active',
+        stage,
+        stageHistory: stage ? [{ stage, at }] : [],
+        events: [],
+      };
       all.push(row);
       storage.write(KEYS.lots, all);
       return ok({ ok: true, record: row });
+    },
+    // Typo / data correction. Refuses to touch lifecycle-managed fields —
+    // those go through advance/discard/restore so history stays honest.
+    update(lotId, patch) {
+      const all = storage.read(KEYS.lots, []);
+      const i = all.findIndex(r => r.lotId === lotId);
+      if (i < 0) return ok({ ok: false, reason: 'not_found' });
+      const blocked = ['stage', 'stageHistory', 'status', 'events', 'createdAt', 'lotId'];
+      const clean = { ...patch };
+      for (const k of blocked) delete clean[k];
+      all[i] = { ...all[i], ...clean, updatedAt: nowISO() };
+      storage.write(KEYS.lots, all);
+      return ok({ ok: true, record: all[i] });
+    },
+    // Advance the lifecycle stage. Append-only — never rewrites prior entries.
+    // For 'harvested', accepts optional wetWeight / dryWeight on the entry.
+    advance(lotId, toStage, opts = {}) {
+      const valid = ['grain', 'fruiting', 'harvested'];
+      if (!valid.includes(toStage)) return ok({ ok: false, reason: 'bad_stage' });
+      const all = storage.read(KEYS.lots, []);
+      const i = all.findIndex(r => r.lotId === lotId);
+      if (i < 0) return ok({ ok: false, reason: 'not_found' });
+      const at = opts.at || nowISO();
+      const entry = { stage: toStage, at };
+      if (opts.note != null)       entry.note = String(opts.note);
+      if (opts.wetWeight != null)  entry.wetWeight = Number(opts.wetWeight);
+      if (opts.dryWeight != null)  entry.dryWeight = Number(opts.dryWeight);
+      const hist = Array.isArray(all[i].stageHistory) ? all[i].stageHistory.slice() : [];
+      hist.push(entry);
+      all[i] = { ...all[i], stage: toStage, stageHistory: hist, updatedAt: at };
+      storage.write(KEYS.lots, all);
+      return ok({ ok: true, record: all[i] });
+    },
+    // Real-world discard. The bag is out — set status to a non-active value
+    // and record why. The lot stays in storage; it just falls out of the
+    // active dashboard counts and into the 'tossed' bucket.
+    discard(lotId, { reason = 'destroyed', note, at } = {}) {
+      const valid = ['contaminated', 'destroyed', 'gifted', 'archived'];
+      if (!valid.includes(reason)) return ok({ ok: false, reason: 'bad_reason' });
+      const all = storage.read(KEYS.lots, []);
+      const i = all.findIndex(r => r.lotId === lotId);
+      if (i < 0) return ok({ ok: false, reason: 'not_found' });
+      const ts = at || nowISO();
+      const evts = Array.isArray(all[i].events) ? all[i].events.slice() : [];
+      evts.push({ type: 'discard', reason, note: note ? String(note) : '', at: ts });
+      all[i] = { ...all[i], status: reason, events: evts, updatedAt: ts };
+      storage.write(KEYS.lots, all);
+      return ok({ ok: true, record: all[i] });
+    },
+    // Undo a discard. Returns the lot to 'active'.
+    restore(lotId) {
+      const all = storage.read(KEYS.lots, []);
+      const i = all.findIndex(r => r.lotId === lotId);
+      if (i < 0) return ok({ ok: false, reason: 'not_found' });
+      const ts = nowISO();
+      const evts = Array.isArray(all[i].events) ? all[i].events.slice() : [];
+      evts.push({ type: 'restore', at: ts });
+      all[i] = { ...all[i], status: 'active', events: evts, updatedAt: ts };
+      storage.write(KEYS.lots, all);
+      return ok({ ok: true, record: all[i] });
+    },
+    // Backfill stage='grain' on any pre-existing grain-spawn lot that
+    // predates the lifecycle layer. Idempotent.
+    _migrate() {
+      const all = storage.read(KEYS.lots, []);
+      let changed = false;
+      for (const r of all) {
+        if (!r.stage && r.workflowId === 'grain-spawn') {
+          r.stage = 'grain';
+          r.stageHistory = [{ stage: 'grain', at: r.createdAt || nowISO() }];
+          r.events = r.events || [];
+          changed = true;
+        }
+        if (!r.status) { r.status = 'active'; changed = true; }
+      }
+      if (changed) storage.write(KEYS.lots, all);
+      return ok({ ok: true, migrated: changed });
+    },
+    // Bulk insert for seeding demo data. Skips lot IDs that already exist.
+    _bulkSeed(records) {
+      const all = storage.read(KEYS.lots, []);
+      const seen = new Set(all.map(r => r.lotId));
+      let added = 0;
+      for (const r of records) {
+        if (!r.lotId || seen.has(r.lotId)) continue;
+        all.push(r);
+        seen.add(r.lotId);
+        added++;
+      }
+      storage.write(KEYS.lots, all);
+      return ok({ ok: true, added });
     },
     // Counter passthroughs — kept thin so the existing inline code can drive
     // the counter dict while we centralize storage here.

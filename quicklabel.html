@@ -447,6 +447,162 @@ textarea { resize: vertical; min-height: 56px; }
 #gedit-panel .ge-footer button.primary { background: #2d6a3f; border-color: #2d6a3f; color: white; }
 #gedit-panel .ge-footer button.danger  { color: #f88; border-color: #553; }
 #gedit-panel .ge-footer button.danger:hover { background: rgba(255,80,80,.12); border-color: #f55; }
+
+/* ── DASHBOARD ── */
+#dash-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 220;
+}
+#dash-overlay.open { display: flex; align-items: center; justify-content: center; }
+#dash-panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  width: min(1280px, 96vw); max-height: 92vh; display: flex; flex-direction: column;
+}
+#dash-panel .d-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+#dash-panel .d-header h2 { font-size: 14px; font-weight: 600; }
+#dash-panel .d-header .d-actions { display: flex; gap: 6px; align-items: center; }
+#dash-panel .d-header button {
+  font-size: 11px; padding: 5px 10px; background: var(--bg);
+  border: 1px solid var(--border); color: var(--text); border-radius: 4px; cursor: pointer;
+}
+#dash-panel .d-header button:hover { border-color: #666; }
+#dash-panel .d-summary {
+  display: flex; gap: 14px; padding: 10px 16px;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+#dash-panel .d-stat {
+  flex: 1; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 5px; padding: 10px 12px;
+}
+#dash-panel .d-stat .lbl {
+  font-size: 10px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .05em;
+}
+#dash-panel .d-stat .val {
+  font-size: 22px; font-weight: 600; margin-top: 2px;
+  font-family: 'SF Mono', Menlo, monospace;
+}
+#dash-panel .d-stat.grain .val     { color: var(--amber); }
+#dash-panel .d-stat.fruiting .val  { color: var(--teal); }
+#dash-panel .d-stat.harvested .val { color: var(--green); }
+#dash-panel .d-stat.tossed .val    { color: var(--muted); }
+
+#dash-panel .d-body {
+  flex: 1; overflow: auto; padding: 14px 16px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  align-content: start;
+}
+#dash-panel .d-col {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 5px; padding: 10px; min-height: 200px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+#dash-panel .d-col h3 {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--muted);
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+#dash-panel .d-col h3 .ct { color: var(--text); font-family: 'SF Mono', Menlo, monospace; }
+#dash-panel .d-col.grain     h3 { color: var(--amber); }
+#dash-panel .d-col.fruiting  h3 { color: var(--teal); }
+#dash-panel .d-col.harvested h3 { color: var(--green); }
+#dash-panel .d-empty {
+  padding: 24px 8px; text-align: center; color: var(--muted);
+  font-size: 11px; font-style: italic;
+}
+#dash-panel .lot-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px;
+}
+#dash-panel .lot-card .lc-top {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 12px;
+}
+#dash-panel .lot-card .lc-id {
+  font-family: 'SF Mono', Menlo, monospace; font-weight: 600;
+  color: var(--text); font-size: 11px;
+}
+#dash-panel .lot-card .lc-code {
+  font-size: 10px; color: var(--muted); font-family: 'SF Mono', Menlo, monospace;
+}
+#dash-panel .lot-card .lc-meta {
+  font-size: 10px; color: var(--muted); display: flex; gap: 8px;
+  flex-wrap: wrap;
+}
+#dash-panel .lot-card .lc-meta strong { color: var(--text); font-weight: 500; }
+#dash-panel .lot-card .lc-actions {
+  display: flex; gap: 4px; margin-top: 2px; flex-wrap: wrap;
+}
+#dash-panel .lot-card .lc-actions button {
+  font-size: 10px; padding: 3px 7px; background: var(--bg);
+  border: 1px solid var(--border); color: var(--text);
+  border-radius: 3px; cursor: pointer;
+}
+#dash-panel .lot-card .lc-actions button:hover { border-color: #666; }
+#dash-panel .lot-card .lc-actions button.primary {
+  background: rgba(34,211,238,.12); border-color: var(--teal); color: var(--teal);
+}
+#dash-panel .lot-card .lc-actions button.go {
+  background: rgba(74,222,128,.12); border-color: var(--green); color: var(--green);
+}
+#dash-panel .lot-card .lc-actions button.danger { color: var(--red); }
+#dash-panel .lot-card .lc-actions button.danger:hover {
+  background: rgba(255,80,80,.12); border-color: var(--red);
+}
+#dash-panel .lot-card.tossed { opacity: .55; }
+#dash-panel .lot-card.tossed .lc-id { text-decoration: line-through; }
+
+#dash-panel .d-tossed {
+  border-top: 1px solid var(--border); padding: 12px 16px;
+  flex-shrink: 0; max-height: 200px; overflow-y: auto;
+}
+#dash-panel .d-tossed h3 {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--muted); margin-bottom: 8px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+#dash-panel .d-tossed .d-tossed-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px;
+}
+
+#dash-panel .d-footer {
+  padding: 8px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
+  font-size: 11px; color: var(--muted);
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+/* Stage transition modal — small confirm with optional weight inputs */
+#dash-prompt-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 350;
+}
+#dash-prompt-overlay.open { display: flex; align-items: center; justify-content: center; }
+#dash-prompt-panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+  width: min(420px, 92vw); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
+}
+#dash-prompt-panel h3 { font-size: 13px; font-weight: 600; }
+#dash-prompt-panel .dp-body { font-size: 12px; color: var(--text); display: flex; flex-direction: column; gap: 8px; }
+#dash-prompt-panel .dp-field { display: flex; flex-direction: column; gap: 3px; }
+#dash-prompt-panel .dp-field label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+#dash-prompt-panel .dp-field input, #dash-prompt-panel .dp-field select, #dash-prompt-panel .dp-field textarea {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  padding: 6px 8px; font-size: 12px; border-radius: 4px; font-family: inherit;
+}
+#dash-prompt-panel .dp-row { display: flex; gap: 8px; }
+#dash-prompt-panel .dp-row > .dp-field { flex: 1; }
+#dash-prompt-panel .dp-footer {
+  display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px;
+}
+#dash-prompt-panel .dp-footer button {
+  font-size: 12px; padding: 6px 12px; background: var(--bg);
+  border: 1px solid var(--border); color: var(--text);
+  border-radius: 4px; cursor: pointer;
+}
+#dash-prompt-panel .dp-footer button.primary { background: #2d6a3f; border-color: #2d6a3f; color: white; }
+#dash-prompt-panel .dp-footer button.danger { color: var(--red); border-color: #553; }
 .s-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 13px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
@@ -556,6 +712,9 @@ textarea { resize: vertical; min-height: 56px; }
             data-testid="workflow-tag">Make Grain Spawn ▾</span>
     </div>
     <div class="header-right">
+      <button class="icon ghost" id="dash-btn" title="Dashboard"
+              onclick="openDashboard()" data-testid="dash-btn"
+              style="font-size:14px;line-height:1">▤</button>
       <button class="icon ghost" id="fiddle-btn" title="Layout Lab (⌘\)"
               onclick="toggleFiddle()" data-testid="fiddle-toggle-btn">▦</button>
       <button class="icon ghost" id="settings-btn" title="Settings">⚙</button>
@@ -1316,6 +1475,61 @@ textarea { resize: vertical; min-height: 56px; }
       <span id="genetics-footer-count">0 records</span>
       <span>Click a row to load its code into the form.</span>
     </div>
+  </div>
+</div>
+
+<!-- Dashboard Modal -->
+<div id="dash-overlay" onclick="if(event.target===this)closeDashboard()">
+  <div id="dash-panel">
+    <div class="d-header">
+      <h2>Grain → Fruiting → Harvest</h2>
+      <div class="d-actions">
+        <button onclick="seedDemoLots()" title="Insert ~12 realistic demo lots">Seed demo</button>
+        <button onclick="renderDashboard()" title="Refresh">↻</button>
+        <button class="icon ghost" onclick="closeDashboard()" style="padding:4px 8px">✕</button>
+      </div>
+    </div>
+    <div class="d-summary">
+      <div class="d-stat grain">     <div class="lbl">Grain</div>     <div class="val" id="dash-ct-grain">0</div></div>
+      <div class="d-stat fruiting">  <div class="lbl">Fruiting</div>  <div class="val" id="dash-ct-fruiting">0</div></div>
+      <div class="d-stat harvested"> <div class="lbl">Harvested</div> <div class="val" id="dash-ct-harvested">0</div></div>
+      <div class="d-stat tossed">    <div class="lbl">Tossed</div>    <div class="val" id="dash-ct-tossed">0</div></div>
+    </div>
+    <div class="d-body">
+      <div class="d-col grain">
+        <h3>Grain <span class="ct" id="dash-col-grain-ct">0</span></h3>
+        <div id="dash-col-grain"></div>
+      </div>
+      <div class="d-col fruiting">
+        <h3>Fruiting <span class="ct" id="dash-col-fruiting-ct">0</span></h3>
+        <div id="dash-col-fruiting"></div>
+      </div>
+      <div class="d-col harvested">
+        <h3>Harvested <span class="ct" id="dash-col-harvested-ct">0</span></h3>
+        <div id="dash-col-harvested"></div>
+      </div>
+    </div>
+    <div class="d-tossed" id="dash-tossed-section" style="display:none">
+      <h3>
+        <span>Tossed &amp; archived <span style="color:var(--text)" id="dash-tossed-ct">0</span></span>
+        <button onclick="toggleTossedDetail()" id="dash-tossed-toggle"
+                style="font-size:10px;padding:3px 8px;background:var(--bg);border:1px solid var(--border);color:var(--muted);border-radius:3px;cursor:pointer">Show</button>
+      </h3>
+      <div class="d-tossed-grid" id="dash-tossed-list" style="display:none"></div>
+    </div>
+    <div class="d-footer">
+      <span>Lots auto-capture when you print a Grain Spawn label. Edit fixes typos; Toss records a real-world discard.</span>
+      <span id="dash-updated"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Stage / Discard / Edit prompt -->
+<div id="dash-prompt-overlay" onclick="if(event.target===this)closeDashPrompt()">
+  <div id="dash-prompt-panel">
+    <h3 id="dash-prompt-title">Confirm</h3>
+    <div class="dp-body" id="dash-prompt-body"></div>
+    <div class="dp-footer" id="dash-prompt-footer"></div>
   </div>
 </div>
 
@@ -3378,6 +3592,401 @@ function updateUserDisplay() {
   const u = db.session.currentUser();
   const el = $('current-user-label');
   if (el) el.textContent = u || '—';
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+// Grain → Fruiting → Harvest lifecycle view over db.lots (grain-spawn only).
+
+let dashTossedExpanded = false;
+
+async function openDashboard() {
+  closeWorkflowDropdown();
+  await db.lots._migrate();
+  $('dash-overlay').classList.add('open');
+  renderDashboard();
+}
+
+function closeDashboard() {
+  $('dash-overlay').classList.remove('open');
+}
+
+function daysSince(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d)) return null;
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+}
+
+function lastStageEntry(lot) {
+  const h = Array.isArray(lot.stageHistory) ? lot.stageHistory : [];
+  return h.length ? h[h.length - 1] : null;
+}
+
+function lotCardHTML(lot, opts = {}) {
+  const id = escapeHtml(lot.lotId);
+  const code = escapeHtml(lot.geneticCode || '—');
+  const cultivar = escapeHtml(lot.cultivar || '');
+  const grainSub = lot.sub ? escapeHtml(lot.sub) : '';
+  const last = lastStageEntry(lot);
+  const stageAt = last && last.at ? last.at : lot.createdAt;
+  const days = daysSince(stageAt);
+  const ageStr = days == null ? '' : `${days}d`;
+  const meta = [];
+  if (cultivar) meta.push(`<span><strong>${cultivar}</strong></span>`);
+  if (grainSub) meta.push(`<span>${grainSub}</span>`);
+  if (ageStr)   meta.push(`<span>in stage ${ageStr}</span>`);
+  if (last && last.wetWeight != null) meta.push(`<span>wet ${last.wetWeight}g</span>`);
+  if (last && last.dryWeight != null) meta.push(`<span>dry ${last.dryWeight}g</span>`);
+
+  let actions;
+  if (opts.tossed) {
+    const reason = escapeHtml(lot.status || 'destroyed');
+    meta.push(`<span style="color:var(--red)">${reason}</span>`);
+    actions = `<button onclick="restoreLot('${id}')">Restore</button>`;
+  } else if (lot.stage === 'grain') {
+    actions = `
+      <button class="primary" onclick="promptAdvance('${id}','fruiting')">→ Fruiting</button>
+      <button onclick="promptEdit('${id}')">Edit</button>
+      <button class="danger" onclick="promptDiscard('${id}')">Toss</button>`;
+  } else if (lot.stage === 'fruiting') {
+    actions = `
+      <button class="go" onclick="promptAdvance('${id}','harvested')">→ Harvested</button>
+      <button onclick="promptEdit('${id}')">Edit</button>
+      <button class="danger" onclick="promptDiscard('${id}')">Toss</button>`;
+  } else { // harvested
+    actions = `
+      <button onclick="promptEdit('${id}')">Edit</button>
+      <button class="danger" onclick="promptDiscard('${id}')">Toss</button>`;
+  }
+
+  return `
+    <div class="lot-card${opts.tossed ? ' tossed' : ''}">
+      <div class="lc-top">
+        <span class="lc-id">${id}</span>
+        <span class="lc-code">${code}</span>
+      </div>
+      <div class="lc-meta">${meta.join('')}</div>
+      <div class="lc-actions">${actions}</div>
+    </div>`;
+}
+
+async function renderDashboard() {
+  // Live lots: grain-spawn workflow, status=active, group by stage.
+  const all = await db.lots.list({ includeInactive: true });
+  const grain = all.filter(r => r.workflowId === 'grain-spawn');
+
+  const live   = grain.filter(r => (r.status || 'active') === 'active');
+  const tossed = grain.filter(r => (r.status || 'active') !== 'active');
+
+  const cols = { grain: [], fruiting: [], harvested: [] };
+  for (const r of live) {
+    const s = r.stage || 'grain';
+    if (cols[s]) cols[s].push(r);
+  }
+  for (const k of Object.keys(cols)) {
+    cols[k].sort((a, b) => {
+      const ta = (lastStageEntry(a) || {}).at || a.createdAt || '';
+      const tb = (lastStageEntry(b) || {}).at || b.createdAt || '';
+      return tb.localeCompare(ta);
+    });
+  }
+
+  // Stats
+  $('dash-ct-grain').textContent     = cols.grain.length;
+  $('dash-ct-fruiting').textContent  = cols.fruiting.length;
+  $('dash-ct-harvested').textContent = cols.harvested.length;
+  $('dash-ct-tossed').textContent    = tossed.length;
+  $('dash-col-grain-ct').textContent     = cols.grain.length;
+  $('dash-col-fruiting-ct').textContent  = cols.fruiting.length;
+  $('dash-col-harvested-ct').textContent = cols.harvested.length;
+
+  // Columns
+  const renderCol = (id, rows) => {
+    const host = $(id);
+    if (!rows.length) {
+      host.innerHTML = `<div class="d-empty">— empty —</div>`;
+    } else {
+      host.innerHTML = rows.map(r => lotCardHTML(r)).join('');
+    }
+  };
+  renderCol('dash-col-grain', cols.grain);
+  renderCol('dash-col-fruiting', cols.fruiting);
+  renderCol('dash-col-harvested', cols.harvested);
+
+  // Tossed
+  $('dash-tossed-section').style.display = tossed.length ? 'block' : 'none';
+  $('dash-tossed-ct').textContent = tossed.length;
+  if (dashTossedExpanded) {
+    const sorted = tossed.slice().sort((a, b) =>
+      (b.updatedAt || b.createdAt || '').localeCompare(a.updatedAt || a.createdAt || ''));
+    $('dash-tossed-list').innerHTML = sorted.map(r => lotCardHTML(r, { tossed: true })).join('');
+  }
+  $('dash-updated').textContent = `updated ${new Date().toLocaleTimeString()}`;
+}
+
+function toggleTossedDetail() {
+  dashTossedExpanded = !dashTossedExpanded;
+  $('dash-tossed-list').style.display = dashTossedExpanded ? 'grid' : 'none';
+  $('dash-tossed-toggle').textContent = dashTossedExpanded ? 'Hide' : 'Show';
+  if (dashTossedExpanded) renderDashboard();
+}
+
+// ─── DASH PROMPT (advance / discard / edit) ──────────────────────────────────
+
+function openDashPrompt(title, bodyHTML, footerHTML) {
+  $('dash-prompt-title').textContent = title;
+  $('dash-prompt-body').innerHTML = bodyHTML;
+  $('dash-prompt-footer').innerHTML = footerHTML;
+  $('dash-prompt-overlay').classList.add('open');
+}
+
+function closeDashPrompt() {
+  $('dash-prompt-overlay').classList.remove('open');
+}
+
+function promptAdvance(lotId, toStage) {
+  const isHarvest = toStage === 'harvested';
+  const body = `
+    <div>Move <strong style="font-family:'SF Mono',Menlo,monospace">${escapeHtml(lotId)}</strong>
+         to <strong>${toStage}</strong>?</div>
+    ${isHarvest ? `
+      <div class="dp-row">
+        <div class="dp-field">
+          <label>Wet weight (g) <span style="color:var(--muted)">— optional</span></label>
+          <input type="number" id="dp-wet" min="0" step="1" placeholder="e.g. 420">
+        </div>
+        <div class="dp-field">
+          <label>Dry weight (g) <span style="color:var(--muted)">— optional</span></label>
+          <input type="number" id="dp-dry" min="0" step="1" placeholder="e.g. 38">
+        </div>
+      </div>` : ''}
+    <div class="dp-field">
+      <label>Note <span style="color:var(--muted)">— optional</span></label>
+      <input type="text" id="dp-note" placeholder="anything worth remembering">
+    </div>`;
+  const footer = `
+    <button onclick="closeDashPrompt()">Cancel</button>
+    <button class="primary" onclick="confirmAdvance('${lotId}','${toStage}')">Move</button>`;
+  openDashPrompt(`Advance to ${toStage}`, body, footer);
+  setTimeout(() => {
+    const f = $(isHarvest ? 'dp-wet' : 'dp-note');
+    if (f) f.focus();
+  }, 50);
+}
+
+async function confirmAdvance(lotId, toStage) {
+  const opts = {};
+  const note = $('dp-note');
+  if (note && note.value.trim()) opts.note = note.value.trim();
+  const wet = $('dp-wet'), dry = $('dp-dry');
+  if (wet && wet.value !== '') opts.wetWeight = +wet.value;
+  if (dry && dry.value !== '') opts.dryWeight = +dry.value;
+  await db.lots.advance(lotId, toStage, opts);
+  closeDashPrompt();
+  renderDashboard();
+}
+
+function promptDiscard(lotId) {
+  const body = `
+    <div>Mark <strong style="font-family:'SF Mono',Menlo,monospace">${escapeHtml(lotId)}</strong> as discarded.
+      This is a real-world event — the bag is out. It stays in history.</div>
+    <div class="dp-field">
+      <label>Reason</label>
+      <select id="dp-reason">
+        <option value="contaminated">Contaminated</option>
+        <option value="destroyed" selected>Destroyed / thrown out</option>
+        <option value="gifted">Gifted</option>
+        <option value="archived">Archived (no further use)</option>
+      </select>
+    </div>
+    <div class="dp-field">
+      <label>Note <span style="color:var(--muted)">— optional</span></label>
+      <input type="text" id="dp-note" placeholder="trich / overrun / etc.">
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px">
+      To fix a typo on this lot's data instead, use <strong>Edit</strong>.
+    </div>`;
+  const footer = `
+    <button onclick="closeDashPrompt()">Cancel</button>
+    <button class="danger" onclick="confirmDiscard('${lotId}')">Toss</button>`;
+  openDashPrompt('Discard lot', body, footer);
+  setTimeout(() => { const f = $('dp-reason'); if (f) f.focus(); }, 50);
+}
+
+async function confirmDiscard(lotId) {
+  const reason = $('dp-reason').value;
+  const note = ($('dp-note').value || '').trim();
+  await db.lots.discard(lotId, { reason, note });
+  closeDashPrompt();
+  renderDashboard();
+}
+
+async function restoreLot(lotId) {
+  await db.lots.restore(lotId);
+  renderDashboard();
+}
+
+async function promptEdit(lotId) {
+  const lot = await db.lots.get(lotId);
+  if (!lot) return;
+  const body = `
+    <div style="font-size:11px;color:var(--muted)">
+      Correct a typo or wrong input. Lifecycle history is preserved.
+    </div>
+    <div class="dp-field">
+      <label>Lot ID</label>
+      <input type="text" id="dp-edit-lotid" value="${escapeHtml(lot.lotId)}" disabled
+             style="opacity:.5">
+    </div>
+    <div class="dp-row">
+      <div class="dp-field">
+        <label>Genetic code</label>
+        <input type="text" id="dp-edit-code" value="${escapeHtml(lot.geneticCode || '')}">
+      </div>
+      <div class="dp-field">
+        <label>Cultivar</label>
+        <input type="text" id="dp-edit-cultivar" value="${escapeHtml(lot.cultivar || '')}">
+      </div>
+    </div>
+    <div class="dp-field">
+      <label>Grain type / sub</label>
+      <input type="text" id="dp-edit-sub" value="${escapeHtml(lot.sub || '')}">
+    </div>
+    <div class="dp-field">
+      <label>Notes</label>
+      <input type="text" id="dp-edit-notes" value="${escapeHtml(lot.notes || '')}">
+    </div>`;
+  const footer = `
+    <button onclick="closeDashPrompt()">Cancel</button>
+    <button class="primary" onclick="confirmEdit('${lotId}')">Save</button>`;
+  openDashPrompt('Edit lot data', body, footer);
+}
+
+async function confirmEdit(lotId) {
+  await db.lots.update(lotId, {
+    geneticCode: $('dp-edit-code').value.trim().toUpperCase(),
+    cultivar:    $('dp-edit-cultivar').value.trim(),
+    sub:         $('dp-edit-sub').value.trim(),
+    notes:       $('dp-edit-notes').value.trim(),
+  });
+  closeDashPrompt();
+  renderDashboard();
+}
+
+// ─── SEED DEMO DATA ───────────────────────────────────────────────────────────
+// Inserts ~12 grain-spawn lots distributed across stages with realistic
+// timestamps. Uses existing genetics codes if available, falls back to a
+// short demo set. Idempotent — lot IDs collide with the existing counter
+// space, so re-running picks unique new IDs each call.
+
+async function seedDemoLots() {
+  if (!confirm('Insert ~12 demo grain-spawn lots across grain/fruiting/harvested stages?')) return;
+
+  // Pick up to 4 real genetics for variety; fall back to demo set.
+  let codes = (await db.genetics.list()).map(g => ({
+    code: g.code, cultivar: g.cultivar, genus: g.genus, species: g.species,
+  })).filter(g => g.code);
+  if (codes.length === 0) {
+    codes = [
+      { code: 'SL176', cultivar: 'Enigma',       genus: 'Psilocybe', species: 'cubensis' },
+      { code: 'SL192', cultivar: 'Golden Teacher', genus: 'Psilocybe', species: 'cubensis' },
+      { code: 'SL204', cultivar: 'Lion’s Mane', genus: 'Hericium',  species: 'erinaceus' },
+      { code: 'SL211', cultivar: 'Blue Oyster',  genus: 'Pleurotus', species: 'ostreatus' },
+    ];
+    // Persist the demo codes so the rest of the app sees them.
+    for (const c of codes) {
+      await db.genetics.create({ ...c, cat: 'actives', ingestData: {} });
+    }
+  }
+  codes = codes.slice(0, 4);
+
+  const grainTypes = ['RYE', 'OATS', 'WBS', 'MILLET'];
+  const pad2 = n => String(n).padStart(2, '0');
+  const daysAgo = d => new Date(Date.now() - d * 86400000);
+  const isoAgo = d => daysAgo(d).toISOString();
+  const yymmdd = d => {
+    const dt = daysAgo(d);
+    return String(dt.getFullYear()).slice(2) + pad2(dt.getMonth() + 1) + pad2(dt.getDate());
+  };
+
+  // Spec: [stage, ageDays, optional weights]. Lot creation date = ageDays.
+  // We backfill stageHistory so "days in stage" looks alive.
+  const recipes = [
+    { stage: 'grain',     ageDays: 2 },
+    { stage: 'grain',     ageDays: 4 },
+    { stage: 'grain',     ageDays: 6 },
+    { stage: 'grain',     ageDays: 8 },
+    { stage: 'fruiting',  ageDays: 14, fruitAt: 3 },
+    { stage: 'fruiting',  ageDays: 18, fruitAt: 5 },
+    { stage: 'fruiting',  ageDays: 12, fruitAt: 2 },
+    { stage: 'harvested', ageDays: 28, fruitAt: 12, harvestAt: 2, wet: 412, dry: 38 },
+    { stage: 'harvested', ageDays: 32, fruitAt: 14, harvestAt: 4, wet: 380, dry: 35 },
+    { stage: 'harvested', ageDays: 40, fruitAt: 20, harvestAt: 8, wet: 510, dry: 47 },
+    // One contaminated lot to demo the tossed flow
+    { stage: 'fruiting',  ageDays: 9,  fruitAt: 2, tossed: 'contaminated', tossNote: 'trich on the surface' },
+    // One destroyed grain bag
+    { stage: 'grain',     ageDays: 5,  tossed: 'destroyed', tossNote: 'bag punctured during transfer' },
+  ];
+
+  // Pull existing IDs to disambiguate sequence numbers.
+  const existing = await db.lots.list({ includeInactive: true });
+  const existingIds = new Set(existing.map(r => r.lotId));
+
+  const records = [];
+  for (let i = 0; i < recipes.length; i++) {
+    const r = recipes[i];
+    const c = codes[i % codes.length];
+    const gt = grainTypes[i % grainTypes.length];
+    const createdAt = isoAgo(r.ageDays);
+    const datePart = yymmdd(r.ageDays);
+    // Find first non-colliding sequence number.
+    let seq = 1;
+    let lotId;
+    do {
+      lotId = `GL-${c.code}-${datePart}-${pad2(seq)}`;
+      seq++;
+    } while (existingIds.has(lotId));
+    existingIds.add(lotId);
+
+    const stageHistory = [{ stage: 'grain', at: createdAt }];
+    if (r.fruitAt   != null) stageHistory.push({ stage: 'fruiting',  at: isoAgo(r.fruitAt) });
+    if (r.harvestAt != null) {
+      const entry = { stage: 'harvested', at: isoAgo(r.harvestAt) };
+      if (r.wet != null) entry.wetWeight = r.wet;
+      if (r.dry != null) entry.dryWeight = r.dry;
+      stageHistory.push(entry);
+    }
+    const events = [];
+    let status = 'active';
+    if (r.tossed) {
+      status = r.tossed;
+      events.push({ type: 'discard', reason: r.tossed, note: r.tossNote || '', at: isoAgo(Math.max(1, r.ageDays - 3)) });
+    }
+
+    records.push({
+      lotId,
+      workflowId:  'grain-spawn',
+      geneticCode: c.code,
+      cultivar:    c.cultivar || '',
+      genus:       c.genus || '',
+      species:     c.species || '',
+      cat:         'actives',
+      destination: 'Grain Spawn',
+      sub:         gt,
+      date:        datePart,
+      qty:         1,
+      createdAt,
+      status,
+      stage:       r.stage,
+      stageHistory,
+      events,
+      _seed:       true,
+    });
+  }
+
+  await db.lots._bulkSeed(records);
+  renderDashboard();
+  alert(`Seeded ${records.length} demo lots.`);
 }
 
 async function boot() {
