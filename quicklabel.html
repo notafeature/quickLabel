@@ -4022,33 +4022,29 @@ async function confirmEdit(lotId) {
 }
 
 // ─── SEED DEMO DATA ───────────────────────────────────────────────────────────
-// Inserts ~12 grain-spawn lots distributed across stages with realistic
-// timestamps. Uses existing genetics codes if available, falls back to a
-// short demo set. Idempotent — lot IDs collide with the existing counter
-// space, so re-running picks unique new IDs each call.
+// Inserts grain-spawn lots distributed across stages with realistic
+// timestamps. Cycles through every imported genetic so the dashboard
+// reflects the operator's actual strain library.
 
 async function seedDemoLots() {
-  if (!confirm('Insert ~12 demo grain-spawn lots across grain/fruiting/harvested stages?')) return;
-
-  // Pick up to 4 real genetics for variety; fall back to demo set.
   let codes = (await db.genetics.list()).map(g => ({
-    code: g.code, cultivar: g.cultivar, genus: g.genus, species: g.species,
-  })).filter(g => g.code);
+    code: g.code, cultivar: g.cultivar, genus: g.genus, species: g.species, cat: g.cat,
+  })).filter(g => g.code && !g.archived);
   if (codes.length === 0) {
     codes = [
-      { code: 'SL176', cultivar: 'Enigma',       genus: 'Psilocybe', species: 'cubensis' },
-      { code: 'SL192', cultivar: 'Golden Teacher', genus: 'Psilocybe', species: 'cubensis' },
-      { code: 'SL204', cultivar: 'Lion’s Mane', genus: 'Hericium',  species: 'erinaceus' },
-      { code: 'SL211', cultivar: 'Blue Oyster',  genus: 'Pleurotus', species: 'ostreatus' },
+      { code: 'SL176', cultivar: 'Enigma',         genus: 'Psilocybe', species: 'cubensis', cat: 'actives' },
+      { code: 'SL192', cultivar: 'Golden Teacher', genus: 'Psilocybe', species: 'cubensis', cat: 'actives' },
+      { code: 'SL204', cultivar: 'Lion’s Mane',    genus: 'Hericium',  species: 'erinaceus', cat: 'gourmet' },
+      { code: 'SL211', cultivar: 'Blue Oyster',    genus: 'Pleurotus', species: 'ostreatus', cat: 'gourmet' },
     ];
-    // Persist the demo codes so the rest of the app sees them.
     for (const c of codes) {
-      await db.genetics.create({ ...c, cat: 'actives', ingestData: {} });
+      await db.genetics.create({ ...c, ingestData: {} });
     }
   }
-  codes = codes.slice(0, 4);
 
-  const grainTypes = ['RYE', 'OATS', 'WBS', 'MILLET'];
+  if (!confirm(`Seed grain-spawn lots across all ${codes.length} of your genetics?`)) return;
+
+  const grainTypes = ['RYE', 'OATS', 'WBS', 'MILLET', 'SORGHUM', 'RYE'];
   const pad2 = n => String(n).padStart(2, '0');
   const daysAgo = d => new Date(Date.now() - d * 86400000);
   const isoAgo = d => daysAgo(d).toISOString();
@@ -4057,26 +4053,40 @@ async function seedDemoLots() {
     return String(dt.getFullYear()).slice(2) + pad2(dt.getMonth() + 1) + pad2(dt.getDate());
   };
 
-  // Spec: [stage, ageDays, optional weights]. Lot creation date = ageDays.
-  // We backfill stageHistory so "days in stage" looks alive.
+  // Recipe templates, designed to look like a real working lab. We cycle
+  // each through the available genetics, weighted toward grain/fruiting to
+  // reflect what's actively in motion. Tweak counts to taste.
   const recipes = [
-    { stage: 'grain',     ageDays: 2 },
-    { stage: 'grain',     ageDays: 4 },
-    { stage: 'grain',     ageDays: 6 },
-    { stage: 'grain',     ageDays: 8 },
-    { stage: 'fruiting',  ageDays: 14, fruitAt: 3 },
-    { stage: 'fruiting',  ageDays: 18, fruitAt: 5 },
-    { stage: 'fruiting',  ageDays: 12, fruitAt: 2 },
-    { stage: 'harvested', ageDays: 28, fruitAt: 12, harvestAt: 2, wet: 412, dry: 38 },
-    { stage: 'harvested', ageDays: 32, fruitAt: 14, harvestAt: 4, wet: 380, dry: 35 },
-    { stage: 'harvested', ageDays: 40, fruitAt: 20, harvestAt: 8, wet: 510, dry: 47 },
-    // One contaminated lot to demo the tossed flow
-    { stage: 'fruiting',  ageDays: 9,  fruitAt: 2, tossed: 'contaminated', tossNote: 'trich on the surface' },
-    // One destroyed grain bag
-    { stage: 'grain',     ageDays: 5,  tossed: 'destroyed', tossNote: 'bag punctured during transfer' },
+    // Grain — colonizing
+    { stage: 'grain', ageDays: 1 },
+    { stage: 'grain', ageDays: 3 },
+    { stage: 'grain', ageDays: 5 },
+    { stage: 'grain', ageDays: 7 },
+    { stage: 'grain', ageDays: 9 },
+    { stage: 'grain', ageDays: 11 },
+    { stage: 'grain', ageDays: 14 },
+    { stage: 'grain', ageDays: 16 },
+    // Fruiting — spawn-to-bulk done, pinning / fruiting
+    { stage: 'fruiting', ageDays: 19, fruitAt: 2 },
+    { stage: 'fruiting', ageDays: 22, fruitAt: 4 },
+    { stage: 'fruiting', ageDays: 25, fruitAt: 6 },
+    { stage: 'fruiting', ageDays: 27, fruitAt: 8 },
+    { stage: 'fruiting', ageDays: 30, fruitAt: 10 },
+    { stage: 'fruiting', ageDays: 32, fruitAt: 12 },
+    { stage: 'fruiting', ageDays: 17, fruitAt: 3 },
+    // Harvested — wet/dry recorded
+    { stage: 'harvested', ageDays: 34, fruitAt: 14, harvestAt: 2,  wet: 412, dry: 38 },
+    { stage: 'harvested', ageDays: 37, fruitAt: 16, harvestAt: 4,  wet: 380, dry: 35 },
+    { stage: 'harvested', ageDays: 40, fruitAt: 18, harvestAt: 6,  wet: 510, dry: 47 },
+    { stage: 'harvested', ageDays: 43, fruitAt: 20, harvestAt: 8,  wet: 295, dry: 27 },
+    { stage: 'harvested', ageDays: 47, fruitAt: 23, harvestAt: 11, wet: 460, dry: 42 },
+    { stage: 'harvested', ageDays: 52, fruitAt: 28, harvestAt: 14, wet: 605, dry: 56 },
+    { stage: 'harvested', ageDays: 56, fruitAt: 32, harvestAt: 17, wet: 350, dry: 33 },
+    // Two reality-checks
+    { stage: 'fruiting',  ageDays: 13, fruitAt: 4, tossed: 'contaminated', tossNote: 'trich on the casing surface' },
+    { stage: 'grain',     ageDays: 6,  tossed: 'destroyed',                tossNote: 'bag punctured during transfer' },
   ];
 
-  // Pull existing IDs to disambiguate sequence numbers.
   const existing = await db.lots.list({ includeInactive: true });
   const existingIds = new Set(existing.map(r => r.lotId));
 
@@ -4087,7 +4097,6 @@ async function seedDemoLots() {
     const gt = grainTypes[i % grainTypes.length];
     const createdAt = isoAgo(r.ageDays);
     const datePart = yymmdd(r.ageDays);
-    // Find first non-colliding sequence number.
     let seq = 1;
     let lotId;
     do {
@@ -4118,7 +4127,7 @@ async function seedDemoLots() {
       cultivar:    c.cultivar || '',
       genus:       c.genus || '',
       species:     c.species || '',
-      cat:         'actives',
+      cat:         c.cat || 'gourmet',
       destination: 'Grain Spawn',
       sub:         gt,
       date:        datePart,
@@ -4134,7 +4143,7 @@ async function seedDemoLots() {
 
   await db.lots._bulkSeed(records);
   renderDashboard();
-  alert(`Seeded ${records.length} demo lots.`);
+  alert(`Seeded ${records.length} lots across ${codes.length} genetics.`);
 }
 
 async function boot() {
