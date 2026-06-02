@@ -226,15 +226,15 @@ const toYYMMDD = iso => { if (!iso) return ''; const [y,m,d] = iso.split('-'); r
 
 /* ── the seven bags (genus/species per the printed labels: P. cubensis, ACTIVE) ── */
 const ROWS = [
-  { cultivar:'Green Cap Ochraceocentrata',     code:'SL199', g2g:2, units:1, parent:'GL-SL199-260521-01' },
-  { cultivar:'Manna from Heaven Ochraceocentrata', code:'', g2g:2, units:1, parent:'' },
-  { cultivar:'Iceberg',                        code:'SL194', g2g:0, units:1, parent:'GL-SL194-260518-02' },
-  { cultivar:'Rusty Whyte',                    code:'SL190', g2g:0, units:1, parent:'GL-SL190-260518-01' },
-  { cultivar:'Enigma',                         code:'',      g2g:0, units:1, parent:'' },
-  { cultivar:'Cabo Amarillo',                  code:'',      g2g:0, units:1, parent:'' },
-  { cultivar:'Machine Elf',                    code:'',      g2g:0, units:1, parent:'' },
+  { cultivar:'Green Cap Ochraceocentrata', species:'cubensis',         code:'SL199', g2g:2, units:1, parent:'GL-SL199-260521-01' },
+  { cultivar:'MFH Ochra',                  species:'ochraceocentrata', code:'SL188', g2g:2, units:1, parent:'SL188-260509-01' },
+  { cultivar:'Iceberg',                    species:'cubensis',         code:'SL194', g2g:0, units:1, parent:'GL-SL194-260518-02' },
+  { cultivar:'Rusty Whyte',                species:'cubensis',         code:'SL190', g2g:0, units:1, parent:'GL-SL190-260518-01' },
+  { cultivar:'Enigma',                     species:'cubensis',         code:'SL192', g2g:0, units:1, parent:'SL192-260509-02' },
+  { cultivar:'Cabo Amarillo',              species:'cubensis',         code:'SL193', g2g:0, units:1, parent:'SL193-260510-01' },
+  { cultivar:'Machine Elf',                species:'cubensis',         code:'SL187', g2g:0, units:1, parent:'SL187-260510-01' },
 ];
-const GENUS = 'Psilocybe', SPECIES = 'cubensis', CAT = 'actives';
+const GENUS = 'Psilocybe', CAT = 'actives';
 
 /* ── build the config table ── */
 function buildPanel() {
@@ -275,7 +275,7 @@ function buildLabels() {
     for (let g = 1; g <= r.g2g; g++) {
       out.push({
         kind:`${r.cultivar} — G2G transfer ${g}/${r.g2g}`, need,
-        d: { cat:CAT, genus:GENUS, species:SPECIES, cultivar:r.cultivar,
+        d: { cat:CAT, genus:GENUS, species:r.species, cultivar:r.cultivar,
              lotId:`GL-${C}-${ymd}-${pad2(g)}`, destination:'Grain Spawn',
              source:r.parent || '', sub:'', notes:'G2G transfer', date }
       });
@@ -284,7 +284,7 @@ function buildLabels() {
     for (let u = 1; u <= r.units; u++) {
       out.push({
         kind:`${r.cultivar} — batch ${unit.toLowerCase()} ${u}/${r.units}`, need,
-        d: { cat:CAT, genus:GENUS, species:SPECIES, cultivar:r.cultivar,
+        d: { cat:CAT, genus:GENUS, species:r.species, cultivar:r.cultivar,
              lotId:`BL-${C}-${ymd}-01`, destination:`${unit} ${pad2(u)}/${pad2(r.units)}`,
              source:r.parent || '', sub:'', notes:'', date }
       });
