@@ -61,19 +61,14 @@
 
   <div class="globals">
     <label class="fld"><span>Event date</span><input type="date" id="g-date" value="2026-06-02"></label>
-    <label class="fld"><span>Unit type</span>
-      <select id="g-unit">
-        <option>Bag</option><option>Bin</option><option>Monotub</option>
-        <option>Tub</option><option>Jar</option><option>Tray</option><option>Block</option>
-      </select>
-    </label>
     <button class="btn" onclick="window.print()">Print all</button>
     <span class="count" id="count"></span>
   </div>
+  <p style="margin-top:0">Container type &amp; size are set <b>per line</b> below — mix bags and bins (any size) however you need.</p>
 
   <table>
     <thead><tr>
-      <th>Cultivar</th><th>Genetic code</th><th>G2G transfers</th><th>Batch units</th><th>Parent / source bag</th>
+      <th>Cultivar</th><th>Genetic code</th><th>G2G transfers</th><th>Batch units</th><th>Container</th><th>Size</th><th>Parent / source bag</th>
     </tr></thead>
     <tbody id="rows"></tbody>
   </table>
@@ -226,15 +221,16 @@ const toYYMMDD = iso => { if (!iso) return ''; const [y,m,d] = iso.split('-'); r
 
 /* ── the seven bags (genus/species per the printed labels: P. cubensis, ACTIVE) ── */
 const ROWS = [
-  { cultivar:'Green Cap Ochraceocentrata', species:'cubensis',         code:'SL199', g2g:2, units:1, parent:'GL-SL199-260521-01' },
-  { cultivar:'MFH Ochra',                  species:'ochraceocentrata', code:'SL188', g2g:2, units:1, parent:'SL188-260509-01' },
-  { cultivar:'Iceberg',                    species:'cubensis',         code:'SL194', g2g:0, units:1, parent:'GL-SL194-260518-02' },
-  { cultivar:'Rusty Whyte',                species:'cubensis',         code:'SL190', g2g:0, units:1, parent:'GL-SL190-260518-01' },
-  { cultivar:'Enigma',                     species:'cubensis',         code:'SL192', g2g:0, units:1, parent:'SL192-260509-02' },
-  { cultivar:'Cabo Amarillo',              species:'cubensis',         code:'SL193', g2g:0, units:1, parent:'SL193-260510-01' },
-  { cultivar:'Machine Elf',                species:'cubensis',         code:'SL187', g2g:0, units:1, parent:'SL187-260510-01' },
+  { cultivar:'Green Cap Ochraceocentrata', species:'cubensis',         code:'SL199', g2g:2, units:1, unit:'Bag', size:'', parent:'GL-SL199-260521-01' },
+  { cultivar:'MFH Ochra',                  species:'ochraceocentrata', code:'SL188', g2g:2, units:1, unit:'Bag', size:'', parent:'SL188-260509-01' },
+  { cultivar:'Iceberg',                    species:'cubensis',         code:'SL194', g2g:0, units:1, unit:'Bag', size:'', parent:'GL-SL194-260518-02' },
+  { cultivar:'Rusty Whyte',                species:'cubensis',         code:'SL190', g2g:0, units:1, unit:'Bag', size:'', parent:'GL-SL190-260518-01' },
+  { cultivar:'Enigma',                     species:'cubensis',         code:'SL192', g2g:0, units:1, unit:'Bag', size:'', parent:'SL192-260509-02' },
+  { cultivar:'Cabo Amarillo',              species:'cubensis',         code:'SL193', g2g:0, units:1, unit:'Bag', size:'', parent:'SL193-260510-01' },
+  { cultivar:'Machine Elf',                species:'cubensis',         code:'SL187', g2g:0, units:1, unit:'Bag', size:'', parent:'SL187-260510-01' },
 ];
 const GENUS = 'Psilocybe', CAT = 'actives';
+const UNIT_TYPES = ['Bag','Bin','Monotub','Tub','Jar','Tray','Block'];
 
 /* ── build the config table ── */
 function buildPanel() {
@@ -245,11 +241,14 @@ function buildPanel() {
       <td><input class="code" data-i="${i}" data-f="code" value="${svgEsc(r.code)}" placeholder="SL___"></td>
       <td><input class="num"  data-i="${i}" data-f="g2g"   type="number" min="0" max="20" value="${r.g2g}"></td>
       <td><input class="num"  data-i="${i}" data-f="units" type="number" min="1" max="99" value="${r.units}"></td>
+      <td><select data-i="${i}" data-f="unit">${
+        UNIT_TYPES.map(t => `<option${t === (r.unit||'Bag') ? ' selected' : ''}>${t}</option>`).join('')
+      }</select></td>
+      <td><input style="width:80px" data-i="${i}" data-f="size" value="${svgEsc(r.size||'')}" placeholder="e.g. 6qt"></td>
       <td><input style="width:170px" data-i="${i}" data-f="parent" value="${svgEsc(r.parent)}" placeholder="optional"></td>
     </tr>`).join('');
-  tb.querySelectorAll('input').forEach(inp => inp.addEventListener('input', onEdit));
+  tb.querySelectorAll('input, select').forEach(el => el.addEventListener('input', onEdit));
   document.getElementById('g-date').addEventListener('input', render);
-  document.getElementById('g-unit').addEventListener('input', render);
 }
 function onEdit(e) {
   const i = +e.target.dataset.i, f = e.target.dataset.f;
@@ -264,13 +263,16 @@ function onEdit(e) {
 /* ── expand rows → individual labels → render ── */
 function buildLabels() {
   const date = document.getElementById('g-date').value;
-  const unit = document.getElementById('g-unit').value || 'Bag';
   const ymd  = toYYMMDD(date);
   const out = [];
   for (const r of ROWS) {
     const code = String(r.code).trim().toUpperCase();
     const need = !code;
     const C = code || 'SL___';
+    const unit = r.unit || 'Bag';
+    const size = (r.size || '').trim();
+    // container marker, e.g. "Bin 6qt 01/01" or "Bag 01/01"
+    const cont = size ? `${unit} ${size}` : unit;
     // grain-to-grain transfers → new GRAIN lots
     for (let g = 1; g <= r.g2g; g++) {
       out.push({
@@ -280,12 +282,12 @@ function buildLabels() {
              source:r.parent || '', sub:'', notes:'G2G transfer', date }
       });
     }
-    // batch → single (or N) unit(s)
+    // batch → single (or N) unit(s), each tagged with this line's container
     for (let u = 1; u <= r.units; u++) {
       out.push({
-        kind:`${r.cultivar} — batch ${unit.toLowerCase()} ${u}/${r.units}`, need,
+        kind:`${r.cultivar} — batch ${cont.toLowerCase()} ${u}/${r.units}`, need,
         d: { cat:CAT, genus:GENUS, species:r.species, cultivar:r.cultivar,
-             lotId:`BL-${C}-${ymd}-01`, destination:`${unit} ${pad2(u)}/${pad2(r.units)}`,
+             lotId:`BL-${C}-${ymd}-01`, destination:`${cont} ${pad2(u)}/${pad2(r.units)}`,
              source:r.parent || '', sub:'', notes:'', date }
       });
     }
@@ -296,6 +298,7 @@ function render() {
   const labels = buildLabels();
   const sheet = document.getElementById('sheet');
   sheet.innerHTML = '';
+  const svgs = [];
   for (const lab of labels) {
     const card = document.createElement('div');
     card.className = 'label-card' + (lab.need ? ' flag' : '');
@@ -305,11 +308,14 @@ function render() {
     const host = document.createElement('div');
     host.className = 'label-host';
     host.innerHTML = TPL.render(lab.d);
-    const svg = host.firstElementChild;
-    if (svg) { svg.setAttribute('width','2.25in'); svg.setAttribute('height','1.25in'); TPL.fit(svg); }
     card.appendChild(cap); card.appendChild(host);
     sheet.appendChild(card);
+    const svg = host.firstElementChild;
+    if (svg) { svg.setAttribute('width','2.25in'); svg.setAttribute('height','1.25in'); svgs.push(svg); }
   }
+  // Fit ONLY after the SVGs are in the live DOM — getComputedTextLength()
+  // returns 0 for detached nodes, which is why long titles weren't shrinking.
+  for (const svg of svgs) TPL.fit(svg);
   const need = labels.filter(l => l.need).length;
   document.getElementById('count').textContent =
     `${labels.length} labels` + (need ? ` · ${need} need a genetic code` : ' · all codes set ✓');
