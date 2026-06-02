@@ -222,6 +222,22 @@ textarea { resize: vertical; min-height: 56px; }
 .reset-btn  { padding: 10px 14px; font-size: 18px; line-height: 1; }
 .reset-lot-btn { padding: 6px 12px; font-size: 11px; }
 
+.batch-sources { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.batch-sources:empty { margin-top: 0; }
+.batch-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--chip-bg, #eef2f7); color: var(--text);
+  border: 1px solid var(--border, #d8d8d8); border-radius: 6px;
+  padding: 3px 6px 3px 9px; font-size: 11px;
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+}
+.batch-chip button {
+  border: 0; background: transparent; color: var(--muted);
+  cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px;
+}
+.batch-chip button:hover { color: var(--text); }
+.batch-sources-empty { color: var(--muted); font-size: 11px; margin-top: 8px; font-style: italic; }
+
 #preview-panel {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -571,7 +587,7 @@ textarea { resize: vertical; min-height: 56px; }
     <div class="wf-opt disabled" title="Coming soon">Create Storage Media <span class="wf-soon">soon</span></div>
     <div class="wf-group-label">Production</div>
     <div class="wf-opt" id="wf-opt-grain-spawn"    onclick="switchWorkflow('grain-spawn')"    data-testid="wf-grain">Make Grain Spawn</div>
-    <div class="wf-opt disabled" title="Coming soon">Generate a Batch <span class="wf-soon">soon</span></div>
+    <div class="wf-opt" id="wf-opt-generate-batch" onclick="switchWorkflow('generate-batch')" data-testid="wf-batch">Generate a Batch</div>
   </div>
 
   <main>
@@ -580,7 +596,7 @@ textarea { resize: vertical; min-height: 56px; }
       <!-- ══ STANDARD CARDS (agar / lc / grain — hidden for ingest) ══ -->
 
       <!-- Genetic -->
-      <div class="card" data-wf="agar-plate liquid-culture grain-spawn">
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch">
         <div class="card-label">Genetic</div>
         <div class="field">
           <span class="fl">Genetic Code</span>
@@ -645,7 +661,7 @@ textarea { resize: vertical; min-height: 56px; }
       </div>
 
       <!-- Lot -->
-      <div class="card" data-wf="agar-plate liquid-culture grain-spawn">
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch">
         <div class="card-label">Lot</div>
         <div class="field">
           <span class="fl">Date</span>
@@ -657,7 +673,7 @@ textarea { resize: vertical; min-height: 56px; }
         </div>
         <div class="row" style="align-items:flex-end;gap:8px">
           <div class="field" style="flex:0 0 auto">
-            <span class="fl">Quantity</span>
+            <span class="fl" id="quantity-label">Quantity</span>
             <input type="number" id="quantity" min="1" max="99" value="1"
                    oninput="onQuantityChange()" onchange="onQuantityChange()">
           </div>
@@ -703,8 +719,51 @@ textarea { resize: vertical; min-height: 56px; }
         </div>
       </div>
 
+      <!-- Details: Generate a Batch -->
+      <div class="card" data-detail="batch">
+        <div class="card-label">Batch</div>
+        <div class="row">
+          <div class="field" style="flex:0 0 auto">
+            <span class="fl">Unit Type</span>
+            <select id="batch-unit-type" onchange="updatePreview()">
+              <option value="Bag">Bag</option>
+              <option value="Bin" selected>Bin</option>
+              <option value="Monotub">Monotub</option>
+              <option value="Tub">Tub</option>
+              <option value="Jar">Jar</option>
+              <option value="Tray">Tray</option>
+              <option value="Block">Block</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="fl">Substrate / Recipe <span style="color:var(--muted);font-weight:400">— optional, shown on label</span></span>
+            <input type="text" id="batch-substrate" placeholder="e.g. CVG, Masters Mix"
+                   oninput="updatePreview()">
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="fl">Source Grain Lots <span style="color:var(--muted);font-weight:400">— optional, override-friendly</span></span>
+          <div class="row" style="gap:8px">
+            <select id="batch-grain-pick" style="flex:1">
+              <option value="">— saved grain lots —</option>
+            </select>
+            <button type="button" class="reset-lot-btn" onclick="addBatchSourceFromPick()" title="Add selected grain lot">Add</button>
+          </div>
+          <div class="row" style="gap:8px;margin-top:6px">
+            <input type="text" id="batch-grain-manual" placeholder="or type a lot ID (override)"
+                   style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addBatchSourceFromManual();}">
+            <button type="button" class="reset-lot-btn" onclick="addBatchSourceFromManual()" title="Add typed lot ID">Add</button>
+          </div>
+          <div id="batch-sources" class="batch-sources"></div>
+          <div id="batch-sources-empty" class="batch-sources-empty">
+            No grain lots added — the batch will still generate and print. Add lots to record lineage.
+          </div>
+        </div>
+      </div>
+
       <!-- Notes (standard workflows) -->
-      <div class="card" data-wf="agar-plate liquid-culture grain-spawn">
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch">
         <div class="field">
           <span class="fl">Notes <span style="color:var(--muted);font-weight:400">— optional, shown on label</span></span>
           <input type="text" id="notes" placeholder="~40 chars" maxlength="60"
@@ -713,7 +772,7 @@ textarea { resize: vertical; min-height: 56px; }
       </div>
 
       <!-- Print (standard workflows) -->
-      <div class="card" data-wf="agar-plate liquid-culture grain-spawn">
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch">
         <div class="row print-row-end">
           <button class="primary print-btn" id="print-btn" onclick="printLabel()"
                   data-testid="print-btn">Print</button>
@@ -1401,11 +1460,19 @@ const WORKFLOWS = {
   'grain-spawn': {
     label: 'Make Grain Spawn', lotType: 'Grain Lot',
     lotPrefix: 'GL', destination: 'Grain Spawn', mediaLabel: 'Media', detailSection: 'grain'
+  },
+  'generate-batch': {
+    label: 'Generate a Batch', lotType: 'Batch',
+    lotPrefix: 'BL', destination: 'Batch', mediaLabel: 'Substrate', detailSection: 'batch'
   }
 };
 
 let currentWorkflowId = 'grain-spawn';
 function currentWorkflow() { return WORKFLOWS[currentWorkflowId]; }
+
+// Source grain lots feeding the current batch (Generate a Batch workflow).
+// Each entry: { lotId, manual }. Optional — a batch prints fine with none.
+let batchSources = [];
 
 // ─── PRINTERS & LABEL TEMPLATES ───────────────────────────────────────────────
 
@@ -2673,6 +2740,15 @@ function updateFormForWorkflow(id) {
     $('lot-id-label').textContent = `${wf.lotType} ID (next print)`;
   }
 
+  // Quantity means "physical units" for a batch; "copies" otherwise.
+  const qLabel = $('quantity-label');
+  if (qLabel) qLabel.textContent = id === 'generate-batch' ? 'How many units' : 'Quantity';
+
+  if (id === 'generate-batch') {
+    renderBatchSources();
+    refreshBatchGrainPicker();
+  }
+
   // Update active marker in dropdown
   document.querySelectorAll('.wf-opt[id^="wf-opt-"]').forEach(el => {
     el.classList.toggle('active', el.id === `wf-opt-${id}`);
@@ -3175,6 +3251,21 @@ function rebuildLot() {
   const date = $('date').value;
   const qty  = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
   if (!code || !date) { $('lot-display').innerHTML = '—'; updatePreview(); return; }
+
+  // Batch: one batch ID, qty = number of physical units (not a lot range).
+  if (currentWorkflowId === 'generate-batch') {
+    const prefix  = effectiveLotPrefix();
+    const seq     = nextSeq(code, date);
+    const batchId = prefix
+      ? `${prefix}-${code}-${toYYMMDD(date)}-${pad2(seq)}`
+      : `${code}-${toYYMMDD(date)}-${pad2(seq)}`;
+    $('lot-display').innerHTML = qty > 1
+      ? `${batchId}<span class="range">× ${qty} ${batchUnitType().toLowerCase()}s</span>`
+      : `${batchId}<span class="range">× 1 ${batchUnitType().toLowerCase()}</span>`;
+    updatePreview();
+    return;
+  }
+
   const prefix = effectiveLotPrefix();
   const start  = nextSeq(code, date);
   const end    = start + qty - 1;
@@ -3194,6 +3285,12 @@ function resetForm() {
   $('date').value = todayISO();
   $('notation').textContent = '—';
   $('grain-show-desc').checked = false;
+  // batch fields
+  batchSources = [];
+  const batchSub = $('batch-substrate'); if (batchSub) batchSub.value = '';
+  const batchManual = $('batch-grain-manual'); if (batchManual) batchManual.value = '';
+  renderBatchSources();
+  if (currentWorkflowId === 'generate-batch') refreshBatchGrainPicker();
   const af = $('source-autofill');
   if (af) af.style.display = 'none';
   // ingest fields
@@ -3255,13 +3352,207 @@ function buildLabelData(seqOverride) {
 
 function updatePreview() {
   saveFormState();
-  const d = currentWorkflowId === 'ingest' ? buildIngestLabelData() : buildLabelData();
+  let d;
+  if (currentWorkflowId === 'ingest') {
+    d = buildIngestLabelData();
+  } else if (currentWorkflowId === 'generate-batch') {
+    const units = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
+    d = buildBatchLabelData(1, units);
+  } else {
+    d = buildLabelData();
+  }
   renderLabel($('label-preview'), d);
+}
+
+// ─── GENERATE A BATCH ─────────────────────────────────────────────────────────
+
+// Singular unit noun for labels, e.g. "Bin 03/12".
+function batchUnitType() {
+  const sel = $('batch-unit-type');
+  return (sel && sel.value) ? sel.value : 'Unit';
+}
+
+// Repopulate the "saved grain lots" picker from the lot database (GL- records).
+async function refreshBatchGrainPicker() {
+  const sel = $('batch-grain-pick');
+  if (!sel) return;
+  let rows = [];
+  try { rows = (await db.lots.byPrefix('GL')) || []; } catch (_) { rows = []; }
+  const added = new Set(batchSources.map(s => s.lotId));
+  const opts = ['<option value="">— saved grain lots —</option>'];
+  for (const r of rows) {
+    if (!r || !r.lotId || added.has(r.lotId)) continue;
+    const label = r.cultivar ? `${r.lotId} — ${r.cultivar}` : r.lotId;
+    opts.push(`<option value="${escAttr(r.lotId)}">${escHtml(label)}</option>`);
+  }
+  sel.innerHTML = opts.join('');
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escAttr(s) { return escHtml(s).replace(/"/g,'&quot;'); }
+
+// Pull genetic/taxonomy from a saved grain lot record into the Genetic card
+// when those fields are still blank — convenience, never destructive.
+async function autofillGeneticFromLot(lotId) {
+  let rec = null;
+  try { rec = await db.lots.get(lotId); } catch (_) { rec = null; }
+  if (!rec) return;
+  if (!$('gen-code').value.trim() && rec.geneticCode) $('gen-code').value = rec.geneticCode;
+  if (!$('cultivar').value.trim() && rec.cultivar)    $('cultivar').value = rec.cultivar;
+  if (rec.cat && (rec.cat === 'actives' || rec.cat === 'gourmet')) setCategory(rec.cat);
+  setSelectIfOption('genus', rec.genus);
+  if (rec.genus) { onGenus(); setSelectIfOption('species', rec.species); }
+}
+
+// Set a <select> to a value only if that option exists (avoids blanking it).
+function setSelectIfOption(id, value) {
+  const sel = $(id);
+  if (!sel || !value) return;
+  const cur = sel.value;
+  if (cur) return; // don't overwrite a user's choice
+  for (const o of sel.options) { if (o.value === value) { sel.value = value; return; } }
+}
+
+async function addBatchSource(lotId) {
+  lotId = (lotId || '').trim();
+  if (!lotId) return;
+  if (batchSources.some(s => s.lotId.toUpperCase() === lotId.toUpperCase())) return;
+  batchSources.push({ lotId });
+  await autofillGeneticFromLot(lotId);
+  renderBatchSources();
+  await refreshBatchGrainPicker();
+  rebuildLot();
+}
+
+function addBatchSourceFromPick() {
+  const sel = $('batch-grain-pick');
+  if (sel && sel.value) addBatchSource(sel.value);
+}
+
+function addBatchSourceFromManual() {
+  const inp = $('batch-grain-manual');
+  if (inp && inp.value.trim()) { addBatchSource(inp.value); inp.value = ''; }
+}
+
+function removeBatchSource(lotId) {
+  batchSources = batchSources.filter(s => s.lotId !== lotId);
+  renderBatchSources();
+  refreshBatchGrainPicker();
+  rebuildLot();
+}
+
+function renderBatchSources() {
+  const host = $('batch-sources');
+  const empty = $('batch-sources-empty');
+  if (!host) return;
+  host.innerHTML = batchSources.map(s =>
+    `<span class="batch-chip">${escHtml(s.lotId)}<button type="button" title="Remove"
+       onclick="removeBatchSource('${escAttr(s.lotId)}')">×</button></span>`
+  ).join('');
+  if (empty) empty.style.display = batchSources.length ? 'none' : '';
+}
+
+// Label data for one unit of the batch. The batch ID is constant across all
+// units; only the unit index (Bin 03/12) changes.
+function buildBatchLabelData(unitIndex, unitCount) {
+  const code     = $('gen-code').value.trim().toUpperCase();
+  const date     = $('date').value;
+  const genus    = $('genus').value;
+  const species  = $('species').value;
+  const cultivar = $('cultivar').value.trim();
+  const notes    = $('notes').value.trim();
+  const substrate = ($('batch-substrate') ? $('batch-substrate').value : '').trim();
+
+  let batchId = '';
+  if (code && date) {
+    const prefix = effectiveLotPrefix(); // 'BL' for generate-batch
+    const seq    = nextSeq(code, date);
+    batchId = prefix
+      ? `${prefix}-${code}-${toYYMMDD(date)}-${pad2(seq)}`
+      : `${code}-${toYYMMDD(date)}-${pad2(seq)}`;
+  }
+
+  // Unit marker reuses the label's "destination" line, e.g. "Bin 03/12".
+  const unit = unitCount > 0
+    ? `${batchUnitType()} ${pad2(unitIndex)}/${pad2(unitCount)}`
+    : batchUnitType();
+
+  // Source: first grain lot on the label; note "+N" when there are more.
+  let source = '';
+  if (batchSources.length) {
+    source = batchSources[0].lotId;
+    if (batchSources.length > 1) source += ` +${batchSources.length - 1}`;
+  }
+
+  return {
+    cat, genus, species, cultivar,
+    destination: unit,
+    date, source,
+    sub: substrate, mediaLabel: 'Substrate',
+    notes, notation: '', lotId: batchId
+  };
+}
+
+function printBatch() {
+  const code  = $('gen-code').value.trim().toUpperCase();
+  const date  = $('date').value;
+  const units = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
+
+  // No modal nags — just guide focus to whatever's missing.
+  if (!code) { const el = $('gen-code'); if (el) el.focus(); return; }
+  if (!date) { const el = $('date');     if (el) el.focus(); return; }
+
+  const key     = lotKey(code, date);
+  const batchId = buildBatchLabelData(1, units).lotId;
+
+  const printArea = $('print-area');
+  printArea.innerHTML = '';
+  for (let i = 1; i <= units; i++) {
+    const host = document.createElement('div');
+    host.className = 'label-host';
+    printArea.appendChild(host);
+    renderLabel(host, buildBatchLabelData(i, units), { physical: 'print' });
+  }
+  window.print();
+
+  // One batch consumes exactly one BL- sequence number for the day.
+  if (key) { lotCounters[key] = (lotCounters[key] || 0) + 1; persistLots(); }
+
+  // Persist the batch as a single lot record + lineage edges from each source.
+  const d = buildBatchLabelData(1, units);
+  if (batchId) {
+    db.lots.create({
+      lotId:        batchId,
+      workflowId:   'generate-batch',
+      geneticCode:  code,
+      cultivar:     d.cultivar,
+      genus:        d.genus,
+      species:      d.species,
+      cat:          d.cat,
+      notation:     '',
+      destination:  'Batch',
+      source:       batchSources.map(s => s.lotId).join(', '),
+      sub:          d.sub,
+      notes:        d.notes,
+      date:         d.date,
+      qty:          units,
+      unitType:     batchUnitType(),
+      sourceLots:   batchSources.map(s => s.lotId),
+    });
+    for (const s of batchSources) {
+      db.lineage.addEdge(s.lotId, batchId);
+    }
+  }
+
+  rebuildLot();
 }
 
 // ─── PRINT (standard workflows) ───────────────────────────────────────────────
 
 function printLabel() {
+  if (currentWorkflowId === 'generate-batch') return printBatch();
   const code = $('gen-code').value.trim().toUpperCase();
   const date = $('date').value;
   const qty  = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
