@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuickLabel — Batch &amp; Transfer Labels (260602)</title>
+<style>
+  :root { --green:#16a34a; --muted:#666; --border:#d8d8d8; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Helvetica, Arial, sans-serif; margin: 0; background:#f4f5f7; color:#111; }
+
+  /* ── control panel (screen only) ── */
+  .panel { padding: 18px 22px; background:#fff; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:5; }
+  .panel h1 { font-size: 18px; margin: 0 0 4px; }
+  .panel p  { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+  .globals { display:flex; gap:18px; flex-wrap:wrap; align-items:flex-end; margin-bottom:14px; }
+  .fld { display:flex; flex-direction:column; gap:4px; font-size:12px; }
+  .fld span { color: var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; font-size:10px; }
+  input, select { padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:13px; }
+  input.code { width:110px; font-family:'SF Mono',Menlo,Consolas,monospace; text-transform:uppercase; }
+  input.num { width:54px; text-align:center; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid #eee; }
+  th { font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); }
+  tr.need input.code { border-color:#e11d48; background:#fff1f3; }
+  .btn { padding:9px 18px; border:0; border-radius:7px; background:var(--green); color:#fff; font-weight:700; font-size:14px; cursor:pointer; }
+  .btn.secondary { background:#374151; }
+  .count { font-size:12px; color:var(--muted); margin-left:10px; }
+
+  /* ── label sheet ── */
+  .sheet { padding: 20px; display:flex; flex-wrap:wrap; gap:18px; }
+  .label-card { background:#fff; border:1px solid var(--border); border-radius:8px; padding:8px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .label-card.flag { outline:2px solid #e11d48; outline-offset:2px; }
+  .cap { font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:600; }
+  .cap b { color:#111; }
+  .label-host { width:3.6in; height:2in; }            /* on-screen, scaled up 1.6x */
+  .label-host > svg { display:block; width:3.6in; height:2in; }
+
+  @media print {
+    .panel { display:none !important; }
+    .sheet { display:block !important; padding:0 !important; margin:0 !important; gap:0 !important; }
+    .label-card { border:0 !important; box-shadow:none !important; outline:0 !important; padding:0 !important; margin:0 !important; border-radius:0 !important; }
+    .cap { display:none !important; }
+    .lbl-qr-reserve { display:none !important; }
+    @page { size: 2.25in 1.25in; margin: 0; }
+    html, body { width:2.25in; margin:0 !important; padding:0 !important; background:#fff !important; }
+    .label-host { width:2.25in !important; height:1.25in !important;
+      page-break-after: always; page-break-inside: avoid;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow:hidden; }
+    .label-card:last-child .label-host { page-break-after: auto; }
+    .label-host > svg { width:2.25in !important; height:1.25in !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <h1>Batch &amp; Transfer Labels</h1>
+  <p>Set any missing genetic codes (red), confirm the date, then <b>Print</b> → DYMO LabelWriter (2.25″ × 1.25″).
+     Margins <b>None</b>, Scale <b>100%</b>, Background graphics <b>On</b>.</p>
+
+  <div class="globals">
+    <label class="fld"><span>Event date</span><input type="date" id="g-date" value="2026-06-02"></label>
+    <label class="fld"><span>Unit type</span>
+      <select id="g-unit">
+        <option>Bag</option><option>Bin</option><option>Monotub</option>
+        <option>Tub</option><option>Jar</option><option>Tray</option><option>Block</option>
+      </select>
+    </label>
+    <button class="btn" onclick="window.print()">Print all</button>
+    <span class="count" id="count"></span>
+  </div>
+
+  <table>
+    <thead><tr>
+      <th>Cultivar</th><th>Genetic code</th><th>G2G transfers</th><th>Batch units</th><th>Parent / source bag</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<div class="sheet" id="sheet"></div>
+
+<script>
+/* ── label renderer: copied verbatim from quicklabel.html so output matches ── */
+const CHIP_COLORS = {
+  actives: { fill: '#dcfce7', text: '#14532d' },
+  gourmet: { fill: '#cffafe', text: '#164e63' }
+};
+function svgEsc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function fitText(textEl, maxLen) {
+  if (!textEl || !maxLen) return;
+  textEl.removeAttribute('textLength'); textEl.removeAttribute('lengthAdjust');
+  const natural = textEl.getComputedTextLength();
+  if (natural > maxLen) {
+    textEl.setAttribute('textLength', maxLen);
+    textEl.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+  }
+}
+const fmtDate = iso => { if (!iso) return ''; const [y,m,d] = iso.split('-'); return `${m}.${d}.${y.slice(2)}`; };
+
+const LABEL_TEMPLATES = {
+  'grain-spawn-9x5': {
+    viewBox: { w: 900, h: 500 },
+    layout: {
+      padL: 36, padR: 36, padTop: 26, padBot: 45,
+      cultivarFS: 100, cultivarKerning: 1.75,
+      speciesFS: 38, lotFS: 50, lineFS: 34, dimFS: 34,
+      dateFS: 30, notesFS: 30,
+      chipH: 42, chipPadX: 18, chipFS: 30,
+      cultivarSpeciesGap: 62, speciesRuleGap: 20,
+      ruleLotGap: 50, lotNotationGap: 44, notationSrcGap: 44,
+      lotSourceGap: 52, lineGap: 44,
+      ruleStroke: 2, ruleColor: '#d8d8d8',
+      qrSize: 150, qrGap: 14,
+      lineFSSmall: 28
+    },
+    render(d) {
+      const VB = this.viewBox, L = this.layout;
+      const cat      = d.cat === 'actives' ? 'actives' : 'gourmet';
+      const chip     = CHIP_COLORS[cat];
+      const chipText = cat === 'actives' ? 'ACTIVE' : 'GOURMET';
+
+      const cultivarY  = L.padTop + L.cultivarFS * 0.82;
+      const speciesY   = cultivarY + L.cultivarSpeciesGap;
+      const chipTextW  = chipText.length * L.chipFS * 0.62;
+      const chipW      = chipTextW + L.chipPadX * 2;
+      const chipX      = VB.w - L.padR - chipW;
+      const chipY      = speciesY - L.speciesFS * 0.35 - L.chipH / 2;
+      const ruleY      = speciesY + L.speciesRuleGap;
+      const monoFam    = "'SF Mono', Menlo, Monaco, Consolas, monospace";
+      const lotY       = ruleY + L.ruleLotGap;
+      const bottomY    = VB.h - L.padBot;
+
+      const cultivarText = d.cultivar || '—';
+      const speciesText  = [d.genus, d.species].filter(Boolean).join(' ');
+
+      const qrX = VB.w - L.padR - L.qrSize;
+      const qrY = ruleY + L.qrGap;
+      const qrBandTop = qrY;
+      const qrBandBot = qrY + L.qrSize;
+
+      const bodyEls = [];
+      // legacy flat-field path (notation / destination+source / media:sub)
+      const notationY  = lotY + L.lotNotationGap;
+      const srcY       = d.notation ? notationY + L.notationSrcGap : lotY + L.lotSourceGap;
+      const grainY     = srcY + L.lineGap;
+      const destLabel  = d.destination || '';
+      if (d.notation) bodyEls.push(`<text class="lbl-notation" x="${L.padL}" y="${notationY}"
+            font-size="${L.lineFS}" font-family="${monoFam}" fill="#555">${svgEsc(d.notation)}</text>`);
+      if (destLabel || d.source) bodyEls.push(`<text x="${L.padL}" y="${srcY}" font-size="${L.lineFS}" fill="#000">
+            ${destLabel ? svgEsc(destLabel) : ''}
+            ${destLabel && d.source ? `<tspan dx="12">|</tspan>` : ''}
+            ${d.source ? `<tspan dx="12" font-size="${L.dimFS}">Src:</tspan>` : ''}
+            ${d.source ? `<tspan class="lbl-src" dx="8" font-family="${monoFam}">${svgEsc(d.source)}</tspan>` : ''}
+          </text>`);
+      const mediaLabel = d.mediaLabel || 'Media';
+      if (d.sub) bodyEls.push(`<text x="${L.padL}" y="${grainY}" font-size="${L.lineFS}" fill="#000">
+            <tspan>${svgEsc(mediaLabel)}:</tspan><tspan class="lbl-grain" dx="10">${svgEsc(d.sub)}</tspan>
+          </text>`);
+
+      const footer = { left: d.date || '', center: '', right: d.notes || '' };
+      const footerEls = [];
+      if (footer.left) footerEls.push(`<text x="${L.padL}" y="${bottomY}"
+            font-size="${L.dateFS}" font-family="${monoFam}" fill="#000">${svgEsc(fmtDate(footer.left))}</text>`);
+      if (footer.right) footerEls.push(`<text class="lbl-notes" x="${VB.w-L.padR}" y="${bottomY}"
+            font-size="${L.notesFS}" font-style="italic" text-anchor="end" fill="#000">${svgEsc(footer.right)}</text>`);
+
+      const qrMarker = `<g class="lbl-qr-reserve">
+          <rect x="${qrX}" y="${qrY}" width="${L.qrSize}" height="${L.qrSize}"
+                fill="none" stroke="#bbb" stroke-dasharray="6 5" stroke-width="1.5"/>
+          <text x="${qrX + L.qrSize/2}" y="${qrY + L.qrSize/2 + 6}" font-size="18"
+                text-anchor="middle" fill="#bbb">QR</text>
+        </g>`;
+
+      return `<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 ${VB.w} ${VB.h}"
+     font-family="Arial, Helvetica, sans-serif"
+     shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <rect width="${VB.w}" height="${VB.h}" fill="#ffffff"/>
+  <text class="lbl-cultivar" x="${L.padL}" y="${cultivarY}"
+        font-size="${L.cultivarFS}" font-weight="700"
+        letter-spacing="${L.cultivarKerning}" fill="#000">${svgEsc(cultivarText)}</text>
+  ${speciesText ? `<text class="lbl-species" x="${L.padL}" y="${speciesY}"
+        font-size="${L.speciesFS}" font-style="italic" fill="#333">${svgEsc(speciesText)}</text>` : ''}
+  <g class="lbl-chip" transform="translate(${chipX} ${chipY})">
+    <rect width="${chipW}" height="${L.chipH}" rx="6" ry="6" fill="${chip.fill}"/>
+    <text x="${chipW/2}" y="${L.chipH*0.72}" font-size="${L.chipFS}" font-weight="700"
+          letter-spacing="1.3" text-anchor="middle" fill="${chip.text}">${chipText}</text>
+  </g>
+  <line x1="${L.padL}" y1="${ruleY}" x2="${VB.w-L.padR}" y2="${ruleY}"
+        stroke="${L.ruleColor}" stroke-width="${L.ruleStroke}"/>
+  ${d.lotId ? `<text class="lbl-lot" x="${L.padL}" y="${lotY}"
+        font-size="${L.lotFS}" font-weight="600"
+        font-family="${monoFam}" fill="#000">${svgEsc(d.lotId)}</text>` : ''}
+  ${bodyEls.join('\n  ')}
+  ${footerEls.join('\n  ')}
+  ${qrMarker}
+</svg>`.trim();
+    },
+    fit(svgEl) {
+      const L = this.layout, VB = this.viewBox;
+      const contentW = VB.w - L.padL - L.padR;
+      fitText(svgEl.querySelector('.lbl-cultivar'), contentW);
+      const chipG = svgEl.querySelector('.lbl-chip');
+      if (chipG) {
+        const cb = chipG.getBBox();
+        const sp = svgEl.querySelector('.lbl-species');
+        if (sp) fitText(sp, cb.x - L.padL - 14);
+      }
+      fitText(svgEl.querySelector('.lbl-lot'),      contentW);
+      fitText(svgEl.querySelector('.lbl-notation'), contentW);
+      fitText(svgEl.querySelector('.lbl-src'),      contentW * 0.72);
+      fitText(svgEl.querySelector('.lbl-grain'),    contentW * 0.78);
+      fitText(svgEl.querySelector('.lbl-notes'),    contentW * 0.55);
+    }
+  }
+};
+const TPL = LABEL_TEMPLATES['grain-spawn-9x5'];
+
+/* ── helpers ── */
+const pad2 = n => String(n).padStart(2,'0');
+const toYYMMDD = iso => { if (!iso) return ''; const [y,m,d] = iso.split('-'); return `${y.slice(2)}${m}${d}`; };
+
+/* ── the seven bags (genus/species per the printed labels: P. cubensis, ACTIVE) ── */
+const ROWS = [
+  { cultivar:'Green Cap Ochraceocentrata',     code:'SL199', g2g:2, units:1, parent:'GL-SL199-260521-01' },
+  { cultivar:'Manna from Heaven Ochraceocentrata', code:'', g2g:2, units:1, parent:'' },
+  { cultivar:'Iceberg',                        code:'SL194', g2g:0, units:1, parent:'GL-SL194-260518-02' },
+  { cultivar:'Rusty Whyte',                    code:'SL190', g2g:0, units:1, parent:'GL-SL190-260518-01' },
+  { cultivar:'Enigma',                         code:'',      g2g:0, units:1, parent:'' },
+  { cultivar:'Cabo Amarillo',                  code:'',      g2g:0, units:1, parent:'' },
+  { cultivar:'Machine Elf',                    code:'',      g2g:0, units:1, parent:'' },
+];
+const GENUS = 'Psilocybe', SPECIES = 'cubensis', CAT = 'actives';
+
+/* ── build the config table ── */
+function buildPanel() {
+  const tb = document.getElementById('rows');
+  tb.innerHTML = ROWS.map((r,i) => `
+    <tr class="${r.code.trim() ? '' : 'need'}" id="row-${i}">
+      <td>${svgEsc(r.cultivar)}</td>
+      <td><input class="code" data-i="${i}" data-f="code" value="${svgEsc(r.code)}" placeholder="SL___"></td>
+      <td><input class="num"  data-i="${i}" data-f="g2g"   type="number" min="0" max="20" value="${r.g2g}"></td>
+      <td><input class="num"  data-i="${i}" data-f="units" type="number" min="1" max="99" value="${r.units}"></td>
+      <td><input style="width:170px" data-i="${i}" data-f="parent" value="${svgEsc(r.parent)}" placeholder="optional"></td>
+    </tr>`).join('');
+  tb.querySelectorAll('input').forEach(inp => inp.addEventListener('input', onEdit));
+  document.getElementById('g-date').addEventListener('input', render);
+  document.getElementById('g-unit').addEventListener('input', render);
+}
+function onEdit(e) {
+  const i = +e.target.dataset.i, f = e.target.dataset.f;
+  let v = e.target.value;
+  if (f === 'g2g' || f === 'units') v = Math.max(f==='units'?1:0, parseInt(v,10)||0);
+  if (f === 'code') v = v.toUpperCase();
+  ROWS[i][f] = v;
+  if (f === 'code') document.getElementById('row-'+i).classList.toggle('need', !String(v).trim());
+  render();
+}
+
+/* ── expand rows → individual labels → render ── */
+function buildLabels() {
+  const date = document.getElementById('g-date').value;
+  const unit = document.getElementById('g-unit').value || 'Bag';
+  const ymd  = toYYMMDD(date);
+  const out = [];
+  for (const r of ROWS) {
+    const code = String(r.code).trim().toUpperCase();
+    const need = !code;
+    const C = code || 'SL___';
+    // grain-to-grain transfers → new GRAIN lots
+    for (let g = 1; g <= r.g2g; g++) {
+      out.push({
+        kind:`${r.cultivar} — G2G transfer ${g}/${r.g2g}`, need,
+        d: { cat:CAT, genus:GENUS, species:SPECIES, cultivar:r.cultivar,
+             lotId:`GL-${C}-${ymd}-${pad2(g)}`, destination:'Grain Spawn',
+             source:r.parent || '', sub:'', notes:'G2G transfer', date }
+      });
+    }
+    // batch → single (or N) unit(s)
+    for (let u = 1; u <= r.units; u++) {
+      out.push({
+        kind:`${r.cultivar} — batch ${unit.toLowerCase()} ${u}/${r.units}`, need,
+        d: { cat:CAT, genus:GENUS, species:SPECIES, cultivar:r.cultivar,
+             lotId:`BL-${C}-${ymd}-01`, destination:`${unit} ${pad2(u)}/${pad2(r.units)}`,
+             source:r.parent || '', sub:'', notes:'', date }
+      });
+    }
+  }
+  return out;
+}
+function render() {
+  const labels = buildLabels();
+  const sheet = document.getElementById('sheet');
+  sheet.innerHTML = '';
+  for (const lab of labels) {
+    const card = document.createElement('div');
+    card.className = 'label-card' + (lab.need ? ' flag' : '');
+    const cap = document.createElement('div');
+    cap.className = 'cap';
+    cap.innerHTML = `<b>${svgEsc(lab.d.lotId)}</b> — ${svgEsc(lab.kind)}${lab.need ? '  ⚠ needs code' : ''}`;
+    const host = document.createElement('div');
+    host.className = 'label-host';
+    host.innerHTML = TPL.render(lab.d);
+    const svg = host.firstElementChild;
+    if (svg) { svg.setAttribute('width','2.25in'); svg.setAttribute('height','1.25in'); TPL.fit(svg); }
+    card.appendChild(cap); card.appendChild(host);
+    sheet.appendChild(card);
+  }
+  const need = labels.filter(l => l.need).length;
+  document.getElementById('count').textContent =
+    `${labels.length} labels` + (need ? ` · ${need} need a genetic code` : ' · all codes set ✓');
+}
+
+buildPanel();
+render();
+</script>
+</body>
+</html>
