@@ -78,12 +78,122 @@
     write(key, value) {
       try {
         localStorage.setItem(key, JSON.stringify(value));
+        const pk = parseKey(key);
+        if (pk) queuePush(pk.user, pk.slot, value);   // mirror to Supabase
         return true;
       } catch (_) {
         return false;
       }
     },
   };
+
+  // ─── Supabase sync (open-mode key/value store, one row per user+slot) ────────
+  const SUPA = {
+    url:   'https://lunkqtvndjdntuaidhyv.supabase.co',
+    key:   'sb_publishable_4qj90ZGOBTpU6bVcEiuulQ_05qyRsHN',
+    table: 'ql_store',
+  };
+  // Slots synced across devices. `form` is device-local UX and never synced.
+  const SYNC_SLOTS = ['cfg', 'counters', 'genetics', 'lots', 'lineage'];
+  const _canFetch = (typeof fetch === 'function');
+  function supaHeaders(extra) {
+    return Object.assign({ apikey: SUPA.key, Authorization: 'Bearer ' + SUPA.key }, extra || {});
+  }
+  // Map a namespaced localStorage key back to { user, slot }.
+  function parseKey(fullKey) {
+    const u = currentUser();
+    if (!u) return null;
+    const K = keysFor(u);
+    for (const slot of Object.keys(K)) if (K[slot] === fullKey) return { user: u, slot: slot };
+    return null;
+  }
+  async function pushRemote(user, slot, value) {
+    if (!_canFetch || !user || SYNC_SLOTS.indexOf(slot) < 0) return;
+    try {
+      await fetch(SUPA.url + '/rest/v1/' + SUPA.table + '?on_conflict=user_id,slot', {
+        method: 'POST',
+        headers: supaHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' }),
+        body: JSON.stringify([{ user_id: user, slot: slot, data: value, updated_at: new Date().toISOString() }]),
+      });
+    } catch (_) { /* offline — local cache still holds it */ }
+  }
+  const _pushTimers = {};
+  function queuePush(user, slot, value) {
+    if (SYNC_SLOTS.indexOf(slot) < 0) return;     // skip form + anything off-list
+    const k = user + '|' + slot;
+    clearTimeout(_pushTimers[k]);
+    _pushTimers[k] = setTimeout(function () { pushRemote(user, slot, value); }, 600);
+  }
+  // Pull this user's rows into the local cache; seed remote with local-only slots.
+  async function pullRemote(user) {
+    user = user || currentUser();
+    if (!_canFetch || !user) return;
+    let rows = [];
+    try {
+      const res = await fetch(
+        SUPA.url + '/rest/v1/' + SUPA.table + '?user_id=eq.' + encodeURIComponent(user) + '&select=slot,data',
+        { headers: supaHeaders() });
+      if (!res.ok) return;
+      rows = await res.json();
+    } catch (_) { return; }
+    const K = keysFor(user);
+    const got = {};
+    for (const row of rows) {
+      if (K[row.slot] && row.data != null) {
+        try { localStorage.setItem(K[row.slot], JSON.stringify(row.data)); got[row.slot] = true; } catch (_) {}
+      }
+    }
+    // First-time upload: push any local slots the cloud doesn't have yet.
+    for (const slot of SYNC_SLOTS) {
+      if (!got[slot]) {
+        const local = storage.read(K[slot], null);
+        if (local != null) pushRemote(user, slot, local);
+      }
+    }
+  }
+  const sync = {
+    pull: function () { return pullRemote(currentUser()); },
+    push: function (slot, value) { return pushRemote(currentUser(), slot, value); },
+  };
+
+  // ─── username + password (custom, no email; stored in the `auth` slot) ───────
+  async function sha256(str) {
+    try {
+      if (typeof crypto !== 'undefined' && crypto.subtle) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch (_) {}
+    return 'plain:' + str;   // non-secure fallback (e.g. non-HTTPS)
+  }
+  async function upsertAuth(user, hash) {
+    try {
+      await fetch(SUPA.url + '/rest/v1/' + SUPA.table + '?on_conflict=user_id,slot', {
+        method: 'POST',
+        headers: supaHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' }),
+        body: JSON.stringify([{ user_id: user, slot: 'auth', data: { hash: hash }, updated_at: new Date().toISOString() }]),
+      });
+    } catch (_) {}
+  }
+  // Returns { ok, reason?, isNew? }. Sets the password on first sign-in.
+  async function checkAuth(user, pass) {
+    const hash = await sha256(user + ':' + pass);
+    let authData = null, reachable = false;
+    if (_canFetch) {
+      try {
+        const res = await fetch(
+          SUPA.url + '/rest/v1/' + SUPA.table + '?user_id=eq.' + encodeURIComponent(user) + '&slot=eq.auth&select=data',
+          { headers: supaHeaders() });
+        if (res.ok) { reachable = true; const rows = await res.json(); if (rows.length) authData = rows[0].data; }
+      } catch (_) {}
+    }
+    if (!reachable) return { ok: true, isNew: false, offline: true };   // can't verify → allow (no security)
+    if (authData && authData.hash) {
+      return authData.hash === hash ? { ok: true, isNew: false } : { ok: false, reason: 'bad_pass' };
+    }
+    await upsertAuth(user, hash);            // first sign-in: set the password
+    return { ok: true, isNew: true };
+  }
 
   const nowISO = () => new Date().toISOString();
   const ok     = v => Promise.resolve(v);
@@ -172,13 +282,18 @@
   const session = {
     currentUser,
     isLoggedIn()  { return !!currentUser(); },
-    login(name) {
+    // Username + password. No email. First sign-in for a username sets its
+    // password; thereafter it's verified. (Open mode — not real security.)
+    async login(name, password) {
       const u = String(name || '').trim();
-      if (!u) return ok({ ok: false, reason: 'empty' });
+      if (!u) return { ok: false, reason: 'empty' };
+      if (!String(password || '')) return { ok: false, reason: 'empty_pass' };
+      const auth = await checkAuth(u, String(password));
+      if (!auth.ok) return auth;
       localStorage.setItem(USER_KEY, u);
       const imp = importLegacyForUser(u);
       syncGeneticsAndCfg();
-      return ok({ ok: true, user: u, legacy: imp });
+      return { ok: true, user: u, isNew: auth.isNew, legacy: imp };
     },
     logout() {
       try { localStorage.removeItem(USER_KEY); } catch (_) {}
@@ -331,5 +446,5 @@
     restore()       { return ok(storage.read(KEYS.form, null)); },
   };
 
-  window.db = { genetics, lots, lineage, config, form, session, _keys: KEYS };
+  window.db = { genetics, lots, lineage, config, form, session, sync, _keys: KEYS };
 })();
