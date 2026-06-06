@@ -2955,6 +2955,11 @@ const IMPORT_HEADER_MAP = {
   'media type':             'mediaType',
   'ingest date':            'ingestDate',
   'date':                   'ingestDate',
+  'inat':                   'inat',
+  'inaturalist':            'inat',
+  'inat id':                'inat',
+  'inat number':            'inat',
+  'inat #':                 'inat',
 };
 
 let importParsed = null;  // { headers, rows, mapping, actions }
@@ -3141,7 +3146,7 @@ function recordFromRow(cells, headers, mapping) {
       extNotes:    flat.extNotes   || '',
       ingestDate:  flat.ingestDate || '',
       originDate:  '',
-      inat: { enabled: false, number: '', collector: '', date: '', location: '' },
+      inat: { enabled: !!flat.inat, number: flat.inat || '', collector: '', date: '', location: '' },
     },
   };
   return rec;
