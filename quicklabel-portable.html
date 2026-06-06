@@ -439,6 +439,19 @@ textarea { resize: vertical; min-height: 56px; }
   font-size: 16px; padding: 4px 8px !important; opacity: .7; line-height: 1;
 }
 .pw-eye:hover { opacity: 1; }
+.combo-results {
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 30;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+  margin-top: 2px; max-height: 240px; overflow-y: auto; display: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,.45);
+}
+.combo-results.show { display: block; }
+.combo-item { padding: 9px 10px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--border); }
+.combo-item:last-child { border-bottom: 0; }
+.combo-item:hover { background: var(--surface); }
+.combo-item .ci-code { font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; font-weight: 600; color: var(--text); }
+.combo-item .ci-name { color: var(--muted); }
+.combo-empty { padding: 9px 10px; font-size: 12px; color: var(--muted); }
 .login-toggle { font-size: 12px; color: var(--muted); text-align: center; }
 .login-toggle a { color: var(--green); text-decoration: none; cursor: pointer; }
 .login-toggle a:hover { text-decoration: underline; }
@@ -698,18 +711,15 @@ textarea { resize: vertical; min-height: 56px; }
       <!-- Genetic -->
       <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch">
         <div class="card-label">Genetic</div>
-        <div class="field">
-          <span class="fl">Genetic Code</span>
-          <input type="text" id="gen-code" placeholder="SL192" maxlength="12"
-                 oninput="onCodeChange()" onchange="onCodeChange()" list="code-dl"
+        <div class="field" style="position:relative">
+          <span class="fl">Genetic Code <span style="color:var(--muted);font-weight:400">— type a code or name to search</span></span>
+          <input type="text" id="gen-code" placeholder="SL192 or “lions mane”" maxlength="40"
+                 autocomplete="off"
+                 oninput="onCodeChange()" onchange="onCodeChange()"
+                 onfocus="renderGenResults()" onblur="setTimeout(hideGenResults,150)"
                  data-testid="gen-code-input">
           <datalist id="code-dl"></datalist>
-        </div>
-        <div class="field" id="gen-pick-field" style="display:none">
-          <span class="fl">…or pick from library</span>
-          <select id="gen-code-pick" onchange="onPickCode()">
-            <option value="">— select a saved genetic —</option>
-          </select>
+          <div id="gen-results" class="combo-results"></div>
         </div>
         <div class="field">
           <span class="fl">Category</span>
@@ -3414,28 +3424,55 @@ function renderVesselDl() {
 
 // Code datalist (for gen-code field in standard workflows)
 function refreshCodeDl() {
-  const saved = cfg.codes.filter(r => r.code);
-  $('code-dl').innerHTML = saved
-    .map(r => `<option value="${r.code}">${r.cultivar} — ${r.genus} ${r.species}</option>`)
+  $('code-dl').innerHTML = cfg.codes.filter(r => r.code)
+    .map(r => `<option value="${svgEsc(r.code)}">${svgEsc(r.cultivar || '')} — ${svgEsc(r.genus || '')} ${svgEsc(r.species || '')}</option>`)
     .join('');
-  // Real <select> picker — datalists barely work on mobile; this always does.
-  const pick = $('gen-code-pick'), field = $('gen-pick-field');
-  if (pick) {
-    const cur = pick.value;
-    pick.innerHTML = '<option value="">— select a saved genetic —</option>' + saved
-      .map(r => `<option value="${svgEsc(r.code)}">${svgEsc(r.code)} — ${svgEsc(r.cultivar || '')} ${svgEsc(r.genus || '')} ${svgEsc(r.species || '')}</option>`)
-      .join('');
-    pick.value = cur;
-    if (field) field.style.display = saved.length ? '' : 'none';
-  }
+  renderGenResults();
 }
 
-// Pick a saved genetic from the dropdown → fill the code + autofill the rest.
-function onPickCode() {
-  const v = $('gen-code-pick').value;
-  if (!v) return;
-  $('gen-code').value = v;
-  onCodeChange();
+// ─── Genetic typeahead: filter the library by code OR name as you type ────────
+function geneticMatches(q) {
+  q = String(q || '').trim().toLowerCase();
+  let list = cfg.codes.filter(r => r.code);
+  if (q) {
+    list = list.filter(r => {
+      const hay = [r.code, r.cultivar, r.genus, r.species, (r.genus || '') + ' ' + (r.species || '')]
+        .map(x => String(x || '').toLowerCase()).join(' ');
+      return hay.indexOf(q) >= 0;
+    });
+  }
+  list.sort((a, b) => {
+    const ac = String(a.code || '').toLowerCase(), bc = String(b.code || '').toLowerCase();
+    const as = (q && ac.indexOf(q) === 0) ? 0 : 1, bs = (q && bc.indexOf(q) === 0) ? 0 : 1;
+    if (as !== bs) return as - bs;
+    return String(a.cultivar || '').toLowerCase().localeCompare(String(b.cultivar || '').toLowerCase()) || ac.localeCompare(bc);
+  });
+  return list.slice(0, 25);
+}
+function renderGenResults() {
+  const box = $('gen-results');
+  if (!box) return;
+  const q = ($('gen-code').value || '').trim();
+  const matches = geneticMatches(q);
+  // already an exact code match → nothing to pick
+  if (matches.length === 1 && String(matches[0].code).toLowerCase() === q.toLowerCase()) { hideGenResults(); return; }
+  if (!cfg.codes.some(r => r.code)) { hideGenResults(); return; }   // empty library
+  if (!matches.length) {
+    box.innerHTML = '<div class="combo-empty">No match in your library</div>';
+  } else {
+    box.innerHTML = matches.map(r => {
+      const name = [r.cultivar, ([r.genus, r.species].filter(Boolean).join(' '))].filter(s => s && s.trim()).join(' · ');
+      return `<div class="combo-item" data-code="${svgEsc(r.code)}" onmousedown="event.preventDefault()" onclick="pickGenCode(this.dataset.code)">`
+        + `<span class="ci-code">${svgEsc(r.code)}</span> <span class="ci-name">${svgEsc(name)}</span></div>`;
+    }).join('');
+  }
+  box.classList.add('show');
+}
+function hideGenResults() { const b = $('gen-results'); if (b) b.classList.remove('show'); }
+function pickGenCode(code) {
+  $('gen-code').value = code;
+  onCodeChange();        // autofills genus/species/cultivar/category
+  hideGenResults();
 }
 
 function findCode(code) {
@@ -3946,6 +3983,7 @@ function onCodeChange() {
     setSelectValueLoose($('species'), rec.species);
     $('cultivar').value = rec.cultivar || '';
   }
+  renderGenResults();   // live-filter the library dropdown as you type
   rebuildLot();
 }
 
