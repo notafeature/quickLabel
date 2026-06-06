@@ -97,7 +97,8 @@
   const SYNC_SLOTS = ['cfg', 'counters', 'genetics', 'lots', 'lineage'];
   const _canFetch = (typeof fetch === 'function');
   function supaHeaders(extra) {
-    return Object.assign({ apikey: SUPA.key, Authorization: 'Bearer ' + SUPA.key }, extra || {});
+    const tok = accessToken() || SUPA.key;   // user's JWT when signed in (RLS uses it)
+    return Object.assign({ apikey: SUPA.key, Authorization: 'Bearer ' + tok }, extra || {});
   }
   // Map a namespaced localStorage key back to { user, slot }.
   function parseKey(fullKey) {
@@ -109,12 +110,15 @@
   }
   async function pushRemote(user, slot, value) {
     if (!_canFetch || !user || SYNC_SLOTS.indexOf(slot) < 0) return;
+    const body = JSON.stringify([{ user_id: user, slot: slot, data: value, updated_at: new Date().toISOString() }]);
+    const send = () => fetch(SUPA.url + '/rest/v1/' + SUPA.table + '?on_conflict=user_id,slot', {
+      method: 'POST',
+      headers: supaHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' }),
+      body: body,
+    });
     try {
-      await fetch(SUPA.url + '/rest/v1/' + SUPA.table + '?on_conflict=user_id,slot', {
-        method: 'POST',
-        headers: supaHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' }),
-        body: JSON.stringify([{ user_id: user, slot: slot, data: value, updated_at: new Date().toISOString() }]),
-      });
+      let res = await send();
+      if (res.status === 401 && await refreshSession()) await send();   // token expired → refresh + retry
     } catch (_) { /* offline — local cache still holds it */ }
   }
   const _pushTimers = {};
@@ -128,11 +132,11 @@
   async function pullRemote(user) {
     user = user || currentUser();
     if (!_canFetch || !user) return;
+    const url = SUPA.url + '/rest/v1/' + SUPA.table + '?user_id=eq.' + encodeURIComponent(user) + '&select=slot,data';
     let rows = [];
     try {
-      const res = await fetch(
-        SUPA.url + '/rest/v1/' + SUPA.table + '?user_id=eq.' + encodeURIComponent(user) + '&select=slot,data',
-        { headers: supaHeaders() });
+      let res = await fetch(url, { headers: supaHeaders() });
+      if (res.status === 401 && await refreshSession()) res = await fetch(url, { headers: supaHeaders() });
       if (!res.ok) return;
       rows = await res.json();
     } catch (_) { return; }
@@ -156,43 +160,57 @@
     push: function (slot, value) { return pushRemote(currentUser(), slot, value); },
   };
 
-  // ─── username + password (custom, no email; stored in the `auth` slot) ───────
-  async function sha256(str) {
-    try {
-      if (typeof crypto !== 'undefined' && crypto.subtle) {
-        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-      }
-    } catch (_) {}
-    return 'plain:' + str;   // non-secure fallback (e.g. non-HTTPS)
+  // ─── username + password via Supabase Auth (synthetic email, no real email) ──
+  // Real auth → each request carries a verified JWT → RLS enforces per-user walls.
+  const AUTH_DOMAIN = 'quicklabel.app';
+  const TOKEN_KEY = 'ql_sb_token';
+  function emailFor(u) { return String(u).toLowerCase() + '@' + AUTH_DOMAIN; }
+  function loadToken() { try { return JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null'); } catch (_) { return null; } }
+  function saveToken(t) { try { localStorage.setItem(TOKEN_KEY, JSON.stringify(t)); } catch (_) {} }
+  function clearToken() { try { localStorage.removeItem(TOKEN_KEY); } catch (_) {} }
+  function accessToken() { const t = loadToken(); return t && t.access_token; }
+  function persistSession(username, sess) {
+    localStorage.setItem(USER_KEY, username);
+    saveToken({
+      access_token:  sess.access_token,
+      refresh_token: sess.refresh_token,
+      username:      username,
+      expires_at:    Date.now() + ((sess.expires_in || 3600) * 1000),
+    });
   }
-  async function upsertAuth(user, hash) {
-    try {
-      await fetch(SUPA.url + '/rest/v1/' + SUPA.table + '?on_conflict=user_id,slot', {
-        method: 'POST',
-        headers: supaHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' }),
-        body: JSON.stringify([{ user_id: user, slot: 'auth', data: { hash: hash }, updated_at: new Date().toISOString() }]),
-      });
-    } catch (_) {}
+  async function sbAuthFetch(path, body) {
+    const res = await fetch(SUPA.url + '/auth/v1/' + path, {
+      method: 'POST',
+      headers: { apikey: SUPA.key, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+    return { ok: res.ok, status: res.status, data: data };
   }
-  // Returns { ok, reason?, isNew? }. Sets the password on first sign-in.
-  async function checkAuth(user, pass) {
-    const hash = await sha256(user + ':' + pass);
-    let authData = null, reachable = false;
-    if (_canFetch) {
-      try {
-        const res = await fetch(
-          SUPA.url + '/rest/v1/' + SUPA.table + '?user_id=eq.' + encodeURIComponent(user) + '&slot=eq.auth&select=data',
-          { headers: supaHeaders() });
-        if (res.ok) { reachable = true; const rows = await res.json(); if (rows.length) authData = rows[0].data; }
-      } catch (_) {}
-    }
-    if (!reachable) return { ok: true, isNew: false, offline: true };   // can't verify → allow (no security)
-    if (authData && authData.hash) {
-      return authData.hash === hash ? { ok: true, isNew: false } : { ok: false, reason: 'bad_pass' };
-    }
-    await upsertAuth(user, hash);            // first sign-in: set the password
-    return { ok: true, isNew: true };
+  function authMsg(d) { return String((d && (d.msg || d.error_description || d.error || d.message)) || ''); }
+  async function signUp(username, password) {
+    const r = await sbAuthFetch('signup', { email: emailFor(username), password: password });
+    if (r.ok && r.data && r.data.access_token) { persistSession(username, r.data); return { ok: true, isNew: true }; }
+    const m = authMsg(r.data);
+    if (r.status === 422 || /already.*(registered|exists)|user.*exists/i.test(m)) return { ok: false, reason: 'taken' };
+    if (/password/i.test(m)) return { ok: false, reason: 'weak_pass' };
+    if (r.ok) return { ok: false, reason: 'no_session' };   // confirmation still on?
+    return { ok: false, reason: 'error', msg: m };
+  }
+  async function signIn(username, password) {
+    const r = await sbAuthFetch('token?grant_type=password', { email: emailFor(username), password: password });
+    if (r.ok && r.data && r.data.access_token) { persistSession(username, r.data); return { ok: true, isNew: false }; }
+    return { ok: false, reason: 'bad_creds' };
+  }
+  async function refreshSession() {
+    const t = loadToken();
+    if (!t || !t.refresh_token) return false;
+    try {
+      const r = await sbAuthFetch('token?grant_type=refresh_token', { refresh_token: t.refresh_token });
+      if (r.ok && r.data && r.data.access_token) { persistSession(t.username, r.data); return true; }
+    } catch (_) {}
+    return false;
   }
 
   const nowISO = () => new Date().toISOString();
@@ -281,21 +299,21 @@
 
   const session = {
     currentUser,
-    isLoggedIn()  { return !!currentUser(); },
-    // Username + password. No email. First sign-in for a username sets its
-    // password; thereafter it's verified. (Open mode — not real security.)
-    async login(name, password) {
-      const u = String(name || '').trim();
+    isLoggedIn()  { return !!currentUser() && !!accessToken(); },
+    refresh() { return refreshSession(); },
+    // Username + password via real auth (synthetic email). mode: 'login'|'signup'.
+    async login(name, password, mode) {
+      const u = String(name || '').trim().toLowerCase();
       if (!u) return { ok: false, reason: 'empty' };
       if (!String(password || '')) return { ok: false, reason: 'empty_pass' };
-      const auth = await checkAuth(u, String(password));
-      if (!auth.ok) return auth;
-      localStorage.setItem(USER_KEY, u);
-      const imp = importLegacyForUser(u);
+      const res = (mode === 'signup') ? await signUp(u, String(password)) : await signIn(u, String(password));
+      if (!res.ok) return res;                 // { reason: taken|bad_creds|weak_pass|... }
+      const imp = importLegacyForUser(u);       // session already persisted by signUp/signIn
       syncGeneticsAndCfg();
-      return { ok: true, user: u, isNew: auth.isNew, legacy: imp };
+      return { ok: true, user: u, isNew: res.isNew, legacy: imp };
     },
     logout() {
+      clearToken();
       try { localStorage.removeItem(USER_KEY); } catch (_) {}
       return ok({ ok: true });
     },

@@ -439,6 +439,9 @@ textarea { resize: vertical; min-height: 56px; }
   font-size: 16px; padding: 4px 8px !important; opacity: .7; line-height: 1;
 }
 .pw-eye:hover { opacity: 1; }
+.login-toggle { font-size: 12px; color: var(--muted); text-align: center; }
+.login-toggle a { color: var(--green); text-decoration: none; cursor: pointer; }
+.login-toggle a:hover { text-decoration: underline; }
 #login-panel button {
   background: #2d6a3f; border: 1px solid #2d6a3f; color: white;
   padding: 9px 14px; font-size: 13px; font-weight: 600;
@@ -1344,7 +1347,7 @@ textarea { resize: vertical; min-height: 56px; }
 <div id="login-overlay">
   <div id="login-panel">
     <h1>QuickLabel</h1>
-    <p>Sign in with a username and password. Your data syncs to that account on any device. New username? Your password is set on first sign-in.</p>
+    <p id="login-sub">Log in with your username and password. Your data syncs to that account on any device.</p>
     <input id="login-name" type="text" placeholder="Username" autocomplete="username"
            onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
     <div class="pw-wrap">
@@ -1352,7 +1355,9 @@ textarea { resize: vertical; min-height: 56px; }
              onkeydown="if(event.key==='Enter')doLogin()">
       <button type="button" class="pw-eye" onclick="togglePw()" aria-label="Show password" title="Show / hide password">👁</button>
     </div>
-    <button onclick="doLogin()">Sign in</button>
+    <button id="login-btn" onclick="doLogin()">Log in</button>
+    <div class="login-toggle"><span id="login-toggle-text">New here?</span>
+      <a href="#" id="login-toggle-link" onclick="toggleAuthMode();return false">Create an account</a></div>
     <div id="login-error"></div>
   </div>
 </div>
@@ -1606,7 +1611,8 @@ textarea { resize: vertical; min-height: 56px; }
   const SYNC_SLOTS = ['cfg', 'counters', 'genetics', 'lots', 'lineage'];
   const _canFetch = (typeof fetch === 'function');
   function supaHeaders(extra) {
-    return Object.assign({ apikey: SUPA.key, Authorization: 'Bearer ' + SUPA.key }, extra || {});
+    const tok = accessToken() || SUPA.key;   // user's JWT when signed in (RLS uses it)
+    return Object.assign({ apikey: SUPA.key, Authorization: 'Bearer ' + tok }, extra || {});
   }
   // Map a namespaced localStorage key back to { user, slot }.
   function parseKey(fullKey) {
@@ -1618,12 +1624,15 @@ textarea { resize: vertical; min-height: 56px; }
   }
   async function pushRemote(user, slot, value) {
     if (!_canFetch || !user || SYNC_SLOTS.indexOf(slot) < 0) return;
+    const body = JSON.stringify([{ user_id: user, slot: slot, data: value, updated_at: new Date().toISOString() }]);
+    const send = () => fetch(SUPA.url + '/rest/v1/' + SUPA.table + '?on_conflict=user_id,slot', {
+      method: 'POST',
+      headers: supaHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' }),
+      body: body,
+    });
     try {
-      await fetch(SUPA.url + '/rest/v1/' + SUPA.table + '?on_conflict=user_id,slot', {
-        method: 'POST',
-        headers: supaHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' }),
-        body: JSON.stringify([{ user_id: user, slot: slot, data: value, updated_at: new Date().toISOString() }]),
-      });
+      let res = await send();
+      if (res.status === 401 && await refreshSession()) await send();   // token expired → refresh + retry
     } catch (_) { /* offline — local cache still holds it */ }
   }
   const _pushTimers = {};
@@ -1637,11 +1646,11 @@ textarea { resize: vertical; min-height: 56px; }
   async function pullRemote(user) {
     user = user || currentUser();
     if (!_canFetch || !user) return;
+    const url = SUPA.url + '/rest/v1/' + SUPA.table + '?user_id=eq.' + encodeURIComponent(user) + '&select=slot,data';
     let rows = [];
     try {
-      const res = await fetch(
-        SUPA.url + '/rest/v1/' + SUPA.table + '?user_id=eq.' + encodeURIComponent(user) + '&select=slot,data',
-        { headers: supaHeaders() });
+      let res = await fetch(url, { headers: supaHeaders() });
+      if (res.status === 401 && await refreshSession()) res = await fetch(url, { headers: supaHeaders() });
       if (!res.ok) return;
       rows = await res.json();
     } catch (_) { return; }
@@ -1665,43 +1674,57 @@ textarea { resize: vertical; min-height: 56px; }
     push: function (slot, value) { return pushRemote(currentUser(), slot, value); },
   };
 
-  // ─── username + password (custom, no email; stored in the `auth` slot) ───────
-  async function sha256(str) {
-    try {
-      if (typeof crypto !== 'undefined' && crypto.subtle) {
-        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-      }
-    } catch (_) {}
-    return 'plain:' + str;   // non-secure fallback (e.g. non-HTTPS)
+  // ─── username + password via Supabase Auth (synthetic email, no real email) ──
+  // Real auth → each request carries a verified JWT → RLS enforces per-user walls.
+  const AUTH_DOMAIN = 'quicklabel.app';
+  const TOKEN_KEY = 'ql_sb_token';
+  function emailFor(u) { return String(u).toLowerCase() + '@' + AUTH_DOMAIN; }
+  function loadToken() { try { return JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null'); } catch (_) { return null; } }
+  function saveToken(t) { try { localStorage.setItem(TOKEN_KEY, JSON.stringify(t)); } catch (_) {} }
+  function clearToken() { try { localStorage.removeItem(TOKEN_KEY); } catch (_) {} }
+  function accessToken() { const t = loadToken(); return t && t.access_token; }
+  function persistSession(username, sess) {
+    localStorage.setItem(USER_KEY, username);
+    saveToken({
+      access_token:  sess.access_token,
+      refresh_token: sess.refresh_token,
+      username:      username,
+      expires_at:    Date.now() + ((sess.expires_in || 3600) * 1000),
+    });
   }
-  async function upsertAuth(user, hash) {
-    try {
-      await fetch(SUPA.url + '/rest/v1/' + SUPA.table + '?on_conflict=user_id,slot', {
-        method: 'POST',
-        headers: supaHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' }),
-        body: JSON.stringify([{ user_id: user, slot: 'auth', data: { hash: hash }, updated_at: new Date().toISOString() }]),
-      });
-    } catch (_) {}
+  async function sbAuthFetch(path, body) {
+    const res = await fetch(SUPA.url + '/auth/v1/' + path, {
+      method: 'POST',
+      headers: { apikey: SUPA.key, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+    return { ok: res.ok, status: res.status, data: data };
   }
-  // Returns { ok, reason?, isNew? }. Sets the password on first sign-in.
-  async function checkAuth(user, pass) {
-    const hash = await sha256(user + ':' + pass);
-    let authData = null, reachable = false;
-    if (_canFetch) {
-      try {
-        const res = await fetch(
-          SUPA.url + '/rest/v1/' + SUPA.table + '?user_id=eq.' + encodeURIComponent(user) + '&slot=eq.auth&select=data',
-          { headers: supaHeaders() });
-        if (res.ok) { reachable = true; const rows = await res.json(); if (rows.length) authData = rows[0].data; }
-      } catch (_) {}
-    }
-    if (!reachable) return { ok: true, isNew: false, offline: true };   // can't verify → allow (no security)
-    if (authData && authData.hash) {
-      return authData.hash === hash ? { ok: true, isNew: false } : { ok: false, reason: 'bad_pass' };
-    }
-    await upsertAuth(user, hash);            // first sign-in: set the password
-    return { ok: true, isNew: true };
+  function authMsg(d) { return String((d && (d.msg || d.error_description || d.error || d.message)) || ''); }
+  async function signUp(username, password) {
+    const r = await sbAuthFetch('signup', { email: emailFor(username), password: password });
+    if (r.ok && r.data && r.data.access_token) { persistSession(username, r.data); return { ok: true, isNew: true }; }
+    const m = authMsg(r.data);
+    if (r.status === 422 || /already.*(registered|exists)|user.*exists/i.test(m)) return { ok: false, reason: 'taken' };
+    if (/password/i.test(m)) return { ok: false, reason: 'weak_pass' };
+    if (r.ok) return { ok: false, reason: 'no_session' };   // confirmation still on?
+    return { ok: false, reason: 'error', msg: m };
+  }
+  async function signIn(username, password) {
+    const r = await sbAuthFetch('token?grant_type=password', { email: emailFor(username), password: password });
+    if (r.ok && r.data && r.data.access_token) { persistSession(username, r.data); return { ok: true, isNew: false }; }
+    return { ok: false, reason: 'bad_creds' };
+  }
+  async function refreshSession() {
+    const t = loadToken();
+    if (!t || !t.refresh_token) return false;
+    try {
+      const r = await sbAuthFetch('token?grant_type=refresh_token', { refresh_token: t.refresh_token });
+      if (r.ok && r.data && r.data.access_token) { persistSession(t.username, r.data); return true; }
+    } catch (_) {}
+    return false;
   }
 
   const nowISO = () => new Date().toISOString();
@@ -1790,21 +1813,21 @@ textarea { resize: vertical; min-height: 56px; }
 
   const session = {
     currentUser,
-    isLoggedIn()  { return !!currentUser(); },
-    // Username + password. No email. First sign-in for a username sets its
-    // password; thereafter it's verified. (Open mode — not real security.)
-    async login(name, password) {
-      const u = String(name || '').trim();
+    isLoggedIn()  { return !!currentUser() && !!accessToken(); },
+    refresh() { return refreshSession(); },
+    // Username + password via real auth (synthetic email). mode: 'login'|'signup'.
+    async login(name, password, mode) {
+      const u = String(name || '').trim().toLowerCase();
       if (!u) return { ok: false, reason: 'empty' };
       if (!String(password || '')) return { ok: false, reason: 'empty_pass' };
-      const auth = await checkAuth(u, String(password));
-      if (!auth.ok) return auth;
-      localStorage.setItem(USER_KEY, u);
-      const imp = importLegacyForUser(u);
+      const res = (mode === 'signup') ? await signUp(u, String(password)) : await signIn(u, String(password));
+      if (!res.ok) return res;                 // { reason: taken|bad_creds|weak_pass|... }
+      const imp = importLegacyForUser(u);       // session already persisted by signUp/signIn
       syncGeneticsAndCfg();
-      return { ok: true, user: u, isNew: auth.isNew, legacy: imp };
+      return { ok: true, user: u, isNew: res.isNew, legacy: imp };
     },
     logout() {
+      clearToken();
       try { localStorage.removeItem(USER_KEY); } catch (_) {}
       return ok({ ok: true });
     },
@@ -4477,12 +4500,29 @@ function togglePw() {
   if (i) i.type = (i.type === 'password') ? 'text' : 'password';
 }
 
+let authMode = 'login';   // 'login' | 'signup'
+function toggleAuthMode() {
+  authMode = (authMode === 'login') ? 'signup' : 'login';
+  const signup = authMode === 'signup';
+  $('login-sub').textContent = signup
+    ? 'Create an account — pick a username and a password (6+ characters).'
+    : 'Log in with your username and password. Your data syncs to that account on any device.';
+  $('login-btn').textContent = signup ? 'Create account' : 'Log in';
+  $('login-toggle-text').textContent = signup ? 'Have an account?' : 'New here?';
+  $('login-toggle-link').textContent = signup ? 'Log in' : 'Create an account';
+  $('login-error').textContent = '';
+}
+
 function showLogin() {
-  if ($('login-pass')) $('login-pass').type = 'password';
+  authMode = 'login';
+  if ($('login-sub')) $('login-sub').textContent = 'Log in with your username and password. Your data syncs to that account on any device.';
+  if ($('login-btn')) $('login-btn').textContent = 'Log in';
+  if ($('login-toggle-text')) $('login-toggle-text').textContent = 'New here?';
+  if ($('login-toggle-link')) $('login-toggle-link').textContent = 'Create an account';
+  if ($('login-pass')) { $('login-pass').type = 'password'; $('login-pass').value = ''; }
   $('login-overlay').classList.add('open');
   $('login-error').textContent = '';
   $('login-name').value = '';
-  if ($('login-pass')) $('login-pass').value = '';
   setTimeout(() => $('login-name').focus(), 50);
 }
 
@@ -4495,14 +4535,20 @@ async function doLogin() {
   const pass = $('login-pass') ? $('login-pass').value : '';
   if (!name) { $('login-error').textContent = 'Enter a username.'; return; }
   if (!pass) { $('login-error').textContent = 'Enter a password.'; return; }
-  $('login-error').textContent = 'Checking…';
+  $('login-error').textContent = authMode === 'signup' ? 'Creating account…' : 'Signing in…';
   let res;
-  try { res = await db.session.login(name, pass); }
+  try { res = await db.session.login(name, pass, authMode); }
   catch (_) { res = { ok: false, reason: 'error' }; }
   if (!res || !res.ok) {
-    $('login-error').textContent =
-      (res && res.reason === 'bad_pass') ? 'Wrong password for that username.'
-      : 'Could not sign in. Try again.';
+    const msgs = {
+      taken:     'This username is not available. Please select a new one.',
+      bad_creds: 'Wrong username or password.',
+      weak_pass: 'Password must be at least 6 characters.',
+      no_session:'Account issue — confirm email is turned off in Supabase.',
+      empty:     'Enter a username.',
+      empty_pass:'Enter a password.',
+    };
+    $('login-error').textContent = (res && msgs[res.reason]) || 'Could not sign in. Try again.';
     return;
   }
   // Full reload so the namespaced data loads cleanly into a fresh in-memory state.
@@ -4536,6 +4582,11 @@ async function boot() {
     showLogin();
     return;
   }
+  // Refresh the access token so REST/RLS calls are authorized this session.
+  try {
+    const okr = await db.session.refresh();
+    if (!okr) { await db.session.logout(); showLogin(); return; }
+  } catch (_) { /* offline: proceed on cached token, sync just retries later */ }
   await init();
 }
 

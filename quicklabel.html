@@ -439,6 +439,9 @@ textarea { resize: vertical; min-height: 56px; }
   font-size: 16px; padding: 4px 8px !important; opacity: .7; line-height: 1;
 }
 .pw-eye:hover { opacity: 1; }
+.login-toggle { font-size: 12px; color: var(--muted); text-align: center; }
+.login-toggle a { color: var(--green); text-decoration: none; cursor: pointer; }
+.login-toggle a:hover { text-decoration: underline; }
 #login-panel button {
   background: #2d6a3f; border: 1px solid #2d6a3f; color: white;
   padding: 9px 14px; font-size: 13px; font-weight: 600;
@@ -1344,7 +1347,7 @@ textarea { resize: vertical; min-height: 56px; }
 <div id="login-overlay">
   <div id="login-panel">
     <h1>QuickLabel</h1>
-    <p>Sign in with a username and password. Your data syncs to that account on any device. New username? Your password is set on first sign-in.</p>
+    <p id="login-sub">Log in with your username and password. Your data syncs to that account on any device.</p>
     <input id="login-name" type="text" placeholder="Username" autocomplete="username"
            onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
     <div class="pw-wrap">
@@ -1352,7 +1355,9 @@ textarea { resize: vertical; min-height: 56px; }
              onkeydown="if(event.key==='Enter')doLogin()">
       <button type="button" class="pw-eye" onclick="togglePw()" aria-label="Show password" title="Show / hide password">👁</button>
     </div>
-    <button onclick="doLogin()">Sign in</button>
+    <button id="login-btn" onclick="doLogin()">Log in</button>
+    <div class="login-toggle"><span id="login-toggle-text">New here?</span>
+      <a href="#" id="login-toggle-link" onclick="toggleAuthMode();return false">Create an account</a></div>
     <div id="login-error"></div>
   </div>
 </div>
@@ -4024,12 +4029,29 @@ function togglePw() {
   if (i) i.type = (i.type === 'password') ? 'text' : 'password';
 }
 
+let authMode = 'login';   // 'login' | 'signup'
+function toggleAuthMode() {
+  authMode = (authMode === 'login') ? 'signup' : 'login';
+  const signup = authMode === 'signup';
+  $('login-sub').textContent = signup
+    ? 'Create an account — pick a username and a password (6+ characters).'
+    : 'Log in with your username and password. Your data syncs to that account on any device.';
+  $('login-btn').textContent = signup ? 'Create account' : 'Log in';
+  $('login-toggle-text').textContent = signup ? 'Have an account?' : 'New here?';
+  $('login-toggle-link').textContent = signup ? 'Log in' : 'Create an account';
+  $('login-error').textContent = '';
+}
+
 function showLogin() {
-  if ($('login-pass')) $('login-pass').type = 'password';
+  authMode = 'login';
+  if ($('login-sub')) $('login-sub').textContent = 'Log in with your username and password. Your data syncs to that account on any device.';
+  if ($('login-btn')) $('login-btn').textContent = 'Log in';
+  if ($('login-toggle-text')) $('login-toggle-text').textContent = 'New here?';
+  if ($('login-toggle-link')) $('login-toggle-link').textContent = 'Create an account';
+  if ($('login-pass')) { $('login-pass').type = 'password'; $('login-pass').value = ''; }
   $('login-overlay').classList.add('open');
   $('login-error').textContent = '';
   $('login-name').value = '';
-  if ($('login-pass')) $('login-pass').value = '';
   setTimeout(() => $('login-name').focus(), 50);
 }
 
@@ -4042,14 +4064,20 @@ async function doLogin() {
   const pass = $('login-pass') ? $('login-pass').value : '';
   if (!name) { $('login-error').textContent = 'Enter a username.'; return; }
   if (!pass) { $('login-error').textContent = 'Enter a password.'; return; }
-  $('login-error').textContent = 'Checking…';
+  $('login-error').textContent = authMode === 'signup' ? 'Creating account…' : 'Signing in…';
   let res;
-  try { res = await db.session.login(name, pass); }
+  try { res = await db.session.login(name, pass, authMode); }
   catch (_) { res = { ok: false, reason: 'error' }; }
   if (!res || !res.ok) {
-    $('login-error').textContent =
-      (res && res.reason === 'bad_pass') ? 'Wrong password for that username.'
-      : 'Could not sign in. Try again.';
+    const msgs = {
+      taken:     'This username is not available. Please select a new one.',
+      bad_creds: 'Wrong username or password.',
+      weak_pass: 'Password must be at least 6 characters.',
+      no_session:'Account issue — confirm email is turned off in Supabase.',
+      empty:     'Enter a username.',
+      empty_pass:'Enter a password.',
+    };
+    $('login-error').textContent = (res && msgs[res.reason]) || 'Could not sign in. Try again.';
     return;
   }
   // Full reload so the namespaced data loads cleanly into a fresh in-memory state.
@@ -4083,6 +4111,11 @@ async function boot() {
     showLogin();
     return;
   }
+  // Refresh the access token so REST/RLS calls are authorized this session.
+  try {
+    const okr = await db.session.refresh();
+    if (!okr) { await db.session.logout(); showLogin(); return; }
+  } catch (_) { /* offline: proceed on cached token, sync just retries later */ }
   await init();
 }
 
