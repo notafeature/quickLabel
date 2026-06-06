@@ -639,6 +639,11 @@ textarea { resize: vertical; min-height: 56px; }
     width: 100%; transform: none; display: none;
   }
   #settings-panel.open, #fiddle-panel.open { display: flex; }
+
+  /* Big, obvious export action on phones */
+  .preview-actions { flex-direction: column; width: 100%; }
+  .preview-actions button { width: 100%; padding: 14px; font-size: 15px; }
+  body.share-ready .preview-actions #export-save-btn { display: none; }  /* Share sheet already saves */
 }
 </style>
 </head>
@@ -1121,13 +1126,13 @@ textarea { resize: vertical; min-height: 56px; }
         </div>
       </div>
       <div class="preview-actions">
-        <button type="button" id="export-share-btn" onclick="shareCurrentLabel()" style="display:none">Share to printer app</button>
-        <button type="button" id="export-save-btn" onclick="saveCurrentLabel()">Save image (PNG)</button>
+        <button type="button" id="export-share-btn" class="primary" onclick="shareCurrentLabel()" style="display:none">Share / Save image</button>
+        <button type="button" id="export-save-btn" onclick="saveCurrentLabel()">Download PNG</button>
       </div>
       <div class="printer-row">
-        <strong style="color:var(--text)">On a computer:</strong> use Print and pick your label printer (e.g. DYMO 30334).
-        <strong style="color:var(--text)">On a phone:</strong> tap <strong style="color:var(--text)">Share to printer app</strong>
-        to send the label image to your Bluetooth label-maker app.
+        <strong style="color:var(--text)">On a phone:</strong> tap <strong style="color:var(--text)">Share / Save image</strong> —
+        the share sheet has <strong style="color:var(--text)">Save to Photos</strong> and your Bluetooth printer app.
+        <strong style="color:var(--text)">On a computer:</strong> use Print (e.g. DYMO 30334) or Download PNG.
       </div>
     </div>
   </main>
@@ -3963,7 +3968,10 @@ async function init() {
   updateUserDisplay();
   // Phones/tablets that support the native share sheet get the one-tap
   // "Share to printer app" button; everyone keeps "Save image".
-  if (SHARE_OK) { const b = $('export-share-btn'); if (b) b.style.display = ''; }
+  if (SHARE_OK) {
+    const b = $('export-share-btn'); if (b) b.style.display = '';
+    document.body.classList.add('share-ready');   // hides the redundant Download on phones
+  }
 }
 
 // ─── LOGIN / LOGOUT ──────────────────────────────────────────────────────────
