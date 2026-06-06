@@ -251,6 +251,11 @@ textarea { resize: vertical; min-height: 56px; }
   display: flex; align-items: center; gap: 8px;
   font-size: 11px; color: var(--muted); text-align: center; max-width: 480px;
 }
+.preview-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.preview-controls #printer-select {
+  padding: 6px 10px; font-size: 12px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface); color: var(--text);
+}
 .mode-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .mode-toggle button {
   padding: 6px 14px; font-size: 12px; font-weight: 600; border: 0;
@@ -1064,11 +1069,17 @@ textarea { resize: vertical; min-height: 56px; }
     <div id="splitter" title="Drag to resize"></div>
 
     <div id="preview-panel">
-      <span class="preview-label-hint">Label Preview — 2.25 × 1.25 in</span>
+      <span class="preview-label-hint" id="preview-size-hint">Label Preview — 2.25 × 1.25 in</span>
       <div id="label-preview" class="label-host"></div>
-      <div class="mode-toggle" title="Simplified = cultivar + ID + date only, for tiny label makers">
-        <button type="button" id="mode-standard" class="active" onclick="setLabelMode('standard')">Standard</button>
-        <button type="button" id="mode-simple" onclick="setLabelMode('simple')">Simplified</button>
+      <div class="preview-controls">
+        <select id="printer-select" onchange="setPrinter(this.value)" title="Choose your label size">
+          <option value="dymo-30334">DYMO 2.25 × 1.25 in</option>
+          <option value="merryhome-d11">Merryhome / D11 — 14 × 40 mm</option>
+        </select>
+        <div class="mode-toggle" title="Simplified = cultivar + ID + date only, for tiny label makers">
+          <button type="button" id="mode-standard" class="active" onclick="setLabelMode('standard')">Standard</button>
+          <button type="button" id="mode-simple" onclick="setLabelMode('simple')">Simplified</button>
+        </div>
       </div>
       <div class="preview-actions">
         <button type="button" id="export-share-btn" onclick="shareCurrentLabel()" style="display:none">Share to printer app</button>
@@ -1527,6 +1538,12 @@ const PRINTERS = {
   'dymo-30334': {
     id: 'dymo-30334', name: 'DYMO LabelWriter — 30334',
     paper: { widthIn: 2.25, heightIn: 1.25 }, template: 'grain-spawn-9x5'
+  },
+  // D11-class mini thermal maker (Merryhome / NIIMBOT D11). Default roll
+  // ~14 × 40 mm (landscape strip). Export/Share render at this size.
+  'merryhome-d11': {
+    id: 'merryhome-d11', name: 'Merryhome / D11 — 14 × 40 mm',
+    paper: { widthIn: 40 / 25.4, heightIn: 14 / 25.4 }, template: 'd11-strip'
   }
 };
 
@@ -1760,6 +1777,55 @@ const LABEL_TEMPLATES = {
         font-family="${mono}" text-anchor="middle" fill="#000">${svgEsc(date)}</text>` : ''}
 </svg>`.trim();
     }
+  },
+
+  // ── Dedicated D11 / Merryhome strip (≈14 × 40 mm landscape) ──────────────────
+  'd11-strip': {
+    viewBox: { w: 1000, h: 350 },   // 40:14 aspect
+    layout: { padL: 34, padR: 34 },
+    render(d) {
+      const VB = this.viewBox, L = this.layout;
+      const mono = "'SF Mono', Menlo, Monaco, Consolas, monospace";
+      const cultivar = d.cultivar || '—';
+      const id = d.lotId || '';
+      const date = d.date ? fmtDate(d.date) : '';
+      const dest = d.destination || '';
+      return `<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 ${VB.w} ${VB.h}"
+     font-family="Arial, Helvetica, sans-serif"
+     shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <rect width="${VB.w}" height="${VB.h}" fill="#ffffff"/>
+  <text class="lbl-cultivar" x="${L.padL}" y="118" font-size="120" font-weight="700" fill="#000">${svgEsc(cultivar)}</text>
+  ${id ? `<text class="lbl-lot" x="${L.padL}" y="232" font-size="90" font-weight="600"
+        font-family="${mono}" fill="#000">${svgEsc(id)}</text>` : ''}
+  ${date ? `<text x="${L.padL}" y="325" font-size="68" font-family="${mono}" fill="#000">${svgEsc(date)}</text>` : ''}
+  ${dest ? `<text class="lbl-src" x="${VB.w - L.padR}" y="325" font-size="64" text-anchor="end" fill="#000">${svgEsc(dest)}</text>` : ''}
+</svg>`.trim();
+    },
+    renderSimple(d) {
+      const VB = this.viewBox, L = this.layout;
+      const mono = "'SF Mono', Menlo, Monaco, Consolas, monospace";
+      const cultivar = d.cultivar || '—';
+      const id = d.lotId || '';
+      const date = d.date ? fmtDate(d.date) : '';
+      return `<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 ${VB.w} ${VB.h}"
+     font-family="Arial, Helvetica, sans-serif"
+     shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <rect width="${VB.w}" height="${VB.h}" fill="#ffffff"/>
+  <text class="lbl-cultivar" x="${L.padL}" y="120" font-size="128" font-weight="700" fill="#000">${svgEsc(cultivar)}</text>
+  ${id ? `<text class="lbl-lot" x="${L.padL}" y="238" font-size="98" font-weight="600"
+        font-family="${mono}" fill="#000">${svgEsc(id)}</text>` : ''}
+  ${date ? `<text x="${L.padL}" y="330" font-size="74" font-family="${mono}" fill="#000">${svgEsc(date)}</text>` : ''}
+</svg>`.trim();
+    },
+    fit(svgEl) {
+      const L = this.layout, VB = this.viewBox;
+      const cw = VB.w - L.padL - L.padR;
+      fitText(svgEl.querySelector('.lbl-cultivar'), cw);
+      fitText(svgEl.querySelector('.lbl-lot'),      cw);
+      fitText(svgEl.querySelector('.lbl-src'),      cw * 0.45);
+    }
   }
 };
 
@@ -1789,6 +1855,14 @@ function setLabelMode(m) {
   const s = $('mode-standard'), p = $('mode-simple');
   if (s) s.classList.toggle('active', labelMode === 'standard');
   if (p) p.classList.toggle('active', labelMode === 'simple');
+  updatePreview();
+}
+
+function setPrinter(id) {
+  if (!PRINTERS[id]) return;
+  currentPrinterId = id;
+  const hint = $('preview-size-hint');
+  if (hint) hint.textContent = 'Label Preview — ' + (id === 'merryhome-d11' ? '14 × 40 mm' : '2.25 × 1.25 in');
   updatePreview();
 }
 
@@ -3652,7 +3726,8 @@ function labelFileName() {
 function svgToPng(svgEl, dpi) {
   dpi = dpi || 300;
   return new Promise((resolve, reject) => {
-    const w = Math.round(2.25 * dpi), h = Math.round(1.25 * dpi);
+    const paper = PRINTERS[currentPrinterId].paper;   // size to the selected label
+    const w = Math.round(paper.widthIn * dpi), h = Math.round(paper.heightIn * dpi);
     const clone = svgEl.cloneNode(true);
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     clone.setAttribute('width', w); clone.setAttribute('height', h);
