@@ -630,6 +630,15 @@ textarea { resize: vertical; min-height: 56px; }
 
   input, select, textarea { font-size: 16px; }   /* no iOS focus-zoom */
   #wf-dropdown { left: 8px; right: 8px; width: auto; }
+
+  /* Off-canvas side drawers are parked at translateX(100%) when closed, which
+     hangs them past the right edge and stretches the page (iOS ignores
+     overflow-x:hidden for fixed elements). On phones, drop them from layout
+     when closed and make them full-screen when open. */
+  #settings-panel, #fiddle-panel {
+    width: 100%; transform: none; display: none;
+  }
+  #settings-panel.open, #fiddle-panel.open { display: flex; }
 }
 </style>
 </head>
