@@ -1366,8 +1366,8 @@ textarea { resize: vertical; min-height: 56px; }
       <button type="button" class="pw-eye" onclick="togglePw()" aria-label="Show password" title="Show / hide password">👁</button>
     </div>
     <button id="login-btn" onclick="doLogin()">Log in</button>
-    <div class="login-toggle"><span id="login-toggle-text">New here?</span>
-      <a href="#" id="login-toggle-link" onclick="toggleAuthMode();return false">Create an account</a></div>
+    <div class="login-toggle" id="login-toggle-row"><span id="login-toggle-text">New here?</span>
+      <a href="#" id="login-toggle-link" onclick="onAuthToggleLink();return false">Create an account</a></div>
     <div id="login-error"></div>
   </div>
 </div>
@@ -4100,8 +4100,8 @@ function togglePw() {
 }
 
 let authMode = 'login';   // 'login' | 'signup'
-function toggleAuthMode() {
-  authMode = (authMode === 'login') ? 'signup' : 'login';
+function setAuthMode(m) {
+  authMode = (m === 'signup') ? 'signup' : 'login';
   const signup = authMode === 'signup';
   $('login-sub').textContent = signup
     ? 'Create an account — pick a username and a password (6+ characters).'
@@ -4110,17 +4110,14 @@ function toggleAuthMode() {
   $('login-toggle-text').textContent = signup ? 'Have an account?' : 'New here?';
   $('login-toggle-link').textContent = signup ? 'Log in' : 'Create an account';
   $('login-error').textContent = '';
+  if ($('login-pass')) { $('login-pass').type = 'password'; $('login-pass').value = ''; }
 }
+function onAuthToggleLink() { setAuthMode(authMode === 'login' ? 'signup' : 'login'); }
+function toggleAuthMode() { onAuthToggleLink(); }   // back-compat
 
 function showLogin() {
-  authMode = 'login';
-  if ($('login-sub')) $('login-sub').textContent = 'Log in with your username and password. Your data syncs to that account on any device.';
-  if ($('login-btn')) $('login-btn').textContent = 'Log in';
-  if ($('login-toggle-text')) $('login-toggle-text').textContent = 'New here?';
-  if ($('login-toggle-link')) $('login-toggle-link').textContent = 'Create an account';
-  if ($('login-pass')) { $('login-pass').type = 'password'; $('login-pass').value = ''; }
+  setAuthMode('login');
   $('login-overlay').classList.add('open');
-  $('login-error').textContent = '';
   $('login-name').value = '';
   setTimeout(() => $('login-name').focus(), 50);
 }
@@ -4138,6 +4135,19 @@ async function doLogin() {
   let res;
   try { res = await db.session.login(name, pass, authMode); }
   catch (e) { res = { ok: false, reason: 'error', msg: (e && e.message) || 'exception' }; }
+
+  // First sign-in for an account with no password set yet → claim it (set this
+  // password). The server only allows this when the account is passwordless;
+  // once a password exists it refuses, so nobody can hijack an active account.
+  if (authMode === 'login' && res && !res.ok && res.reason === 'bad_creds') {
+    let c; try { c = await db.session.claimPassword(name, pass); } catch (_) { c = { ok: false }; }
+    if (c && c.ok) {
+      try { res = await db.session.login(name, pass, 'login'); } catch (_) {}
+    } else if (c && c.reason === 'weak_pass') {
+      $('login-error').textContent = 'Password must be at least 6 characters.'; return;
+    }
+  }
+
   if (!res || !res.ok) {
     const msgs = {
       taken:     'This username is not available. Please select a new one.',

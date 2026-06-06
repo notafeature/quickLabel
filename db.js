@@ -276,6 +276,23 @@
     } catch (e) { return { ok: false, reason: 'error', msg: (e && e.message) || 'exception' }; }
   }
 
+  // Self-serve "forgot password": calls a server-side function (claim_password)
+  // that only resets the password when an admin has enabled it (force_pw flag).
+  async function claimPassword(username, newPw) {
+    newPw = String(newPw || '');
+    if (newPw.length < 6) return { ok: false, reason: 'weak_pass' };
+    try {
+      const res = await fetch(SUPA.url + '/rest/v1/rpc/claim_password', {
+        method: 'POST',
+        headers: { apikey: SUPA.key, Authorization: 'Bearer ' + SUPA.key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_username: String(username || '').trim(), p_newpw: newPw }),
+      });
+      let d = null; try { d = await res.json(); } catch (_) {}
+      if (res.ok && d && d.ok) return { ok: true };
+      return { ok: false, reason: (d && d.reason) || 'error' };
+    } catch (e) { return { ok: false, reason: 'error', msg: (e && e.message) || 'exception' }; }
+  }
+
   const nowISO = () => new Date().toISOString();
   const ok     = v => Promise.resolve(v);
   const newId  = () => 'g_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
@@ -366,6 +383,7 @@
     refresh() { return refreshSession(); },
     mustChangePassword() { return mustChangePassword(); },
     changePassword(pw) { return changePassword(pw); },
+    claimPassword(u, pw) { return claimPassword(u, pw); },
     // Username + password via real auth (synthetic email). mode: 'login'|'signup'.
     async login(name, password, mode) {
       const u = String(name || '').trim();   // keep exact case (e.g. "pSi:L")
