@@ -43,3 +43,7 @@ credentials.json
 *.pem
 *.key
 .credentials
+
+# One-off genetics import exports (data deliverables, not app code)
+cricket-genetics-*.csv
+*-genetics-p*.csv
