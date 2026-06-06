@@ -4067,7 +4067,7 @@ async function doLogin() {
   $('login-error').textContent = authMode === 'signup' ? 'Creating account…' : 'Signing in…';
   let res;
   try { res = await db.session.login(name, pass, authMode); }
-  catch (_) { res = { ok: false, reason: 'error' }; }
+  catch (e) { res = { ok: false, reason: 'error', msg: (e && e.message) || 'exception' }; }
   if (!res || !res.ok) {
     const msgs = {
       taken:     'This username is not available. Please select a new one.',
