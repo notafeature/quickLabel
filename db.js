@@ -79,7 +79,7 @@
       try {
         localStorage.setItem(key, JSON.stringify(value));
         const pk = parseKey(key);
-        if (pk) queuePush(pk.user, pk.slot, value);   // mirror to Supabase
+        if (pk) queuePush(pk.slot, value);   // mirror to Supabase
         return true;
       } catch (_) {
         return false;
@@ -100,17 +100,19 @@
     const tok = accessToken() || SUPA.key;   // user's JWT when signed in (RLS uses it)
     return Object.assign({ apikey: SUPA.key, Authorization: 'Bearer ' + tok }, extra || {});
   }
-  // Map a namespaced localStorage key back to { user, slot }.
+  // Map a namespaced localStorage key back to its slot.
   function parseKey(fullKey) {
     const u = currentUser();
     if (!u) return null;
     const K = keysFor(u);
-    for (const slot of Object.keys(K)) if (K[slot] === fullKey) return { user: u, slot: slot };
+    for (const slot of Object.keys(K)) if (K[slot] === fullKey) return { slot: slot };
     return null;
   }
-  async function pushRemote(user, slot, value) {
-    if (!_canFetch || !user || SYNC_SLOTS.indexOf(slot) < 0) return;
-    const body = JSON.stringify([{ user_id: user, slot: slot, data: value, updated_at: new Date().toISOString() }]);
+  // Cloud rows are keyed by the auth user id (auth.uid) — stable + secure (RLS).
+  async function pushRemote(slot, value) {
+    const uid = cloudId();
+    if (!_canFetch || !uid || SYNC_SLOTS.indexOf(slot) < 0) return;
+    const body = JSON.stringify([{ user_id: uid, slot: slot, data: value, updated_at: new Date().toISOString() }]);
     const send = () => fetch(SUPA.url + '/rest/v1/' + SUPA.table + '?on_conflict=user_id,slot', {
       method: 'POST',
       headers: supaHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' }),
@@ -122,17 +124,17 @@
     } catch (_) { /* offline — local cache still holds it */ }
   }
   const _pushTimers = {};
-  function queuePush(user, slot, value) {
+  function queuePush(slot, value) {
     if (SYNC_SLOTS.indexOf(slot) < 0) return;     // skip form + anything off-list
-    const k = user + '|' + slot;
+    const k = (cloudId() || '') + '|' + slot;
     clearTimeout(_pushTimers[k]);
-    _pushTimers[k] = setTimeout(function () { pushRemote(user, slot, value); }, 600);
+    _pushTimers[k] = setTimeout(function () { pushRemote(slot, value); }, 600);
   }
-  // Pull this user's rows into the local cache; seed remote with local-only slots.
-  async function pullRemote(user) {
-    user = user || currentUser();
-    if (!_canFetch || !user) return;
-    const url = SUPA.url + '/rest/v1/' + SUPA.table + '?user_id=eq.' + encodeURIComponent(user) + '&select=slot,data';
+  // Pull this user's cloud rows into the local cache; seed cloud with local-only slots.
+  async function pullRemote() {
+    const uid = cloudId();
+    if (!_canFetch || !uid) return;
+    const url = SUPA.url + '/rest/v1/' + SUPA.table + '?user_id=eq.' + encodeURIComponent(uid) + '&select=slot,data';
     let rows = [];
     try {
       let res = await fetch(url, { headers: supaHeaders() });
@@ -140,7 +142,7 @@
       if (!res.ok) return;
       rows = await res.json();
     } catch (_) { return; }
-    const K = keysFor(user);
+    const K = keysFor(currentUser());
     const got = {};
     for (const row of rows) {
       if (K[row.slot] && row.data != null) {
@@ -151,13 +153,13 @@
     for (const slot of SYNC_SLOTS) {
       if (!got[slot]) {
         const local = storage.read(K[slot], null);
-        if (local != null) pushRemote(user, slot, local);
+        if (local != null) pushRemote(slot, local);
       }
     }
   }
   const sync = {
-    pull: function () { return pullRemote(currentUser()); },
-    push: function (slot, value) { return pushRemote(currentUser(), slot, value); },
+    pull: function () { return pullRemote(); },
+    push: function (slot, value) { return pushRemote(slot, value); },
   };
 
   // ─── username + password via Supabase Auth (synthetic email, no real email) ──
@@ -172,17 +174,35 @@
     for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
     return ('0000000' + h.toString(16)).slice(-8);
   }
-  function emailFor(u) { return 'u' + hashStr(u) + '@' + AUTH_DOMAIN; }
+  // Simple usernames keep a readable, stable email (e.g. cricket@…); only
+  // usernames with characters illegal in an email local-part get hashed.
+  function emailFor(u) {
+    u = String(u);
+    return /^[a-z0-9._-]+$/i.test(u) ? (u.toLowerCase() + '@' + AUTH_DOMAIN) : ('u' + hashStr(u) + '@' + AUTH_DOMAIN);
+  }
   function loadToken() { try { return JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null'); } catch (_) { return null; } }
   function saveToken(t) { try { localStorage.setItem(TOKEN_KEY, JSON.stringify(t)); } catch (_) {} }
   function clearToken() { try { localStorage.removeItem(TOKEN_KEY); } catch (_) {} }
   function accessToken() { const t = loadToken(); return t && t.access_token; }
+  function cloudId()    { const t = loadToken(); return t && t.uid; }   // auth.uid — the RLS/storage key
+  // Decode the `sub` (user id) claim from a JWT, as a fallback for the uid.
+  function jwtSub(tok) {
+    try {
+      let p = String(tok).split('.')[1] || '';
+      p = p.replace(/-/g, '+').replace(/_/g, '/');
+      while (p.length % 4) p += '=';
+      return (JSON.parse(atob(p)).sub) || '';
+    } catch (_) { return ''; }
+  }
   function persistSession(username, sess) {
     localStorage.setItem(USER_KEY, username);
+    const prev = loadToken();
+    const uid = (sess.user && sess.user.id) || jwtSub(sess.access_token) || (prev && prev.uid) || '';
     saveToken({
       access_token:  sess.access_token,
       refresh_token: sess.refresh_token,
       username:      username,
+      uid:           uid,
       expires_at:    Date.now() + ((sess.expires_in || 3600) * 1000),
     });
   }
