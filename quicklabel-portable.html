@@ -580,26 +580,55 @@ textarea { resize: vertical; min-height: 56px; }
 }
 
 /* ── mobile / narrow screens (additive — desktop layout untouched) ──────────── */
+/* Mobile bottom bar + preview "back" button are desktop-hidden by default */
+#mobile-bar { display: none; }
+.preview-back { display: none; }
+
 @media (max-width: 700px) {
-  main { flex-direction: column; overflow: auto; }
+  /* Lock width so nothing overflows horizontally (the cause of the
+     pinch-zoom + disappearing header). */
+  html, body { overflow-x: hidden; max-width: 100%; }
+  main { flex-direction: column; overflow-x: hidden; }
   #form-panel {
-    width: auto; min-width: 0; max-width: none;
-    flex-shrink: 1; overflow: visible;
-    padding: 12px 12px 28px;
+    width: auto; min-width: 0; max-width: 100%;
+    flex: 1 1 auto; overflow-y: auto; overflow-x: hidden;
+    padding: 12px 12px 88px;            /* leave room for the fixed bar */
   }
   #splitter { display: none; }
-  /* Live preview becomes a compact sticky bar at the top while you edit below */
+  /* Wrap rows and drop fixed field widths that pushed the layout wide */
+  #form-panel .row { flex-wrap: wrap; }
+  #form-panel .row .field.w56,
+  #form-panel .row .field.w72 { width: auto; flex: 1 1 64px; }
+
+  /* Preview is a slide-up sheet, hidden until you ask for it */
   #preview-panel {
-    order: -1; position: sticky; top: 0; z-index: 40;
-    flex: none; padding: 12px;
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    gap: 8px;
+    position: fixed; left: 0; right: 0; top: 44px; bottom: 0;
+    z-index: 70; background: var(--surface);
+    transform: translateY(102%); transition: transform .22s ease;
+    overflow-y: auto; padding: 16px 14px 28px; gap: 10px;
+    border-top: 1px solid var(--border);
   }
+  body.preview-open #preview-panel { transform: translateY(0); }
   #preview-panel .label-host { max-width: 100%; }
-  #preview-panel .label-host > svg { width: 100%; height: auto; }
+  #preview-panel .label-host > svg { width: 100% !important; height: auto !important; }
   .printer-row { max-width: 100%; }
-  /* 16px inputs stop iOS from zooming the page on field focus */
-  input, select, textarea { font-size: 16px; }
+  .preview-back { display: inline-block; align-self: flex-start;
+    background: none; border: 0; color: var(--green); font-size: 14px;
+    font-weight: 600; cursor: pointer; padding: 2px 0; }
+
+  /* Always-available bottom bar to open the preview */
+  #mobile-bar {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 75;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: var(--surface); border-top: 1px solid var(--border);
+  }
+  body.preview-open #mobile-bar { display: none; }
+  #mobile-bar button {
+    flex: 1; padding: 13px; font-size: 15px; font-weight: 700;
+    border: 0; border-radius: 9px; background: var(--green); color: #fff;
+  }
+
+  input, select, textarea { font-size: 16px; }   /* no iOS focus-zoom */
   #wf-dropdown { left: 8px; right: 8px; width: auto; }
 }
 </style>
@@ -817,7 +846,7 @@ textarea { resize: vertical; min-height: 56px; }
       <!-- Print (standard workflows) -->
       <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch">
         <div class="row print-row-end">
-          <button class="primary print-btn" id="print-btn" onclick="printLabel()"
+          <button class="primary print-btn" id="print-btn" onclick="primaryPrint()"
                   data-testid="print-btn">Print</button>
           <button class="reset-btn" onclick="resetForm()" title="Clear form">↺</button>
         </div>
@@ -1069,6 +1098,7 @@ textarea { resize: vertical; min-height: 56px; }
     <div id="splitter" title="Drag to resize"></div>
 
     <div id="preview-panel">
+      <button type="button" class="preview-back" onclick="closeMobilePreview()">‹ Back to editor</button>
       <span class="preview-label-hint" id="preview-size-hint">Label Preview — 2.25 × 1.25 in</span>
       <div id="label-preview" class="label-host"></div>
       <div class="preview-controls">
@@ -1095,6 +1125,9 @@ textarea { resize: vertical; min-height: 56px; }
 </div>
 
 <div id="print-area"></div>
+
+<!-- Mobile-only bottom bar: open the label preview/print sheet -->
+<div id="mobile-bar"><button type="button" onclick="openMobilePreview()">Preview &amp; print label ▲</button></div>
 
 <!-- ── FIDDLE PANEL ── -->
 <div id="fiddle-panel">
@@ -4041,6 +4074,36 @@ function printBatch() {
   }
 
   rebuildLot();
+}
+
+// ─── MOBILE PREVIEW SHEET ─────────────────────────────────────────────────────
+
+function isMobile() {
+  return typeof window !== 'undefined' && window.matchMedia
+    && window.matchMedia('(max-width: 700px)').matches;
+}
+function openMobilePreview() {
+  updatePreview();                         // make sure it reflects the latest edits
+  document.body.classList.add('preview-open');
+  const pp = $('preview-panel'); if (pp) pp.scrollTop = 0;
+}
+function closeMobilePreview() {
+  document.body.classList.remove('preview-open');
+}
+// On mobile the browser Print dialog can't reach a Bluetooth maker, so the
+// Print button just opens the preview/share sheet instead.
+function primaryPrint() {
+  if (isMobile()) { openMobilePreview(); return; }
+  printLabel();
+}
+// Tapping back into any form field "zips up" the preview sheet.
+if (typeof document !== 'undefined') {
+  document.addEventListener('focusin', e => {
+    if (document.body.classList.contains('preview-open') &&
+        e.target.closest && e.target.closest('#form-panel')) {
+      closeMobilePreview();
+    }
+  });
 }
 
 // ─── IMAGE EXPORT / SHARE (for phone Bluetooth label makers) ──────────────────
