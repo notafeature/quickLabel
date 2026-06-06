@@ -431,6 +431,14 @@ textarea { resize: vertical; min-height: 56px; }
   padding: 10px 12px; font-size: 14px; border-radius: 5px; font-family: inherit;
 }
 #login-panel input:focus { outline: 1px solid #555; }
+.pw-wrap { position: relative; display: flex; }
+.pw-wrap input { flex: 1; padding-right: 40px !important; }
+.pw-eye {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  background: none !important; border: 0 !important; cursor: pointer;
+  font-size: 16px; padding: 4px 8px !important; opacity: .7; line-height: 1;
+}
+.pw-eye:hover { opacity: 1; }
 #login-panel button {
   background: #2d6a3f; border: 1px solid #2d6a3f; color: white;
   padding: 9px 14px; font-size: 13px; font-weight: 600;
@@ -1339,8 +1347,11 @@ textarea { resize: vertical; min-height: 56px; }
     <p>Sign in with a username and password. Your data syncs to that account on any device. New username? Your password is set on first sign-in.</p>
     <input id="login-name" type="text" placeholder="Username" autocomplete="username"
            onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
-    <input id="login-pass" type="password" placeholder="Password" autocomplete="current-password"
-           onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="pw-wrap">
+      <input id="login-pass" type="password" placeholder="Password" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()">
+      <button type="button" class="pw-eye" onclick="togglePw()" aria-label="Show password" title="Show / hide password">👁</button>
+    </div>
     <button onclick="doLogin()">Sign in</button>
     <div id="login-error"></div>
   </div>
@@ -4008,7 +4019,13 @@ async function init() {
 
 // ─── LOGIN / LOGOUT ──────────────────────────────────────────────────────────
 
+function togglePw() {
+  const i = $('login-pass');
+  if (i) i.type = (i.type === 'password') ? 'text' : 'password';
+}
+
 function showLogin() {
+  if ($('login-pass')) $('login-pass').type = 'password';
   $('login-overlay').classList.add('open');
   $('login-error').textContent = '';
   $('login-name').value = '';
@@ -4051,7 +4068,17 @@ function updateUserDisplay() {
   if (el) el.textContent = u || '—';
 }
 
+// Bump this to force every signed-in user to log in again (e.g. to require a
+// password). It runs once per device per value.
+const AUTH_EPOCH = '2026-06-06-pw';
+
 async function boot() {
+  try {
+    if (localStorage.getItem('ql_auth_epoch') !== AUTH_EPOCH) {
+      localStorage.setItem('ql_auth_epoch', AUTH_EPOCH);
+      if (db.session.isLoggedIn()) await db.session.logout();   // force re-login w/ password
+    }
+  } catch (_) {}
   if (!db.session.isLoggedIn()) {
     showLogin();
     return;
