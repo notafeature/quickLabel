@@ -1127,7 +1127,7 @@ textarea { resize: vertical; min-height: 56px; }
       <div class="preview-controls">
         <select id="printer-select" onchange="setPrinter(this.value)" title="Choose your label size">
           <option value="dymo-30334">DYMO 2.25 × 1.25 in</option>
-          <option value="merryhome-d11">Merryhome / D11 — 14 × 40 mm</option>
+          <option value="merryhome-d11">Merryhome / D11 — 14 × 35 mm</option>
         </select>
         <div class="mode-toggle" title="Simplified = cultivar + ID + date only, for tiny label makers">
           <button type="button" id="mode-standard" class="active" onclick="setLabelMode('standard')">Standard</button>
@@ -1336,10 +1336,12 @@ textarea { resize: vertical; min-height: 56px; }
 <div id="login-overlay">
   <div id="login-panel">
     <h1>QuickLabel</h1>
-    <p>Who's using this lab today? Pick a name. Your data is stored under that name; switching names gives you a clean slate.</p>
-    <input id="login-name" type="text" placeholder="e.g. pSi:L" autocomplete="off"
+    <p>Sign in with a username and password. Your data syncs to that account on any device. New username? Your password is set on first sign-in.</p>
+    <input id="login-name" type="text" placeholder="Username" autocomplete="username"
+           onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+    <input id="login-pass" type="password" placeholder="Password" autocomplete="current-password"
            onkeydown="if(event.key==='Enter')doLogin()">
-    <button onclick="doLogin()">Log in</button>
+    <button onclick="doLogin()">Sign in</button>
     <div id="login-error"></div>
   </div>
 </div>
@@ -1598,8 +1600,8 @@ const PRINTERS = {
   // D11-class mini thermal maker (Merryhome / NIIMBOT D11). Default roll
   // ~14 × 40 mm (landscape strip). Export/Share render at this size.
   'merryhome-d11': {
-    id: 'merryhome-d11', name: 'Merryhome / D11 — 14 × 40 mm',
-    paper: { widthIn: 40 / 25.4, heightIn: 14 / 25.4 }, template: 'd11-strip'
+    id: 'merryhome-d11', name: 'Merryhome / D11 — 14 × 35 mm',
+    paper: { widthIn: 35 / 25.4, heightIn: 14 / 25.4 }, template: 'd11-strip'
   }
 };
 
@@ -1812,32 +1814,32 @@ const LABEL_TEMPLATES = {
       fitText(svgEl.querySelector('.lbl-notes'),    contentW * 0.55);
     },
 
-    // Minimal label for tiny thermal makers: cultivar + ID + date, centered.
+    // Minimal label: cultivar + genus/species, date bottom-left, filial code
+    // (e.g. F1.C1_V.T3) bottom-right.
     renderSimple(d) {
       const VB = this.viewBox, L = this.layout;
-      const cx = VB.w / 2;
       const mono = "'SF Mono', Menlo, Monaco, Consolas, monospace";
       const cultivar = d.cultivar || '—';
-      const id = d.lotId || '';
+      const species = [d.genus, d.species].filter(Boolean).join(' ');
       const date = d.date ? fmtDate(d.date) : '';
+      const fil = d.notation || '';
+      const bottomY = VB.h - L.padBot;
       return `<svg xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 ${VB.w} ${VB.h}"
      font-family="Arial, Helvetica, sans-serif"
      shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
   <rect width="${VB.w}" height="${VB.h}" fill="#ffffff"/>
-  <text class="lbl-cultivar" x="${cx}" y="195" font-size="120" font-weight="700"
-        text-anchor="middle" fill="#000">${svgEsc(cultivar)}</text>
-  ${id ? `<text class="lbl-lot" x="${cx}" y="325" font-size="76" font-weight="600"
-        font-family="${mono}" text-anchor="middle" fill="#000">${svgEsc(id)}</text>` : ''}
-  ${date ? `<text x="${cx}" y="435" font-size="50"
-        font-family="${mono}" text-anchor="middle" fill="#000">${svgEsc(date)}</text>` : ''}
+  <text class="lbl-cultivar" x="${L.padL}" y="180" font-size="118" font-weight="700" fill="#000">${svgEsc(cultivar)}</text>
+  ${species ? `<text class="lbl-species" x="${L.padL}" y="262" font-size="50" font-style="italic" fill="#333">${svgEsc(species)}</text>` : ''}
+  ${date ? `<text x="${L.padL}" y="${bottomY}" font-size="${L.dateFS}" font-family="${mono}" fill="#000">${svgEsc(date)}</text>` : ''}
+  ${fil ? `<text class="lbl-notation" x="${VB.w - L.padR}" y="${bottomY}" font-size="46" font-weight="600" font-family="${mono}" text-anchor="end" fill="#000">${svgEsc(fil)}</text>` : ''}
 </svg>`.trim();
     }
   },
 
   // ── Dedicated D11 / Merryhome strip (≈14 × 40 mm landscape) ──────────────────
   'd11-strip': {
-    viewBox: { w: 1000, h: 350 },   // 40:14 aspect
+    viewBox: { w: 875, h: 350 },   // 35:14 aspect
     layout: { padL: 34, padR: 34 },
     render(d) {
       const VB = this.viewBox, L = this.layout;
@@ -1858,21 +1860,23 @@ const LABEL_TEMPLATES = {
   ${dest ? `<text class="lbl-src" x="${VB.w - L.padR}" y="325" font-size="64" text-anchor="end" fill="#000">${svgEsc(dest)}</text>` : ''}
 </svg>`.trim();
     },
+    // Simplified: cultivar + genus/species, date bottom-left, filial bottom-right.
     renderSimple(d) {
       const VB = this.viewBox, L = this.layout;
       const mono = "'SF Mono', Menlo, Monaco, Consolas, monospace";
       const cultivar = d.cultivar || '—';
-      const id = d.lotId || '';
+      const species = [d.genus, d.species].filter(Boolean).join(' ');
       const date = d.date ? fmtDate(d.date) : '';
+      const fil = d.notation || '';
       return `<svg xmlns="http://www.w3.org/2000/svg"
      viewBox="0 0 ${VB.w} ${VB.h}"
      font-family="Arial, Helvetica, sans-serif"
      shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
   <rect width="${VB.w}" height="${VB.h}" fill="#ffffff"/>
-  <text class="lbl-cultivar" x="${L.padL}" y="120" font-size="128" font-weight="700" fill="#000">${svgEsc(cultivar)}</text>
-  ${id ? `<text class="lbl-lot" x="${L.padL}" y="238" font-size="98" font-weight="600"
-        font-family="${mono}" fill="#000">${svgEsc(id)}</text>` : ''}
-  ${date ? `<text x="${L.padL}" y="330" font-size="74" font-family="${mono}" fill="#000">${svgEsc(date)}</text>` : ''}
+  <text class="lbl-cultivar" x="${L.padL}" y="118" font-size="120" font-weight="700" fill="#000">${svgEsc(cultivar)}</text>
+  ${species ? `<text class="lbl-species" x="${L.padL}" y="208" font-size="58" font-style="italic" fill="#333">${svgEsc(species)}</text>` : ''}
+  ${date ? `<text x="${L.padL}" y="320" font-size="60" font-family="${mono}" fill="#000">${svgEsc(date)}</text>` : ''}
+  ${fil ? `<text class="lbl-src" x="${VB.w - L.padR}" y="320" font-size="62" font-weight="600" font-family="${mono}" text-anchor="end" fill="#000">${svgEsc(fil)}</text>` : ''}
 </svg>`.trim();
     },
     fit(svgEl) {
@@ -1918,7 +1922,7 @@ function setPrinter(id) {
   if (!PRINTERS[id]) return;
   currentPrinterId = id;
   const hint = $('preview-size-hint');
-  if (hint) hint.textContent = 'Label Preview — ' + (id === 'merryhome-d11' ? '14 × 40 mm' : '2.25 × 1.25 in');
+  if (hint) hint.textContent = 'Label Preview — ' + (id === 'merryhome-d11' ? '14 × 35 mm' : '2.25 × 1.25 in');
   updatePreview();
 }
 
@@ -2071,6 +2075,7 @@ function nextSeq(code, date) {
 // ─── STORAGE / MIGRATION ──────────────────────────────────────────────────────
 
 async function loadStorage() {
+  try { if (db.sync) await db.sync.pull(); } catch(_) {}   // pull this user's cloud data first
   try {
     const c = await db.config.get();
     if (c) cfg = { ...cfg, ...c };
@@ -4007,6 +4012,7 @@ function showLogin() {
   $('login-overlay').classList.add('open');
   $('login-error').textContent = '';
   $('login-name').value = '';
+  if ($('login-pass')) $('login-pass').value = '';
   setTimeout(() => $('login-name').focus(), 50);
 }
 
@@ -4016,8 +4022,19 @@ function hideLogin() {
 
 async function doLogin() {
   const name = ($('login-name').value || '').trim();
-  if (!name) { $('login-error').textContent = 'Pick a name.'; return; }
-  await db.session.login(name);
+  const pass = $('login-pass') ? $('login-pass').value : '';
+  if (!name) { $('login-error').textContent = 'Enter a username.'; return; }
+  if (!pass) { $('login-error').textContent = 'Enter a password.'; return; }
+  $('login-error').textContent = 'Checking…';
+  let res;
+  try { res = await db.session.login(name, pass); }
+  catch (_) { res = { ok: false, reason: 'error' }; }
+  if (!res || !res.ok) {
+    $('login-error').textContent =
+      (res && res.reason === 'bad_pass') ? 'Wrong password for that username.'
+      : 'Could not sign in. Try again.';
+    return;
+  }
   // Full reload so the namespaced data loads cleanly into a fresh in-memory state.
   location.reload();
 }
