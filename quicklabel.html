@@ -4077,7 +4077,8 @@ async function doLogin() {
       empty:     'Enter a username.',
       empty_pass:'Enter a password.',
     };
-    $('login-error').textContent = (res && msgs[res.reason]) || 'Could not sign in. Try again.';
+    $('login-error').textContent = (res && msgs[res.reason])
+      || (res && res.msg ? ('Sign-in error: ' + res.msg) : 'Could not sign in. Try again.');
     return;
   }
   // Full reload so the namespaced data loads cleanly into a fresh in-memory state.

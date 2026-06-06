@@ -191,12 +191,17 @@
   function authMsg(d) { return String((d && (d.msg || d.error_description || d.error || d.message)) || ''); }
   async function signUp(username, password) {
     const r = await sbAuthFetch('signup', { email: emailFor(username), password: password });
-    if (r.ok && r.data && r.data.access_token) { persistSession(username, r.data); return { ok: true, isNew: true }; }
+    const sess = r.data && (r.data.access_token ? r.data : (r.data.session || null));
+    if (r.ok && sess && sess.access_token) { persistSession(username, sess); return { ok: true, isNew: true }; }
     const m = authMsg(r.data);
     if (r.status === 422 || /already.*(registered|exists)|user.*exists/i.test(m)) return { ok: false, reason: 'taken' };
     if (/password/i.test(m)) return { ok: false, reason: 'weak_pass' };
-    if (r.ok) return { ok: false, reason: 'no_session' };   // confirmation still on?
-    return { ok: false, reason: 'error', msg: m };
+    if (r.ok) {                                 // created but no session returned → sign in to get one
+      const si = await signIn(username, password);
+      if (si.ok) return { ok: true, isNew: true };
+      return { ok: false, reason: 'no_session' };
+    }
+    return { ok: false, reason: 'error', msg: m || ('HTTP ' + r.status) };
   }
   async function signIn(username, password) {
     const r = await sbAuthFetch('token?grant_type=password', { email: emailFor(username), password: password });
