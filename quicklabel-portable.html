@@ -415,11 +415,11 @@ textarea { resize: vertical; min-height: 56px; }
 #gimport-panel .gi-summary { font-size: 11px; color: var(--muted); }
 
 /* ── LOGIN ── */
-#login-overlay {
+#login-overlay, #forcepw-overlay {
   display: none; position: fixed; inset: 0; background: var(--bg); z-index: 500;
   align-items: center; justify-content: center;
 }
-#login-overlay.open { display: flex; }
+#login-overlay.open, #forcepw-overlay.open { display: flex; }
 #login-panel {
   background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   padding: 28px 32px; width: min(360px, 92vw); display: flex; flex-direction: column; gap: 16px;
@@ -1372,6 +1372,22 @@ textarea { resize: vertical; min-height: 56px; }
   </div>
 </div>
 
+<!-- Forced password change -->
+<div id="forcepw-overlay">
+  <div id="login-panel">
+    <h1>Set a new password</h1>
+    <p>Before you continue, please choose your own password (6+ characters).</p>
+    <div class="pw-wrap">
+      <input id="forcepw-new" type="password" placeholder="New password" autocomplete="new-password">
+      <button type="button" class="pw-eye" onclick="var i=document.getElementById('forcepw-new');i.type=i.type==='password'?'text':'password'" title="Show / hide">👁</button>
+    </div>
+    <input id="forcepw-confirm" type="password" placeholder="Confirm new password" autocomplete="new-password"
+           onkeydown="if(event.key==='Enter')doForcePw()">
+    <button id="forcepw-btn" onclick="doForcePw()">Save password &amp; continue</button>
+    <div id="forcepw-error"></div>
+  </div>
+</div>
+
 <!-- Import Genetics Modal -->
 <div id="gimport-overlay" onclick="if(event.target===this)closeImportGenetics()">
   <div id="gimport-panel">
@@ -1769,6 +1785,36 @@ textarea { resize: vertical; min-height: 56px; }
     } catch (_) {}
     return false;
   }
+  // Force-password-change flag: an admin sets a `force_pw` row for the user;
+  // the app makes them set a new password on next sign-in, then clears it.
+  async function mustChangePassword() {
+    const uid = cloudId();
+    if (!_canFetch || !uid) return false;
+    try {
+      const res = await fetch(SUPA.url + '/rest/v1/' + SUPA.table +
+        '?user_id=eq.' + encodeURIComponent(uid) + '&slot=eq.force_pw&select=slot', { headers: supaHeaders() });
+      if (!res.ok) return false;
+      return (await res.json()).length > 0;
+    } catch (_) { return false; }
+  }
+  async function changePassword(newPw) {
+    newPw = String(newPw || '');
+    if (newPw.length < 6) return { ok: false, reason: 'weak_pass' };
+    try {
+      const res = await fetch(SUPA.url + '/auth/v1/user', {
+        method: 'PUT',
+        headers: supaHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ password: newPw }),
+      });
+      if (!res.ok) { let d = {}; try { d = await res.json(); } catch (_) {} return { ok: false, reason: 'error', msg: authMsg(d) }; }
+      const uid = cloudId();   // clear the flag (own row)
+      try {
+        await fetch(SUPA.url + '/rest/v1/' + SUPA.table + '?user_id=eq.' + encodeURIComponent(uid) + '&slot=eq.force_pw',
+          { method: 'DELETE', headers: supaHeaders() });
+      } catch (_) {}
+      return { ok: true };
+    } catch (e) { return { ok: false, reason: 'error', msg: (e && e.message) || 'exception' }; }
+  }
 
   const nowISO = () => new Date().toISOString();
   const ok     = v => Promise.resolve(v);
@@ -1858,6 +1904,8 @@ textarea { resize: vertical; min-height: 56px; }
     currentUser,
     isLoggedIn()  { return !!currentUser() && !!accessToken(); },
     refresh() { return refreshSession(); },
+    mustChangePassword() { return mustChangePassword(); },
+    changePassword(pw) { return changePassword(pw); },
     // Username + password via real auth (synthetic email). mode: 'login'|'signup'.
     async login(name, password, mode) {
       const u = String(name || '').trim();   // keep exact case (e.g. "pSi:L")
@@ -4675,7 +4723,34 @@ async function boot() {
     const okr = await db.session.refresh();
     if (!okr) { await db.session.logout(); showLogin(); return; }
   } catch (_) { /* offline: proceed on cached token, sync just retries later */ }
+  // Admin-forced password change before entering the app.
+  try {
+    if (await db.session.mustChangePassword()) { showForcePw(); return; }
+  } catch (_) {}
   await init();
+}
+
+function showForcePw() {
+  $('forcepw-overlay').classList.add('open');
+  $('forcepw-error').textContent = '';
+  $('forcepw-new').value = ''; $('forcepw-confirm').value = '';
+  setTimeout(() => $('forcepw-new').focus(), 50);
+}
+async function doForcePw() {
+  const a = $('forcepw-new').value || '', b = $('forcepw-confirm').value || '';
+  if (a.length < 6) { $('forcepw-error').textContent = 'Password must be at least 6 characters.'; return; }
+  if (a !== b)     { $('forcepw-error').textContent = "Passwords don't match."; return; }
+  $('forcepw-error').textContent = 'Saving…';
+  let res;
+  try { res = await db.session.changePassword(a); }
+  catch (e) { res = { ok: false, msg: (e && e.message) || 'error' }; }
+  if (!res || !res.ok) {
+    $('forcepw-error').textContent =
+      (res && res.reason === 'weak_pass') ? 'Password must be at least 6 characters.'
+      : (res && res.msg ? ('Error: ' + res.msg) : 'Could not set password. Try again.');
+    return;
+  }
+  location.reload();   // flag cleared → normal load
 }
 
 boot();
