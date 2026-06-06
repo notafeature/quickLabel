@@ -164,7 +164,15 @@
   // Real auth → each request carries a verified JWT → RLS enforces per-user walls.
   const AUTH_DOMAIN = 'quicklabel.app';
   const TOKEN_KEY = 'ql_sb_token';
-  function emailFor(u) { return String(u).toLowerCase() + '@' + AUTH_DOMAIN; }
+  // Usernames may contain anything (e.g. "pSi:L"), which isn't a valid email
+  // local-part. Map each username to a deterministic *valid* synthetic email via
+  // a hash; the real username rides in user_metadata and drives the RLS wall.
+  function hashStr(s) {
+    let h = 2166136261 >>> 0; s = String(s);
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return ('0000000' + h.toString(16)).slice(-8);
+  }
+  function emailFor(u) { return 'u' + hashStr(u) + '@' + AUTH_DOMAIN; }
   function loadToken() { try { return JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null'); } catch (_) { return null; } }
   function saveToken(t) { try { localStorage.setItem(TOKEN_KEY, JSON.stringify(t)); } catch (_) {} }
   function clearToken() { try { localStorage.removeItem(TOKEN_KEY); } catch (_) {} }
@@ -190,7 +198,7 @@
   }
   function authMsg(d) { return String((d && (d.msg || d.error_description || d.error || d.message)) || ''); }
   async function signUp(username, password) {
-    const r = await sbAuthFetch('signup', { email: emailFor(username), password: password });
+    const r = await sbAuthFetch('signup', { email: emailFor(username), password: password, data: { username: username } });
     const sess = r.data && (r.data.access_token ? r.data : (r.data.session || null));
     if (r.ok && sess && sess.access_token) { persistSession(username, sess); return { ok: true, isNew: true }; }
     const m = authMsg(r.data);
@@ -308,7 +316,7 @@
     refresh() { return refreshSession(); },
     // Username + password via real auth (synthetic email). mode: 'login'|'signup'.
     async login(name, password, mode) {
-      const u = String(name || '').trim().toLowerCase();
+      const u = String(name || '').trim();   // keep exact case (e.g. "pSi:L")
       if (!u) return { ok: false, reason: 'empty' };
       if (!String(password || '')) return { ok: false, reason: 'empty_pass' };
       const res = (mode === 'signup') ? await signUp(u, String(password)) : await signIn(u, String(password));
