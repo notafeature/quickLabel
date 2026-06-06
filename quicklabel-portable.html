@@ -4090,6 +4090,35 @@ function openMobilePreview() {
 function closeMobilePreview() {
   document.body.classList.remove('preview-open');
 }
+// Swipe the preview sheet down to dismiss it.
+function setupPreviewSwipe() {
+  const pp = $('preview-panel');
+  if (!pp) return;
+  let startY = 0, dy = 0, dragging = false;
+  pp.addEventListener('touchstart', e => {
+    if (!document.body.classList.contains('preview-open')) return;
+    if (pp.scrollTop > 0) return;           // only when scrolled to the top
+    startY = e.touches[0].clientY; dy = 0; dragging = true;
+    pp.style.transition = 'none';
+  }, { passive: true });
+  pp.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    dy = e.touches[0].clientY - startY;
+    if (dy > 0) {                            // follow the finger downward
+      pp.style.transform = 'translateY(' + dy + 'px)';
+      if (e.cancelable) e.preventDefault();
+    }
+  }, { passive: false });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    pp.style.transition = '';
+    pp.style.transform = '';
+    if (dy > 90) closeMobilePreview();       // past threshold → dismiss
+  };
+  pp.addEventListener('touchend', end);
+  pp.addEventListener('touchcancel', end);
+}
 // On mobile the browser Print dialog can't reach a Bluetooth maker, so the
 // Print button just opens the preview/share sheet instead.
 function primaryPrint() {
@@ -4255,6 +4284,7 @@ async function init() {
   $('date').value = todayISO();
   $('settings-btn').onclick = openSettings;
   setupSplitter();
+  setupPreviewSwipe();
   updateFormForWorkflow(currentWorkflowId);
   if (!(await restoreFormState())) setCategory('actives');
   initializing = false;
