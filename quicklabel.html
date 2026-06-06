@@ -628,7 +628,10 @@ textarea { resize: vertical; min-height: 56px; }
     border: 0; border-radius: 9px; background: var(--green); color: #fff;
   }
 
-  input, select, textarea { font-size: 16px; }   /* no iOS focus-zoom */
+  /* 16px on the actual field selectors (the base input[type=…] rule is more
+     specific than a bare `input`, so it must be matched/!important) — this is
+     what stops iOS from zooming in on focus. */
+  input[type=text], input[type=date], input[type=number], select, textarea { font-size: 16px !important; }
   #wf-dropdown { left: 8px; right: 8px; width: auto; }
 
   /* Off-canvas side drawers are parked at translateX(100%) when closed, which
@@ -690,6 +693,12 @@ textarea { resize: vertical; min-height: 56px; }
                  oninput="onCodeChange()" onchange="onCodeChange()" list="code-dl"
                  data-testid="gen-code-input">
           <datalist id="code-dl"></datalist>
+        </div>
+        <div class="field" id="gen-pick-field" style="display:none">
+          <span class="fl">…or pick from library</span>
+          <select id="gen-code-pick" onchange="onPickCode()">
+            <option value="">— select a saved genetic —</option>
+          </select>
         </div>
         <div class="field">
           <span class="fl">Category</span>
@@ -2900,10 +2909,28 @@ function renderVesselDl() {
 
 // Code datalist (for gen-code field in standard workflows)
 function refreshCodeDl() {
-  $('code-dl').innerHTML = cfg.codes
-    .filter(r => r.code)
+  const saved = cfg.codes.filter(r => r.code);
+  $('code-dl').innerHTML = saved
     .map(r => `<option value="${r.code}">${r.cultivar} — ${r.genus} ${r.species}</option>`)
     .join('');
+  // Real <select> picker — datalists barely work on mobile; this always does.
+  const pick = $('gen-code-pick'), field = $('gen-pick-field');
+  if (pick) {
+    const cur = pick.value;
+    pick.innerHTML = '<option value="">— select a saved genetic —</option>' + saved
+      .map(r => `<option value="${svgEsc(r.code)}">${svgEsc(r.code)} — ${svgEsc(r.cultivar || '')} ${svgEsc(r.genus || '')} ${svgEsc(r.species || '')}</option>`)
+      .join('');
+    pick.value = cur;
+    if (field) field.style.display = saved.length ? '' : 'none';
+  }
+}
+
+// Pick a saved genetic from the dropdown → fill the code + autofill the rest.
+function onPickCode() {
+  const v = $('gen-code-pick').value;
+  if (!v) return;
+  $('gen-code').value = v;
+  onCodeChange();
 }
 
 function findCode(code) {
