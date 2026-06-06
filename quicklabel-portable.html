@@ -251,6 +251,13 @@ textarea { resize: vertical; min-height: 56px; }
   display: flex; align-items: center; gap: 8px;
   font-size: 11px; color: var(--muted); text-align: center; max-width: 480px;
 }
+.mode-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.mode-toggle button {
+  padding: 6px 14px; font-size: 12px; font-weight: 600; border: 0;
+  background: var(--surface); color: var(--muted); cursor: pointer;
+}
+.mode-toggle button + button { border-left: 1px solid var(--border); }
+.mode-toggle button.active { background: var(--green); color: #fff; }
 .preview-actions { display: flex; gap: 8px; }
 .preview-actions button {
   padding: 8px 14px; font-size: 13px; font-weight: 600;
@@ -1059,6 +1066,10 @@ textarea { resize: vertical; min-height: 56px; }
     <div id="preview-panel">
       <span class="preview-label-hint">Label Preview — 2.25 × 1.25 in</span>
       <div id="label-preview" class="label-host"></div>
+      <div class="mode-toggle" title="Simplified = cultivar + ID + date only, for tiny label makers">
+        <button type="button" id="mode-standard" class="active" onclick="setLabelMode('standard')">Standard</button>
+        <button type="button" id="mode-simple" onclick="setLabelMode('simple')">Simplified</button>
+      </div>
       <div class="preview-actions">
         <button type="button" id="export-share-btn" onclick="shareCurrentLabel()" style="display:none">Share to printer app</button>
         <button type="button" id="export-save-btn" onclick="saveCurrentLabel()">Save image (PNG)</button>
@@ -2064,11 +2075,37 @@ const LABEL_TEMPLATES = {
       fitText(svgEl.querySelector('.lbl-src'),      contentW * 0.72);
       fitText(svgEl.querySelector('.lbl-grain'),    contentW * 0.78);
       fitText(svgEl.querySelector('.lbl-notes'),    contentW * 0.55);
+    },
+
+    // Minimal label for tiny thermal makers: cultivar + ID + date, centered.
+    renderSimple(d) {
+      const VB = this.viewBox, L = this.layout;
+      const cx = VB.w / 2;
+      const mono = "'SF Mono', Menlo, Monaco, Consolas, monospace";
+      const cultivar = d.cultivar || '—';
+      const id = d.lotId || '';
+      const date = d.date ? fmtDate(d.date) : '';
+      return `<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 ${VB.w} ${VB.h}"
+     font-family="Arial, Helvetica, sans-serif"
+     shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <rect width="${VB.w}" height="${VB.h}" fill="#ffffff"/>
+  <text class="lbl-cultivar" x="${cx}" y="195" font-size="120" font-weight="700"
+        text-anchor="middle" fill="#000">${svgEsc(cultivar)}</text>
+  ${id ? `<text class="lbl-lot" x="${cx}" y="325" font-size="76" font-weight="600"
+        font-family="${mono}" text-anchor="middle" fill="#000">${svgEsc(id)}</text>` : ''}
+  ${date ? `<text x="${cx}" y="435" font-size="50"
+        font-family="${mono}" text-anchor="middle" fill="#000">${svgEsc(date)}</text>` : ''}
+</svg>`.trim();
     }
   }
 };
 
 const LAYOUT_DEFAULTS = JSON.parse(JSON.stringify(LABEL_TEMPLATES['grain-spawn-9x5'].layout));
+
+// 'standard' = full label; 'simple' = cultivar + ID + date only (for tiny
+// thermal label makers like the D11-class Merryhome).
+let labelMode = 'standard';
 
 function renderLabel(host, d, opts) {
   opts = opts || {};
@@ -2076,12 +2113,21 @@ function renderLabel(host, d, opts) {
   const tpl     = LABEL_TEMPLATES[printer.template];
   if (!tpl) return;
   const scale   = opts.physical === 'print' ? 1 : PREVIEW_SCALE;
-  host.innerHTML = tpl.render(d);
+  const simple  = (opts.mode || labelMode) === 'simple';
+  host.innerHTML = (simple && tpl.renderSimple) ? tpl.renderSimple(d) : tpl.render(d);
   const svg = host.firstElementChild;
   if (!svg) return;
   svg.setAttribute('width',  printer.paper.widthIn  * scale + 'in');
   svg.setAttribute('height', printer.paper.heightIn * scale + 'in');
   tpl.fit(svg);
+}
+
+function setLabelMode(m) {
+  labelMode = (m === 'simple') ? 'simple' : 'standard';
+  const s = $('mode-standard'), p = $('mode-simple');
+  if (s) s.classList.toggle('active', labelMode === 'standard');
+  if (p) p.classList.toggle('active', labelMode === 'simple');
+  updatePreview();
 }
 
 // ─── FIDDLE PANEL ─────────────────────────────────────────────────────────────
