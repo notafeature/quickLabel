@@ -2612,6 +2612,17 @@ async function loadStorage() {
     const counters = await db.lots._loadCounters();
     if (counters) lotCounters = counters;
   } catch(_) {}
+  // Rebuild cfg.codes from THIS user's genetics (authoritative, just-pulled), so
+  // the workflow genetic picker always matches the library — and never shows a
+  // previous/legacy user's codes. (genetics is the superset of codes.)
+  try {
+    const gens = await db.genetics.list();
+    if (Array.isArray(gens)) {
+      cfg.codes = gens
+        .filter(r => r && (r.code || r.cultivar))
+        .map(r => ({ code: r.code || '', cat: r.cat, genus: r.genus, species: r.species, cultivar: r.cultivar, ingestData: r.ingestData }));
+    }
+  } catch(_) {}
   migrateCfg();
 }
 
