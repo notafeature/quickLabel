@@ -245,6 +245,36 @@
     } catch (_) {}
     return false;
   }
+  // Force-password-change flag: an admin sets a `force_pw` row for the user;
+  // the app makes them set a new password on next sign-in, then clears it.
+  async function mustChangePassword() {
+    const uid = cloudId();
+    if (!_canFetch || !uid) return false;
+    try {
+      const res = await fetch(SUPA.url + '/rest/v1/' + SUPA.table +
+        '?user_id=eq.' + encodeURIComponent(uid) + '&slot=eq.force_pw&select=slot', { headers: supaHeaders() });
+      if (!res.ok) return false;
+      return (await res.json()).length > 0;
+    } catch (_) { return false; }
+  }
+  async function changePassword(newPw) {
+    newPw = String(newPw || '');
+    if (newPw.length < 6) return { ok: false, reason: 'weak_pass' };
+    try {
+      const res = await fetch(SUPA.url + '/auth/v1/user', {
+        method: 'PUT',
+        headers: supaHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ password: newPw }),
+      });
+      if (!res.ok) { let d = {}; try { d = await res.json(); } catch (_) {} return { ok: false, reason: 'error', msg: authMsg(d) }; }
+      const uid = cloudId();   // clear the flag (own row)
+      try {
+        await fetch(SUPA.url + '/rest/v1/' + SUPA.table + '?user_id=eq.' + encodeURIComponent(uid) + '&slot=eq.force_pw',
+          { method: 'DELETE', headers: supaHeaders() });
+      } catch (_) {}
+      return { ok: true };
+    } catch (e) { return { ok: false, reason: 'error', msg: (e && e.message) || 'exception' }; }
+  }
 
   const nowISO = () => new Date().toISOString();
   const ok     = v => Promise.resolve(v);
@@ -334,6 +364,8 @@
     currentUser,
     isLoggedIn()  { return !!currentUser() && !!accessToken(); },
     refresh() { return refreshSession(); },
+    mustChangePassword() { return mustChangePassword(); },
+    changePassword(pw) { return changePassword(pw); },
     // Username + password via real auth (synthetic email). mode: 'login'|'signup'.
     async login(name, password, mode) {
       const u = String(name || '').trim();   // keep exact case (e.g. "pSi:L")

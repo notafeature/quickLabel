@@ -415,11 +415,11 @@ textarea { resize: vertical; min-height: 56px; }
 #gimport-panel .gi-summary { font-size: 11px; color: var(--muted); }
 
 /* ── LOGIN ── */
-#login-overlay {
+#login-overlay, #forcepw-overlay {
   display: none; position: fixed; inset: 0; background: var(--bg); z-index: 500;
   align-items: center; justify-content: center;
 }
-#login-overlay.open { display: flex; }
+#login-overlay.open, #forcepw-overlay.open { display: flex; }
 #login-panel {
   background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   padding: 28px 32px; width: min(360px, 92vw); display: flex; flex-direction: column; gap: 16px;
@@ -1369,6 +1369,22 @@ textarea { resize: vertical; min-height: 56px; }
     <div class="login-toggle"><span id="login-toggle-text">New here?</span>
       <a href="#" id="login-toggle-link" onclick="toggleAuthMode();return false">Create an account</a></div>
     <div id="login-error"></div>
+  </div>
+</div>
+
+<!-- Forced password change -->
+<div id="forcepw-overlay">
+  <div id="login-panel">
+    <h1>Set a new password</h1>
+    <p>Before you continue, please choose your own password (6+ characters).</p>
+    <div class="pw-wrap">
+      <input id="forcepw-new" type="password" placeholder="New password" autocomplete="new-password">
+      <button type="button" class="pw-eye" onclick="var i=document.getElementById('forcepw-new');i.type=i.type==='password'?'text':'password'" title="Show / hide">👁</button>
+    </div>
+    <input id="forcepw-confirm" type="password" placeholder="Confirm new password" autocomplete="new-password"
+           onkeydown="if(event.key==='Enter')doForcePw()">
+    <button id="forcepw-btn" onclick="doForcePw()">Save password &amp; continue</button>
+    <div id="forcepw-error"></div>
   </div>
 </div>
 
@@ -4171,7 +4187,34 @@ async function boot() {
     const okr = await db.session.refresh();
     if (!okr) { await db.session.logout(); showLogin(); return; }
   } catch (_) { /* offline: proceed on cached token, sync just retries later */ }
+  // Admin-forced password change before entering the app.
+  try {
+    if (await db.session.mustChangePassword()) { showForcePw(); return; }
+  } catch (_) {}
   await init();
+}
+
+function showForcePw() {
+  $('forcepw-overlay').classList.add('open');
+  $('forcepw-error').textContent = '';
+  $('forcepw-new').value = ''; $('forcepw-confirm').value = '';
+  setTimeout(() => $('forcepw-new').focus(), 50);
+}
+async function doForcePw() {
+  const a = $('forcepw-new').value || '', b = $('forcepw-confirm').value || '';
+  if (a.length < 6) { $('forcepw-error').textContent = 'Password must be at least 6 characters.'; return; }
+  if (a !== b)     { $('forcepw-error').textContent = "Passwords don't match."; return; }
+  $('forcepw-error').textContent = 'Saving…';
+  let res;
+  try { res = await db.session.changePassword(a); }
+  catch (e) { res = { ok: false, msg: (e && e.message) || 'error' }; }
+  if (!res || !res.ok) {
+    $('forcepw-error').textContent =
+      (res && res.reason === 'weak_pass') ? 'Password must be at least 6 characters.'
+      : (res && res.msg ? ('Error: ' + res.msg) : 'Could not set password. Try again.');
+    return;
+  }
+  location.reload();   // flag cleared → normal load
 }
 
 boot();
