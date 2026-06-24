@@ -701,6 +701,13 @@ textarea { resize: vertical; min-height: 56px; }
     <div class="wf-group-label">Production</div>
     <div class="wf-opt" id="wf-opt-grain-spawn"    onclick="switchWorkflow('grain-spawn')"    data-testid="wf-grain">Make Grain Spawn</div>
     <div class="wf-opt" id="wf-opt-generate-batch" onclick="switchWorkflow('generate-batch')" data-testid="wf-batch">Generate a Batch <span class="wf-soon" style="background:none;border:0;padding:0;color:var(--muted)">(Spawn to Bulk)</span></div>
+    <div class="wf-group-label">Harvest</div>
+    <div class="wf-opt" id="wf-opt-harvest-lot"     onclick="switchWorkflow('harvest-lot')"     data-testid="wf-harvest">Record Harvest Lot</div>
+    <div class="wf-opt" id="wf-opt-retail-units"    onclick="switchWorkflow('retail-units')"    data-testid="wf-retail">Print Retail Units</div>
+    <div class="wf-group-label">Samples</div>
+    <div class="wf-opt" id="wf-opt-swab-collection" onclick="switchWorkflow('swab-collection')" data-testid="wf-swab">Swab Collection</div>
+    <div class="wf-group-label">Utilities</div>
+    <div class="wf-opt" id="wf-opt-reprint"         onclick="switchWorkflow('reprint')"         data-testid="wf-reprint">Reprint from ID</div>
   </div>
 
   <main>
@@ -709,7 +716,7 @@ textarea { resize: vertical; min-height: 56px; }
       <!-- ══ STANDARD CARDS (agar / lc / grain — hidden for ingest) ══ -->
 
       <!-- Genetic -->
-      <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch">
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch harvest-lot retail-units swab-collection">
         <div class="card-label">Genetic</div>
         <div class="field" style="position:relative">
           <span class="fl">Genetic Code <span style="color:var(--muted);font-weight:400">— type a code or name to search</span></span>
@@ -777,7 +784,7 @@ textarea { resize: vertical; min-height: 56px; }
       </div>
 
       <!-- Lot -->
-      <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch">
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch harvest-lot retail-units swab-collection">
         <div class="card-label">Lot</div>
         <div class="field">
           <span class="fl">Date</span>
@@ -878,8 +885,104 @@ textarea { resize: vertical; min-height: 56px; }
         </div>
       </div>
 
+      <!-- Source Lot picker (harvest-lot, retail-units, swab-collection) -->
+      <div class="card" data-wf="harvest-lot retail-units swab-collection" style="display:none">
+        <div class="card-label" id="source-lot-card-label">Source Batch</div>
+        <div class="field">
+          <div class="row" style="gap:8px">
+            <select id="source-lot-pick" style="flex:1" onchange="onSourceLotPick()">
+              <option value="">— select lot —</option>
+            </select>
+          </div>
+          <input type="text" id="source-lot-manual"
+                 placeholder="or type a lot ID"
+                 style="margin-top:6px"
+                 oninput="onSourceLotManual()">
+        </div>
+        <div id="source-lot-info" style="display:none;margin-top:6px">
+          <div class="notation-preview" id="source-lot-cultivar"></div>
+        </div>
+      </div>
+
+      <!-- Details: Harvest Lot -->
+      <div class="card" data-detail="harvest" style="display:none">
+        <div class="card-label">Harvest</div>
+        <div class="row">
+          <div class="field" style="flex:0 0 auto">
+            <span class="fl">Flush #</span>
+            <input type="number" id="harvest-flush" min="1" max="99" value="1"
+                   oninput="updatePreview()" style="width:64px">
+          </div>
+          <div class="field">
+            <span class="fl">Wet Weight <span style="color:var(--muted);font-weight:400">— optional</span></span>
+            <div class="row" style="gap:4px;align-items:center">
+              <input type="number" id="harvest-wet-weight" min="0" step="0.1"
+                     placeholder="grams" oninput="updatePreview()" style="flex:1">
+              <span style="color:var(--muted);font-size:11px">g</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Details: Retail Units -->
+      <div class="card" data-detail="retail" style="display:none">
+        <div class="card-label">Unit</div>
+        <div class="field">
+          <span class="fl">Gram Weight</span>
+          <div class="row" style="gap:4px;align-items:center">
+            <input type="number" id="retail-gram-weight" min="0" step="0.01"
+                   placeholder="e.g. 3.5" oninput="updatePreview()" style="flex:1">
+            <span style="color:var(--muted);font-size:11px">g</span>
+          </div>
+        </div>
+        <div class="field">
+          <span class="fl">Potency Ref <span style="color:var(--muted);font-weight:400">— optional, shown on label</span></span>
+          <input type="text" id="retail-potency" placeholder="e.g. COA-260601 or 8.2% tot."
+                 maxlength="32" oninput="updatePreview()">
+        </div>
+      </div>
+
+      <!-- Details: Swab Collection -->
+      <div class="card" data-detail="swab" style="display:none">
+        <div class="card-label">Swabs</div>
+        <div class="field">
+          <label class="inline-toggle">
+            <input type="checkbox" id="swab-print-bag" checked onchange="updatePreview()">
+            <span>Also print bag label (shows source + ID range)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Reprint: Lot Lookup -->
+      <div class="card" data-wf="reprint" style="display:none">
+        <div class="card-label">Reprint by Lot ID</div>
+        <div class="field">
+          <span class="fl">Lot ID</span>
+          <input type="text" id="reprint-lot-id" placeholder="e.g. GL-SL192-260510-01"
+                 oninput="onReprintIdChange()" list="reprint-lot-dl" autocomplete="off">
+          <datalist id="reprint-lot-dl"></datalist>
+        </div>
+        <div id="reprint-lot-info" style="display:none;margin-top:6px">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:8px 10px">
+            <div id="reprint-lot-cultivar" style="font-size:13px;font-weight:600;color:var(--text)"></div>
+            <div id="reprint-lot-meta" style="font-size:11px;color:var(--muted);margin-top:3px"></div>
+          </div>
+        </div>
+        <div id="reprint-not-found" style="display:none;margin-top:6px;font-size:11px;color:var(--red)">
+          No saved lot found for that ID.
+        </div>
+      </div>
+
+      <!-- Reprint: Print button -->
+      <div class="card" data-wf="reprint" style="display:none">
+        <div class="row print-row-end">
+          <button class="primary print-btn" id="reprint-print-btn" onclick="printReprint()" disabled>Reprint</button>
+          <button class="reset-btn" onclick="resetReprintForm()" title="Clear">↺</button>
+        </div>
+      </div>
+
       <!-- Notes (standard workflows) -->
-      <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch">
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch harvest-lot retail-units swab-collection">
         <div class="field">
           <span class="fl">Notes <span style="color:var(--muted);font-weight:400">— optional, shown on label</span></span>
           <input type="text" id="notes" placeholder="~40 chars" maxlength="60"
@@ -888,7 +991,7 @@ textarea { resize: vertical; min-height: 56px; }
       </div>
 
       <!-- Print (standard workflows) -->
-      <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch">
+      <div class="card" data-wf="agar-plate liquid-culture grain-spawn generate-batch harvest-lot retail-units swab-collection">
         <div class="row print-row-end">
           <button class="primary print-btn" id="print-btn" onclick="primaryPrint()"
                   data-testid="print-btn">Print</button>
@@ -1622,7 +1725,23 @@ const WORKFLOWS = {
   'generate-batch': {
     label: 'Generate a Batch', lotType: 'Batch',
     lotPrefix: 'BL', destination: 'Batch', mediaLabel: 'Substrate', detailSection: 'batch'
-  }
+  },
+  'harvest-lot': {
+    label: 'Record Harvest Lot', lotType: 'Harvest Lot',
+    lotPrefix: 'HL', destination: 'Harvest Lot', mediaLabel: null, detailSection: 'harvest'
+  },
+  'retail-units': {
+    label: 'Print Retail Units', lotType: 'Retail Unit',
+    lotPrefix: 'RU', destination: 'Retail', mediaLabel: null, detailSection: 'retail'
+  },
+  'swab-collection': {
+    label: 'Swab Collection', lotType: 'Swab',
+    lotPrefix: 'SW', destination: 'Swab', mediaLabel: null, detailSection: 'swab'
+  },
+  'reprint': {
+    label: 'Reprint from ID', lotType: null,
+    lotPrefix: null, destination: null, mediaLabel: null, detailSection: 'reprint'
+  },
 };
 
 let currentWorkflowId = 'grain-spawn';
@@ -1631,6 +1750,12 @@ function currentWorkflow() { return WORKFLOWS[currentWorkflowId]; }
 // Source grain lots feeding the current batch (Generate a Batch workflow).
 // Each entry: { lotId, manual }. Optional — a batch prints fine with none.
 let batchSources = [];
+
+// Source lot for harvest-lot, retail-units, and swab-collection workflows.
+let sourceLotId = '';
+
+// Loaded lot record for the reprint workflow.
+let reprintLot = null;
 
 // ─── PRINTERS & LABEL TEMPLATES ───────────────────────────────────────────────
 
@@ -2211,6 +2336,14 @@ function saveFormState() {
     ingestToggles: Object.fromEntries(
       INGEST_SECTIONS.map(n => [n, isIngestSectionOn(n)])
     ),
+    // New workflow fields
+    sourceLotId:      sourceLotId,
+    sourceLotManual:  ($('source-lot-manual')   || {}).value || '',
+    harvestFlush:     ($('harvest-flush')        || {}).value || '1',
+    harvestWetWeight: ($('harvest-wet-weight')   || {}).value || '',
+    retailGramWeight: ($('retail-gram-weight')   || {}).value || '',
+    retailPotency:    ($('retail-potency')       || {}).value || '',
+    swabPrintBag:     $('swab-print-bag') ? $('swab-print-bag').checked : true,
   });
 }
 
@@ -2272,6 +2405,15 @@ async function restoreFormState() {
         }
       }
     }
+
+    // New workflow fields
+    if (s.sourceLotId !== undefined) sourceLotId = s.sourceLotId || '';
+    if (s.sourceLotManual) { const el = $('source-lot-manual'); if (el) el.value = s.sourceLotManual; }
+    if (s.harvestFlush)    { const el = $('harvest-flush');      if (el) el.value = s.harvestFlush; }
+    if (s.harvestWetWeight){ const el = $('harvest-wet-weight'); if (el) el.value = s.harvestWetWeight; }
+    if (s.retailGramWeight){ const el = $('retail-gram-weight'); if (el) el.value = s.retailGramWeight; }
+    if (s.retailPotency)   { const el = $('retail-potency');     if (el) el.value = s.retailPotency; }
+    if (s.swabPrintBag !== undefined) { const el = $('swab-print-bag'); if (el) el.checked = s.swabPrintBag; }
 
     onLineage();
     rebuildLot();
@@ -3036,7 +3178,7 @@ function switchWorkflow(id) {
   currentWorkflowId = id;
   updateFormForWorkflow(id);
   closeWorkflowDropdown();
-  if (id !== 'ingest') { rebuildLot(); }
+  if (id !== 'ingest' && id !== 'reprint') { rebuildLot(); }
   saveFormState();
 }
 
@@ -3056,17 +3198,31 @@ function updateFormForWorkflow(id) {
   document.querySelectorAll('[data-detail]').forEach(el => {
     el.style.display = el.dataset.detail === wf.detailSection ? '' : 'none';
   });
-  if (id !== 'ingest') {
+  if (id !== 'ingest' && id !== 'reprint' && wf.lotType) {
     $('lot-id-label').textContent = `${wf.lotType} ID (next print)`;
   }
 
-  // Quantity means "physical units" for a batch; "copies" otherwise.
+  // Quantity label varies by workflow.
   const qLabel = $('quantity-label');
-  if (qLabel) qLabel.textContent = id === 'generate-batch' ? 'How many units' : 'Quantity';
+  if (qLabel) {
+    if (id === 'generate-batch')   qLabel.textContent = 'How many units';
+    else if (id === 'swab-collection') qLabel.textContent = 'Swabs';
+    else if (id === 'retail-units')    qLabel.textContent = 'Units';
+    else if (id === 'harvest-lot')     qLabel.textContent = 'Copies';
+    else qLabel.textContent = 'Quantity';
+  }
 
   if (id === 'generate-batch') {
     renderBatchSources();
     refreshBatchGrainPicker();
+  }
+
+  if (id === 'harvest-lot' || id === 'retail-units' || id === 'swab-collection') {
+    refreshSourceLotPicker();
+  }
+
+  if (id === 'reprint') {
+    populateReprintDatalist();
   }
 
   // Update active marker in dropdown
@@ -3568,10 +3724,24 @@ function resetLotCounter() {
 }
 
 function rebuildLot() {
+  if (currentWorkflowId === 'reprint') return;
+
   const code = $('gen-code').value.trim().toUpperCase();
   const date = $('date').value;
   const qty  = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
   if (!code || !date) { $('lot-display').innerHTML = '—'; updatePreview(); return; }
+
+  // Harvest lot: one HL- ID per harvest, qty = number of label copies.
+  if (currentWorkflowId === 'harvest-lot') {
+    const prefix = effectiveLotPrefix();
+    const seq    = nextSeq(code, date);
+    const hlId   = `${prefix}-${code}-${toYYMMDD(date)}-${pad2(seq)}`;
+    $('lot-display').innerHTML = qty > 1
+      ? `${hlId}<span class="range">× ${qty} copies</span>`
+      : hlId;
+    updatePreview();
+    return;
+  }
 
   // Batch: one batch ID, qty = number of physical units (not a lot range).
   if (currentWorkflowId === 'generate-batch') {
@@ -3625,6 +3795,17 @@ function resetForm() {
   const mediaSel = $('ingest-media-type'); if (mediaSel) { mediaSel.value = ''; onIngestMediaTypeChange(); }
   const ingestDate = $('ingest-date'); if (ingestDate) ingestDate.value = todayISO();
   autoGenIngestCode();
+  // new workflow fields
+  sourceLotId = '';
+  const slPick   = $('source-lot-pick');   if (slPick)   slPick.value   = '';
+  const slManual = $('source-lot-manual'); if (slManual) slManual.value = '';
+  const slInfo   = $('source-lot-info');   if (slInfo)   slInfo.style.display = 'none';
+  const slCultivar = $('source-lot-cultivar'); if (slCultivar) slCultivar.textContent = '';
+  const hFlush   = $('harvest-flush');      if (hFlush)   hFlush.value   = '1';
+  const hWetWt   = $('harvest-wet-weight'); if (hWetWt)   hWetWt.value   = '';
+  const rGram    = $('retail-gram-weight'); if (rGram)    rGram.value    = '';
+  const rPot     = $('retail-potency');     if (rPot)     rPot.value     = '';
+  const sBag     = $('swab-print-bag');     if (sBag)     sBag.checked   = true;
   rebuildLot();
 }
 
@@ -3679,6 +3860,15 @@ function updatePreview() {
   } else if (currentWorkflowId === 'generate-batch') {
     const units = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
     d = buildBatchLabelData(1, units);
+  } else if (currentWorkflowId === 'harvest-lot') {
+    d = buildHarvestLotLabelData();
+  } else if (currentWorkflowId === 'retail-units') {
+    d = buildRetailUnitLabelData();
+  } else if (currentWorkflowId === 'swab-collection') {
+    d = buildSwabLabelData();
+  } else if (currentWorkflowId === 'reprint') {
+    if (reprintLot) d = buildReprintLabelData(reprintLot);
+    else return;
   } else {
     d = buildLabelData();
   }
@@ -3934,11 +4124,15 @@ if (typeof document !== 'undefined') {
 const SHARE_OK = typeof navigator !== 'undefined' && !!navigator.share;
 
 function currentLabelData() {
-  if (currentWorkflowId === 'ingest') return buildIngestLabelData();
+  if (currentWorkflowId === 'ingest')          return buildIngestLabelData();
   if (currentWorkflowId === 'generate-batch') {
     const units = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
     return buildBatchLabelData(1, units);
   }
+  if (currentWorkflowId === 'harvest-lot')     return buildHarvestLotLabelData();
+  if (currentWorkflowId === 'retail-units')    return buildRetailUnitLabelData();
+  if (currentWorkflowId === 'swab-collection') return buildSwabLabelData();
+  if (currentWorkflowId === 'reprint')         return reprintLot ? buildReprintLabelData(reprintLot) : null;
   return buildLabelData();
 }
 function labelFileName() {
@@ -3999,7 +4193,11 @@ async function shareCurrentLabel() {
 // ─── PRINT (standard workflows) ───────────────────────────────────────────────
 
 function printLabel() {
-  if (currentWorkflowId === 'generate-batch') return printBatch();
+  if (currentWorkflowId === 'generate-batch')   return printBatch();
+  if (currentWorkflowId === 'harvest-lot')      return printHarvestLot();
+  if (currentWorkflowId === 'retail-units')     return printRetailUnits();
+  if (currentWorkflowId === 'swab-collection')  return printSwabs();
+  if (currentWorkflowId === 'reprint')          return printReprint();
   const code = $('gen-code').value.trim().toUpperCase();
   const date = $('date').value;
   const qty  = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
@@ -4066,6 +4264,460 @@ function setupSplitter() {
     dragging = false;
     splitter.classList.remove('dragging'); document.body.classList.remove('splitter-dragging');
   });
+}
+
+// ─── SOURCE LOT PICKER (harvest-lot, retail-units, swab-collection) ──────────
+
+function sourcePickerPrefix() {
+  if (currentWorkflowId === 'harvest-lot')      return 'BL';
+  if (currentWorkflowId === 'retail-units')     return 'HL';
+  if (currentWorkflowId === 'swab-collection')  return 'HL';
+  return '';
+}
+
+async function refreshSourceLotPicker() {
+  const sel   = $('source-lot-pick');
+  const label = $('source-lot-card-label');
+  if (!sel) return;
+
+  const wfLabels = {
+    'harvest-lot':     'Source Batch',
+    'retail-units':    'Source Harvest Lot',
+    'swab-collection': 'Source (Harvest Lot)',
+  };
+  if (label) label.textContent = wfLabels[currentWorkflowId] || 'Source';
+
+  const prefix = sourcePickerPrefix();
+  let rows = [];
+  try { rows = prefix ? (await db.lots.byPrefix(prefix)) || [] : []; } catch (_) { rows = []; }
+
+  const opts = ['<option value="">— select lot —</option>'];
+  for (const r of rows) {
+    if (!r || !r.lotId) continue;
+    const display = r.cultivar ? `${r.lotId} — ${r.cultivar}` : r.lotId;
+    const sel_val = sourceLotId === r.lotId ? ' selected' : '';
+    opts.push(`<option value="${escAttr(r.lotId)}"${sel_val}>${escHtml(display)}</option>`);
+  }
+  sel.innerHTML = opts.join('');
+
+  // Restore manual input if sourceLotId is set
+  const manual = $('source-lot-manual');
+  if (manual && sourceLotId) manual.value = sourceLotId;
+}
+
+function onSourceLotPick() {
+  const sel = $('source-lot-pick');
+  if (!sel) return;
+  sourceLotId = sel.value;
+  const manual = $('source-lot-manual');
+  if (manual) manual.value = sourceLotId;
+  autofillGeneticFromSourceLot(sourceLotId);
+  rebuildLot();
+}
+
+function onSourceLotManual() {
+  const inp = $('source-lot-manual');
+  if (!inp) return;
+  sourceLotId = inp.value.trim();
+  const sel = $('source-lot-pick');
+  if (sel) {
+    const opt = Array.from(sel.options).find(o => o.value === sourceLotId);
+    sel.value = opt ? sourceLotId : '';
+  }
+  autofillGeneticFromSourceLot(sourceLotId);
+  rebuildLot();
+}
+
+async function autofillGeneticFromSourceLot(lotId) {
+  const infoEl     = $('source-lot-info');
+  const cultivarEl = $('source-lot-cultivar');
+  if (!lotId) {
+    if (infoEl) infoEl.style.display = 'none';
+    return;
+  }
+  let rec = null;
+  try { rec = await db.lots.get(lotId); } catch (_) { rec = null; }
+  if (rec) {
+    if (infoEl) infoEl.style.display = '';
+    if (cultivarEl) cultivarEl.textContent = [
+      rec.cultivar,
+      (rec.genus && rec.species) ? `${rec.genus} ${rec.species}` : ''
+    ].filter(Boolean).join(' — ');
+  } else {
+    if (infoEl) infoEl.style.display = 'none';
+  }
+  if (!rec) return;
+  if (!$('gen-code').value.trim() && rec.geneticCode) $('gen-code').value = rec.geneticCode;
+  if (!$('cultivar').value.trim() && rec.cultivar)    $('cultivar').value = rec.cultivar;
+  if (rec.cat && (rec.cat === 'actives' || rec.cat === 'gourmet')) setCategory(rec.cat);
+  setSelectIfOption('genus', rec.genus);
+  if (rec.genus) { onGenus(); setSelectIfOption('species', rec.species); }
+  updatePreview();
+}
+
+// ─── HARVEST LOT WORKFLOW ─────────────────────────────────────────────────────
+
+function buildHarvestLotLabelData(seqOverride) {
+  const code     = $('gen-code').value.trim().toUpperCase();
+  const date     = $('date').value;
+  const genus    = $('genus').value;
+  const species  = $('species').value;
+  const cultivar = $('cultivar').value.trim();
+  const notes    = $('notes').value.trim();
+  const flush    = parseInt(($('harvest-flush') || {}).value || '1', 10) || 1;
+  const wetWtEl  = $('harvest-wet-weight');
+  const wetWt    = wetWtEl ? parseFloat(wetWtEl.value || '') : NaN;
+
+  let lotId = '';
+  if (code && date) {
+    const seq = seqOverride !== undefined ? seqOverride : nextSeq(code, date);
+    lotId = `HL-${code}-${toYYMMDD(date)}-${pad2(seq)}`;
+  }
+
+  const slots = [];
+  slots.push({ kind: 'destination', text: `Flush ${flush}`, source: sourceLotId });
+  if (!isNaN(wetWt) && wetWt > 0) slots.push({ kind: 'info', text: `Wet: ${wetWt}g` });
+  if (notes) slots.push({ kind: 'origin', text: notes });
+
+  return { cat, genus, species, cultivar, lotId, bodySlots: slots, footer: { left: date } };
+}
+
+function printHarvestLot() {
+  const code = $('gen-code').value.trim().toUpperCase();
+  const date = $('date').value;
+  const qty  = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
+  if (!code) { const el = $('gen-code'); if (el) el.focus(); return; }
+  if (!date) { const el = $('date');     if (el) el.focus(); return; }
+
+  const key = lotKey(code, date);
+  const seq = key ? nextSeq(code, date) : 1;
+  const d   = buildHarvestLotLabelData(seq);
+
+  const printArea = $('print-area');
+  printArea.innerHTML = '';
+  for (let i = 0; i < qty; i++) {
+    const host = document.createElement('div');
+    host.className = 'label-host';
+    printArea.appendChild(host);
+    renderLabel(host, d, { physical: 'print' });
+  }
+  window.print();
+
+  if (key) { lotCounters[key] = seq; persistLots(); }
+
+  if (d.lotId) {
+    const wetWtEl = $('harvest-wet-weight');
+    db.lots.create({
+      lotId:        d.lotId,
+      workflowId:   'harvest-lot',
+      geneticCode:  code,
+      cultivar:     d.cultivar,
+      genus:        d.genus,
+      species:      d.species,
+      cat:          d.cat,
+      notation:     '',
+      destination:  'Harvest Lot',
+      source:       sourceLotId,
+      sub:          '',
+      notes:        ($('notes') || {}).value || '',
+      date:         d.date,
+      qty,
+      flushNumber:  parseInt(($('harvest-flush') || {}).value || '1', 10) || 1,
+      wetWeight:    wetWtEl ? (parseFloat(wetWtEl.value || '') || null) : null,
+      state:        'wet',
+      bodySlots:    d.bodySlots,
+    });
+    if (sourceLotId) db.lineage.addEdge(sourceLotId, d.lotId);
+  }
+  rebuildLot();
+}
+
+// ─── RETAIL UNITS WORKFLOW ────────────────────────────────────────────────────
+
+function buildRetailUnitLabelData(seqOverride) {
+  const code     = $('gen-code').value.trim().toUpperCase();
+  const date     = $('date').value;
+  const genus    = $('genus').value;
+  const species  = $('species').value;
+  const cultivar = $('cultivar').value.trim();
+  const notes    = $('notes').value.trim();
+  const gramEl   = $('retail-gram-weight');
+  const gramWt   = gramEl ? gramEl.value.trim() : '';
+  const potEl    = $('retail-potency');
+  const potency  = potEl ? potEl.value.trim() : '';
+
+  let lotId = '';
+  if (code && date) {
+    const seq = seqOverride !== undefined ? seqOverride : nextSeq(code, date);
+    lotId = `RU-${code}-${toYYMMDD(date)}-${pad2(seq)}`;
+  }
+
+  const slots = [];
+  slots.push({ kind: 'destination', text: gramWt ? `${gramWt}g` : 'Retail', source: sourceLotId });
+  if (potency) slots.push({ kind: 'origin', text: potency });
+  if (notes)   slots.push({ kind: 'info',   text: notes });
+
+  return { cat, genus, species, cultivar, lotId, bodySlots: slots, footer: { left: date } };
+}
+
+function printRetailUnits() {
+  const code = $('gen-code').value.trim().toUpperCase();
+  const date = $('date').value;
+  const qty  = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
+  if (!code) { const el = $('gen-code'); if (el) el.focus(); return; }
+  if (!date) { const el = $('date');     if (el) el.focus(); return; }
+
+  const key   = lotKey(code, date);
+  const start = key ? nextSeq(code, date) : 1;
+
+  const printArea = $('print-area');
+  printArea.innerHTML = '';
+  for (let i = 0; i < qty; i++) {
+    const host = document.createElement('div');
+    host.className = 'label-host';
+    printArea.appendChild(host);
+    renderLabel(host, buildRetailUnitLabelData(start + i), { physical: 'print' });
+  }
+  window.print();
+
+  if (key) { lotCounters[key] = start + qty - 1; persistLots(); }
+
+  const first = buildRetailUnitLabelData(start);
+  if (first.lotId) {
+    const gramEl = $('retail-gram-weight');
+    const potEl  = $('retail-potency');
+    db.lots.create({
+      lotId:        first.lotId,
+      workflowId:   'retail-units',
+      geneticCode:  code,
+      cultivar:     first.cultivar,
+      genus:        first.genus,
+      species:      first.species,
+      cat:          first.cat,
+      notation:     '',
+      destination:  'Retail',
+      source:       sourceLotId,
+      sub:          gramEl ? gramEl.value.trim() : '',
+      notes:        ($('notes') || {}).value || '',
+      date:         first.date,
+      qty,
+      gramWeight:   gramEl ? (parseFloat(gramEl.value || '') || null) : null,
+      potencyRef:   potEl ? potEl.value.trim() : '',
+      bodySlots:    first.bodySlots,
+    });
+    if (sourceLotId) db.lineage.addEdge(sourceLotId, first.lotId);
+  }
+  rebuildLot();
+}
+
+// ─── SWAB COLLECTION WORKFLOW ─────────────────────────────────────────────────
+
+function buildSwabLabelData(seqOverride) {
+  const code     = $('gen-code').value.trim().toUpperCase();
+  const date     = $('date').value;
+  const genus    = $('genus').value;
+  const species  = $('species').value;
+  const cultivar = $('cultivar').value.trim();
+  const notes    = $('notes').value.trim();
+
+  let lotId = '';
+  if (code && date) {
+    const seq = seqOverride !== undefined ? seqOverride : nextSeq(code, date);
+    lotId = `SW-${code}-${toYYMMDD(date)}-${pad2(seq)}`;
+  }
+
+  const slots = [];
+  slots.push({ kind: 'destination', text: 'Swab', source: sourceLotId });
+  if (notes) slots.push({ kind: 'origin', text: notes });
+
+  return { cat, genus, species, cultivar, lotId, bodySlots: slots, footer: { left: date } };
+}
+
+function buildSwabBagLabelData(firstSeq, qty) {
+  const code     = $('gen-code').value.trim().toUpperCase();
+  const date     = $('date').value;
+  const genus    = $('genus').value;
+  const species  = $('species').value;
+  const cultivar = $('cultivar').value.trim();
+  const notes    = $('notes').value.trim();
+
+  const firstId = code && date ? `SW-${code}-${toYYMMDD(date)}-${pad2(firstSeq)}` : '';
+  const range   = (qty > 1 && firstId)
+    ? `${firstId} → ${pad2(firstSeq + qty - 1)}`
+    : firstId;
+
+  const slots = [];
+  slots.push({ kind: 'destination', text: `Swab Bag ×${qty}`, source: sourceLotId });
+  if (range) slots.push({ kind: 'info', text: range });
+  if (notes) slots.push({ kind: 'origin', text: notes });
+
+  return { cat, genus, species, cultivar, lotId: firstId, bodySlots: slots, footer: { left: date } };
+}
+
+function printSwabs() {
+  const code   = $('gen-code').value.trim().toUpperCase();
+  const date   = $('date').value;
+  const qty    = Math.max(1, Math.min(99, parseInt($('quantity').value, 10) || 1));
+  const bagCb  = $('swab-print-bag');
+  const doBag  = bagCb ? bagCb.checked : true;
+  if (!code) { const el = $('gen-code'); if (el) el.focus(); return; }
+  if (!date) { const el = $('date');     if (el) el.focus(); return; }
+
+  const key   = lotKey(code, date);
+  const start = key ? nextSeq(code, date) : 1;
+
+  const printArea = $('print-area');
+  printArea.innerHTML = '';
+
+  if (doBag) {
+    const bagHost = document.createElement('div');
+    bagHost.className = 'label-host';
+    printArea.appendChild(bagHost);
+    renderLabel(bagHost, buildSwabBagLabelData(start, qty), { physical: 'print' });
+  }
+
+  for (let i = 0; i < qty; i++) {
+    const host = document.createElement('div');
+    host.className = 'label-host';
+    printArea.appendChild(host);
+    renderLabel(host, buildSwabLabelData(start + i), { physical: 'print' });
+  }
+
+  window.print();
+
+  if (key) { lotCounters[key] = start + qty - 1; persistLots(); }
+
+  for (let i = 0; i < qty; i++) {
+    const d = buildSwabLabelData(start + i);
+    if (d.lotId) {
+      db.lots.create({
+        lotId:        d.lotId,
+        workflowId:   'swab-collection',
+        geneticCode:  code,
+        cultivar:     d.cultivar,
+        genus:        d.genus,
+        species:      d.species,
+        cat:          d.cat,
+        notation:     '',
+        destination:  'Swab',
+        source:       sourceLotId,
+        sub:          '',
+        notes:        ($('notes') || {}).value || '',
+        date:         d.date,
+        qty:          1,
+        bodySlots:    d.bodySlots,
+      });
+      if (sourceLotId) db.lineage.addEdge(sourceLotId, d.lotId);
+    }
+  }
+  rebuildLot();
+}
+
+// ─── REPRINT WORKFLOW ─────────────────────────────────────────────────────────
+
+async function populateReprintDatalist() {
+  const dl = $('reprint-lot-dl');
+  if (!dl) return;
+  let rows = [];
+  try { rows = (await db.lots.list()) || []; } catch (_) { rows = []; }
+  dl.innerHTML = rows
+    .filter(r => r && r.lotId)
+    .map(r => `<option value="${escAttr(r.lotId)}"></option>`)
+    .join('');
+}
+
+async function onReprintIdChange() {
+  const inp      = $('reprint-lot-id');
+  const infoEl   = $('reprint-lot-info');
+  const notFound = $('reprint-not-found');
+  const btn      = $('reprint-print-btn');
+  if (!inp) return;
+
+  const id = inp.value.trim();
+  if (!id) {
+    if (infoEl)   infoEl.style.display   = 'none';
+    if (notFound) notFound.style.display = 'none';
+    if (btn)      btn.disabled = true;
+    reprintLot = null;
+    return;
+  }
+
+  let lot = null;
+  try { lot = await db.lots.get(id); } catch (_) { lot = null; }
+  reprintLot = lot;
+  if (btn) btn.disabled = !lot;
+
+  if (lot) {
+    if (infoEl)   infoEl.style.display   = '';
+    if (notFound) notFound.style.display = 'none';
+    const cEl = $('reprint-lot-cultivar');
+    const mEl = $('reprint-lot-meta');
+    if (cEl) cEl.textContent = lot.cultivar || lot.geneticCode || id;
+    if (mEl) mEl.textContent = [lot.workflowId, lot.destination, lot.date].filter(Boolean).join(' · ');
+    renderLabel($('label-preview'), buildReprintLabelData(lot));
+  } else {
+    if (infoEl)   infoEl.style.display   = 'none';
+    if (notFound) notFound.style.display = '';
+  }
+}
+
+function buildReprintLabelData(lot) {
+  if (!lot) return { cat: 'gourmet', cultivar: '—', lotId: '—', bodySlots: [], footer: { left: '' } };
+
+  const base = { cat: lot.cat || 'gourmet', genus: lot.genus || '', species: lot.species || '', cultivar: lot.cultivar || '' };
+
+  // New-style lots store bodySlots directly
+  if (Array.isArray(lot.bodySlots) && lot.bodySlots.length) {
+    return { ...base, lotId: lot.lotId, bodySlots: lot.bodySlots, footer: { left: lot.date || '' } };
+  }
+
+  // Reconstruct from stored flat fields (existing workflows)
+  if (lot.workflowId === 'generate-batch') {
+    return {
+      ...base,
+      destination: `${lot.unitType || 'Unit'} 01/${pad2(lot.qty || 1)}`,
+      source:      lot.source || '',
+      sub:         lot.sub    || '',
+      mediaLabel:  'Substrate',
+      notation:    '',
+      notes:       lot.notes  || '',
+      date:        lot.date   || '',
+      lotId:       lot.lotId,
+    };
+  }
+
+  // Generic flat-field reconstruction
+  const dest = lot.destination || '';
+  const slots = [{ kind: 'destination', text: dest, source: lot.source || '' }];
+  if (lot.notation) slots.unshift({ kind: 'notation', text: lot.notation });
+  if (lot.sub)      slots.push({ kind: 'info', text: lot.sub });
+  if (lot.notes)    slots.push({ kind: 'origin', text: lot.notes });
+
+  return { ...base, lotId: lot.lotId, bodySlots: slots, footer: { left: lot.date || '' } };
+}
+
+function printReprint() {
+  if (!reprintLot) return;
+  const d = buildReprintLabelData(reprintLot);
+  const printArea = $('print-area');
+  printArea.innerHTML = '';
+  const host = document.createElement('div');
+  host.className = 'label-host';
+  printArea.appendChild(host);
+  renderLabel(host, d, { physical: 'print' });
+  window.print();
+}
+
+function resetReprintForm() {
+  const inp = $('reprint-lot-id');
+  if (inp) inp.value = '';
+  const infoEl   = $('reprint-lot-info');
+  const notFound = $('reprint-not-found');
+  const btn      = $('reprint-print-btn');
+  if (infoEl)   infoEl.style.display   = 'none';
+  if (notFound) notFound.style.display = 'none';
+  if (btn)      btn.disabled           = true;
+  reprintLot = null;
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
