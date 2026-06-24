@@ -6,6 +6,56 @@ entry is dated and scoped to one concern. Newest changes at the top.
 
 ---
 
+## 2026-06-24 — New workflows: Harvest Lot, Retail Units, Swab Collection, Reprint
+
+**Files.** `quicklabel.html`.
+
+**Four new workflows added to the workflow picker.**
+
+### Harvest Lot (`HL-` prefix)
+Records a flush harvest. The user picks the source Batch Lot (BL-), enters a
+flush number and wet weight. Prints one or more copies of a single HL- lot ID.
+Creates one `db.lots` record with `flushNumber`, `wetWeight`, `state:'wet'`,
+and a lineage edge from the source BL-. Source picker auto-fills the genetic
+code/cultivar/genus/species fields from the referenced lot.
+
+### Retail Units (`RU-` prefix)
+Creates individual retail unit labels from a Harvest Lot. User picks the
+source HL-, enters gram weight and optional potency reference text. Prints
+*N* labels, each with a sequential RU- ID. Saves the first lot record with
+`gramWeight`, `potencyRef`, and a lineage edge from the source HL-.
+
+### Swab Collection (`SW-` prefix)
+Records tissue swabs taken during harvest. Source is an HL- lot. Prints
+*N* sequential SW- lot labels. An optional "also print bag label" toggle
+(checked by default) prints one summary bag label first (e.g. "Swab Bag ×3"
+with the ID range). Each swab is saved as a separate lot record with a
+lineage edge from the source HL-.
+
+### Reprint (`reprint`)
+Standalone utility workflow — no new lot IDs generated. User types or
+selects any existing lot ID from a datalist (populated from all lots in db).
+Lot metadata is shown (cultivar, type, date). Label is reconstructed: if the
+lot record has a `bodySlots` array it is used directly; otherwise the label
+is rebuilt from flat fields for backwards compatibility with pre-slot lots.
+A single Reprint button fires the print job.
+
+**Source Lot picker.** A shared picker card (shown for all three production
+workflows) contains a `<select>` populated from the db and a manual text
+input fallback. The picker changes which prefix it loads: `BL-` for
+harvest-lot, `HL-` for retail-units and swab-collection. Selecting a lot
+triggers `autofillGeneticFromSourceLot()` which back-fills the genetic
+fields so the label has a cultivar name even without re-typing it.
+
+**Quantity labels.** Quantity field label adjusts per workflow:
+`Swabs` / `Units` / `Copies` / `Quantity`.
+
+**State persistence.** `saveFormState` / `restoreFormState` / `resetForm`
+updated for: `sourceLotId`, `sourceLotManual`, `harvestFlush`,
+`harvestWetWeight`, `retailGramWeight`, `retailPotency`, `swabPrintBag`.
+
+---
+
 ## 2026-05-17 — Slot model polish: QR +50%, source inline, smaller bottom lines
 
 **Files.** `quicklabel.html`.
