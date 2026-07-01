@@ -2,9 +2,15 @@
 ## Product Requirements Document
 
 **Version:** 1.0  
-**Last updated:** 2026-02-01  
-**Status:** Active — initial scope being implemented  
-**Parent PRD:** `/app/PRD.md` (QuickLabel core)
+**Last updated:** 2026-02-01; audited 2026-07-01  
+**Status:** Implemented — the three pre-grain workflows (Ingest, Agar Plate, Liquid Culture) are shipped, along with downstream Grain Spawn, Batch, Harvest, Retail, Swab, and Reprint (as of 2026-07-01).  
+**Parent PRD:** `PRD.md` (QuickLabel core)
+
+---
+
+> ## Implementation status — as of 2026-07-01
+>
+> _Audit note. The upstream workflows specified here (Ingest, Agar Plate, Liquid Culture) are implemented in `quicklabel.html`, as are downstream Grain Spawn, Generate a Batch, Harvest Lot, Retail Units, Swab, and Reprint (nine workflows total). Ingest types SP/SS/LI/GT/AP/SN/CT ship as defaults. Still unbuilt: the Genetics Tracker / progeny-tree UI, real QR encoding (reserve box only), and dedicated Castellani/Slant "storage media" create-workflows._
 
 ---
 
@@ -189,7 +195,7 @@ The lot prefix for a custom ingest type equals its `code`.
 | Agar Plate      | AL     | `AL-SL192-260201-01` |
 | Liquid Culture  | LC     | `LC-SL192-260201-01` |
 | Grain Spawn     | GL     | `GL-SL192-260201-01` |
-| Batch (deferred)| BL     | `BL-SL192-260201-01` |
+| Batch           | BL     | `BL-SL192-260201-01` |
 
 Counters are scoped to `[prefix]_[GeneticCode]_[YYMMDD]`. Different workflows on
 the same genetic+date have independent sequences.
@@ -278,27 +284,35 @@ Storage media are long-term preservation formats. They are ingest types when
 receiving from outside the lab; they become separate workflows when creating
 new storage from live cultures.
 
+**Status (2026-07-01):** Castellani Tube (`CT`) and Slant (`SN`) ship today as
+ingest **types** (part of `DEFAULT_INGEST_TYPES`, usable as lot-ID prefixes on
+Ingest). What remains deferred is the dedicated "Create Storage Media" workflow
+for producing new storage from live cultures — it currently appears as a
+disabled / "soon" item in the workflow menu.
+
 ### 8.1 Create Castellani Tube
 
-A water suspension tube for indefinite cold storage. Workflow deferred.
-Lot prefix would be `CT`.
+A water suspension tube for indefinite cold storage. Create-workflow deferred.
+Lot prefix would be `CT` (already available as an ingest type).
 
 ### 8.2 Create Slant
 
 An agar slant in a small sealed tube for 12–24 month cold storage.
-Workflow deferred. Lot prefix would be `SN`.
+Create-workflow deferred. Lot prefix would be `SN` (already available as an
+ingest type).
 
 These would appear in the workflow selector as "Create Storage Media" (grouped),
 once specified.
 
 ---
 
-## 9. Batch / Generate a Batch (stub)
+## 9. Batch / Generate a Batch (implemented)
 
 The **batch** is spawn-to-bulk — the first step in the regulated chain described
-in the parent PRD. It is out of scope for this session and documented fully in
-§17 of the parent PRD. It appears as a disabled option in the workflow selector
-as a placeholder for the next implementation session.
+in the parent PRD. **Status (2026-07-01):** Generate a Batch is now implemented
+(lot prefix `BL`) and is a live option in the workflow selector; it is documented
+fully in §17 of the parent PRD (`PRD.md`). Downstream-of-batch steps in the
+regulated chain remain future design work per the parent PRD.
 
 ---
 

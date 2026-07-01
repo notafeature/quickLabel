@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuickLabel — Feature Map</title>
+<style>
+  :root{
+    --ink:#171a1d; --muted:#5b6470; --faint:#8a939e;
+    --bg:#f6f7f9; --card:#ffffff; --line:#e6e9ee; --line2:#eef1f5;
+    --actives:#14532d; --actives-bg:#dcfce7;
+    --gourmet:#0e4f63; --gourmet-bg:#cffafe;
+    --accent:#0f766e; --accent-soft:#e6f4f1;
+    --amber:#92600a; --amber-bg:#fef3c7; --amber-line:#f4d78a;
+    --red:#a3231f; --red-bg:#fdeaea; --red-line:#f3c4c2;
+    --gray:#64748b; --gray-bg:#eef1f5;
+    --radius:14px; --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px -12px rgba(16,24,40,.12);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  code,.mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.86em}
+  a{color:var(--accent);text-decoration:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+
+  /* Header */
+  header.hero{
+    background:linear-gradient(150deg,#0c1f1b 0%,#123a34 48%,#0e4f63 100%);
+    color:#eaf2f0; padding:46px 0 40px; border-bottom:1px solid #0a1714;
+  }
+  .hero .wrap{display:flex;flex-direction:column;gap:14px}
+  .hero .eyebrow{display:flex;align-items:center;gap:10px;font-size:12.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:#8fc7bd;font-weight:600}
+  .hero h1{margin:0;font-size:34px;line-height:1.1;letter-spacing:-.02em;font-weight:750;color:#fff}
+  .hero p{margin:0;max-width:760px;color:#c6dbd6;font-size:15.5px}
+  .datebadge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);
+    color:#eafff9;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.02em}
+  .statstrip{display:flex;flex-wrap:wrap;gap:26px;margin-top:8px}
+  .statstrip .s{display:flex;flex-direction:column}
+  .statstrip .n{font-size:24px;font-weight:750;color:#fff;line-height:1}
+  .statstrip .l{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#93c3ba;margin-top:5px}
+
+  /* Sticky nav */
+  nav.toc{position:sticky;top:0;z-index:20;background:rgba(246,247,249,.86);
+    backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid var(--line)}
+  nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding:8px 22px}
+  nav.toc a{white-space:nowrap;padding:6px 12px;border-radius:8px;color:var(--muted);
+    font-size:13px;font-weight:600}
+  nav.toc a:hover{background:#fff;color:var(--ink)}
+
+  section{padding:38px 0 6px}
+  .shead{display:flex;align-items:baseline;gap:12px;margin:0 0 4px}
+  .shead h2{margin:0;font-size:20px;letter-spacing:-.01em;font-weight:720}
+  .shead .k{font-size:12px;color:var(--faint);font-weight:600}
+  .lead{color:var(--muted);margin:0 0 20px;max-width:820px}
+
+  /* Legend */
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 0}
+  .pill{display:inline-flex;align-items:center;gap:7px;padding:4px 11px;border-radius:999px;
+    font-size:12px;font-weight:650;border:1px solid transparent}
+  .pill .dot{width:8px;height:8px;border-radius:50%}
+  .pill.built{background:var(--actives-bg);color:var(--actives);border-color:#bfe9cf}
+  .pill.built .dot{background:var(--actives)}
+  .pill.partial{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-line)}
+  .pill.partial .dot{background:var(--amber)}
+  .pill.none{background:var(--gray-bg);color:var(--gray);border-color:#dbe1e9}
+  .pill.none .dot{background:var(--gray)}
+
+  /* Pipeline */
+  .pipe{display:flex;align-items:stretch;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .node{flex:1 1 120px;min-width:120px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:12px 12px;box-shadow:var(--shadow);position:relative}
+  .node .px{display:inline-block;font-weight:750;font-size:12px;letter-spacing:.03em;
+    background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:2px 7px;margin-bottom:7px}
+  .node .nm{font-weight:670;font-size:13.5px;line-height:1.2}
+  .node .sub{color:var(--faint);font-size:11.5px;margin-top:3px}
+  .arrow{display:flex;align-items:center;color:var(--faint);font-size:18px;font-weight:700;padding:0 1px}
+  .sidebranch{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:6px 13px;font-size:13px;box-shadow:var(--shadow)}
+  .chip b{font-weight:720}
+  .chip .px{font-family:"SF Mono",ui-monospace,monospace;font-size:11px;background:var(--accent-soft);
+    color:var(--accent);border-radius:5px;padding:1px 6px;font-weight:700}
+
+  /* Card grids */
+  .grid{display:grid;gap:14px}
+  .g-wf{grid-template-columns:repeat(auto-fill,minmax(255px,1fr))}
+  .g-2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  .g-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 17px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 3px;font-size:15px;font-weight:700;display:flex;align-items:center;
+    justify-content:space-between;gap:8px}
+  .card .meta{color:var(--muted);font-size:13px}
+  .card .fn{margin-top:9px;font-family:"SF Mono",ui-monospace,monospace;font-size:11.5px;
+    color:var(--accent);background:var(--accent-soft);border-radius:7px;padding:5px 8px;display:inline-block}
+  .badge{font-family:"SF Mono",ui-monospace,monospace;font-weight:750;font-size:12px;
+    background:#0f172a;color:#e2e8f0;border-radius:6px;padding:2px 8px;letter-spacing:.03em}
+  .badge.dim{background:var(--gray-bg);color:var(--gray)}
+  .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+  .tag.built{background:var(--actives-bg);color:var(--actives)}
+  .tag.partial{background:var(--amber-bg);color:var(--amber)}
+
+  /* Field lists */
+  .fields{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:5px}
+  .fields li{font-family:"SF Mono",ui-monospace,monospace;font-size:11px;background:var(--line2);
+    color:#3c4653;border:1px solid #e2e6ec;border-radius:6px;padding:2px 7px}
+  .fields li.hot{background:var(--gourmet-bg);color:var(--gourmet);border-color:#a9e8f2}
+
+  /* two-column built / not-built */
+  .cols2{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+  ul.clean{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+  ul.clean li{display:flex;gap:9px;align-items:flex-start;font-size:13.5px}
+  ul.clean li::before{content:"";flex:0 0 auto;width:7px;height:7px;border-radius:50%;margin-top:7px}
+  ul.built li::before{background:var(--actives)}
+  ul.none li::before{background:var(--gray)}
+  ul.clean li b{font-weight:670}
+
+  /* callout */
+  .callout{border-radius:var(--radius);padding:16px 18px;border:1px solid var(--amber-line);
+    background:var(--amber-bg)}
+  .callout.bug{border-color:var(--red-line);background:var(--red-bg)}
+  .callout h3{margin:0 0 8px;font-size:15px;color:var(--red);display:flex;gap:8px;align-items:center}
+  .callout ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px;font-size:13.5px;color:#5a2b29}
+  .callout ol code{color:#7a1f1c;background:rgba(163,35,31,.08);padding:1px 5px;border-radius:5px}
+
+  /* table */
+  .tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  .tbl th,.tbl td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line2);font-size:13.5px;vertical-align:top}
+  .tbl th{background:#fbfcfd;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:700}
+  .tbl tr:last-child td{border-bottom:0}
+  .tbl td b{font-weight:680}
+  .v{font-weight:750;font-size:12px;padding:2px 9px;border-radius:999px;white-space:nowrap}
+  .v.port{background:var(--actives-bg);color:var(--actives)}
+  .v.rebuild{background:var(--red-bg);color:var(--red)}
+  .v.fresh{background:var(--amber-bg);color:var(--amber)}
+
+  footer{margin-top:40px;padding:26px 0 60px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px}
+  footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+  @media(max-width:720px){
+    .hero h1{font-size:27px}
+    .cols2{grid-template-columns:1fr}
+    .arrow{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">🍄 QuickLabel &nbsp;·&nbsp; Mushroom-cultivation label maker <span class="datebadge">Feature map — as of 2026-07-01</span></div>
+    <h1>What the app actually does</h1>
+    <p>A single-file, browser-only label maker. Pick a workflow, fill a form, and it mints a human-readable
+       lot ID, renders a live <b>SVG</b> label sized to the label stock, and prints it or exports a 300-DPI PNG —
+       backed by a genetics catalog, sequence counters, printed-lot records, and a lineage graph.
+       Companion to <code>FUNCTIONALITY.md</code>.</p>
+    <div class="statstrip">
+      <div class="s"><span class="n">9</span><span class="l">Workflows</span></div>
+      <div class="s"><span class="n">2</span><span class="l">Templates</span></div>
+      <div class="s"><span class="n">2</span><span class="l">Printers</span></div>
+      <div class="s"><span class="n">6</span><span class="l">Data stores</span></div>
+      <div class="s"><span class="n">SVG</span><span class="l">Render engine</span></div>
+      <div class="s"><span class="n">~5.1k</span><span class="l">Lines (1 file)</span></div>
+    </div>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <a href="#pipeline">Pipeline</a>
+    <a href="#workflows">Workflows</a>
+    <a href="#engine">Label engine</a>
+    <a href="#output">Output</a>
+    <a href="#data">Data model</a>
+    <a href="#persistence">Persistence &amp; auth</a>
+    <a href="#capabilities">Capabilities</a>
+    <a href="#bugs">Known bugs</a>
+    <a href="#port">Portability</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <div class="legend">
+    <span class="pill built"><span class="dot"></span>Built &amp; shipping</span>
+    <span class="pill partial"><span class="dot"></span>Partial / placeholder</span>
+    <span class="pill none"><span class="dot"></span>Not built</span>
+  </div>
+
+  <!-- PIPELINE -->
+  <section id="pipeline">
+    <div class="shead"><h2>The cultivation pipeline</h2><span class="k">state chain → one workflow per state change</span></div>
+    <p class="lead">Each arrow is a state-change event that produces one lot with its own prefix. Every lot carries
+      its predecessor's ID as <code>source</code>, so provenance walks backward to the ingest record.</p>
+    <div class="pipe">
+      <div class="node"><span class="px">ingest</span><div class="nm">Ingest</div><div class="sub">received material</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><span class="px">AL</span><div class="nm">Agar Plate</div><div class="sub">plate / wedge</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><span class="px">LC</span><div class="nm">Liquid Culture</div><div class="sub">jar / syringe</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><span class="px">GL</span><div class="nm">Grain Spawn</div><div class="sub">colonized grain</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><span class="px">BL</span><div class="nm">Batch</div><div class="sub">spawn-to-bulk</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><span class="px">HL</span><div class="nm">Harvest</div><div class="sub">per flush</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><span class="px">RU</span><div class="nm">Retail Unit</div><div class="sub">packaged</div></div>
+    </div>
+    <div class="sidebranch">
+      <span class="chip"><span class="px">SW</span><b>Swab Collection</b> — sampling side-branch (+ swab-bag labels)</span>
+      <span class="chip"><span class="px">↺</span><b>Reprint</b> — re-emit any stored lot by ID</span>
+    </div>
+  </section>
+
+  <!-- WORKFLOWS -->
+  <section id="workflows">
+    <div class="shead"><h2>Workflows</h2><span class="k">9 · registry <code>WORKFLOWS</code></span></div>
+    <p class="lead">Selected from a header dropdown. Each fixes the destination state, lot type, and lot-ID prefix,
+      then a <code>build*LabelData()</code> function assembles the label data object.</p>
+    <div class="grid g-wf">
+      <div class="card"><h3>Ingest New Genetic <span class="badge dim">IG*</span></h3><div class="meta">Entry point — received print / swab / LC / tissue / plate</div><span class="fn">buildIngestLabelData()</span></div>
+      <div class="card"><h3>Create Agar Plate <span class="badge">AL</span></h3><div class="meta">Destination: Agar Plate · media = formula</div><span class="fn">buildLabelData()</span></div>
+      <div class="card"><h3>Create Liquid Culture <span class="badge">LC</span></h3><div class="meta">Destination: Liquid Culture · media = vessel</div><span class="fn">buildLabelData()</span></div>
+      <div class="card"><h3>Make Grain Spawn <span class="badge">GL</span></h3><div class="meta">Default workflow · media = grain type</div><span class="fn">buildLabelData()</span></div>
+      <div class="card"><h3>Generate a Batch <span class="badge">BL</span></h3><div class="meta">Spawn-to-bulk · unit marker "Bin 03/12" · multi-source</div><span class="fn">buildBatchLabelData()</span></div>
+      <div class="card"><h3>Record Harvest Lot <span class="badge">HL</span></h3><div class="meta">Per flush · wet weight · flush number</div><span class="fn">buildHarvestLotLabelData()</span></div>
+      <div class="card"><h3>Print Retail Units <span class="badge">RU</span></h3><div class="meta">Gram weight · free-text potency ref</div><span class="fn">buildRetailUnitLabelData()</span></div>
+      <div class="card"><h3>Swab Collection <span class="badge">SW</span></h3><div class="meta">Swab + optional swab-bag range label</div><span class="fn">buildSwabLabelData()</span></div>
+      <div class="card"><h3>Reprint from ID <span class="badge dim">↺</span></h3><div class="meta">Rebuilds a label from a stored lot record</div><span class="fn">buildReprintLabelData(lot)</span></div>
+    </div>
+    <p class="lead" style="margin-top:14px">Lot ID format: <code>PREFIX-CODE-YYMMDD-NN</code> (e.g. <code>GL-SL192-260510-03</code>).
+      Per-day sequence counter keyed <code>PREFIX_CODE_YYMMDD</code>, up to 99/day. <span class="badge dim">*</span> Ingest prefix = selected media-type code (default <code>IG</code>).</p>
+  </section>
+
+  <!-- ENGINE -->
+  <section id="engine">
+    <div class="shead"><h2>Label engine</h2><span class="k">hand-written SVG strings · no library</span></div>
+    <p class="lead">Labels are SVG documents built as template literals — no PDF/QR/canvas/SVG library. Each template
+      owns <code>render</code>, <code>renderSimple</code>, and <code>fit</code> (auto-shrink via SVG <code>textLength</code>; needs a live DOM).</p>
+    <div class="grid g-2">
+      <div class="card">
+        <h3>grain-spawn-9x5 <span class="tag built">default</span></h3>
+        <div class="meta"><b>2.25 × 1.25 in</b> · DYMO LabelWriter 30334 · viewBox 900×500</div>
+        <ul class="fields">
+          <li class="hot">QR reserve box</li><li>cultivar</li><li>genus/species + chip</li><li>rule</li>
+          <li>lot ID</li><li>4-line body budget</li><li>footer</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>d11-strip</h3>
+        <div class="meta"><b>14 × 35 mm</b> · Merryhome / NIIMBOT D11 · viewBox 875×350</div>
+        <ul class="fields"><li>cultivar</li><li>lot ID</li><li>date</li><li>dest</li><li>no QR reserve</li></ul>
+      </div>
+    </div>
+    <div class="grid g-3" style="margin-top:14px">
+      <div class="card"><h3>Category chip</h3><div class="meta"><b>actives</b> (Psilocybe/Panaeolus) → green · <b>gourmet</b> (Pleurotus, Hericium…) → teal</div></div>
+      <div class="card"><h3>Lineage notation</h3><div class="meta">Filial · Clone · Isolation · Transfer → <code>F1.C1_A.T3</code></div></div>
+      <div class="card"><h3>Live layout "Fiddle"</h3><div class="meta">Dev panel to tune the SVG layout object · <code>⌘\</code></div></div>
+    </div>
+  </section>
+
+  <!-- OUTPUT -->
+  <section id="output">
+    <div class="shead"><h2>Output &amp; print</h2><span class="k">two exits, both browser-native</span></div>
+    <div class="grid g-3">
+      <div class="card"><h3>Browser print <span class="tag built">built</span></h3><div class="meta"><code>window.print()</code> into a hidden <code>#print-area</code>; <code>@page</code> hardcoded to 2.25×1.25 in.</div></div>
+      <div class="card"><h3>PNG export <span class="tag built">built</span></h3><div class="meta"><code>svgToPng()</code> rasterizes to <b>300 DPI</b> via canvas → download.</div></div>
+      <div class="card"><h3>Share sheet <span class="tag built">built</span></h3><div class="meta">Web Share API (<code>navigator.share</code>) with download fallback.</div></div>
+      <div class="card"><h3>PDF export <span class="tag partial">not built</span></h3><div class="meta">No library integrated.</div></div>
+      <div class="card"><h3>ZPL / EPL / thermal <span class="tag partial">not built</span></h3><div class="meta">Thermal printers go through the OS dialog, not a printer language.</div></div>
+      <div class="card"><h3>Direct-to-printer <span class="tag partial">abandoned</span></h3><div class="meta">Dymo Connect REST was attempted and dropped.</div></div>
+    </div>
+  </section>
+
+  <!-- DATA -->
+  <section id="data">
+    <div class="shead"><h2>Data model (as stored)</h2><span class="k">JSON blobs — not relational</span></div>
+    <p class="lead">Highlighted fields are the ones a label consumes. Everything else is catalog / provenance metadata.</p>
+    <div class="grid g-2">
+      <div class="card"><h3>Genetics record</h3><div class="meta"><code>db.genetics</code></div>
+        <ul class="fields">
+          <li class="hot">code</li><li class="hot">cat</li><li class="hot">genus</li><li class="hot">species</li><li class="hot">cultivar</li>
+          <li>ingestData.mediaType</li><li>vendor</li><li>originator</li><li>originDate</li><li>family</li>
+          <li>inat{enabled,number,collector,date,location}</li><li>extNotes</li><li>ingestDate</li><li>_id</li>
+        </ul></div>
+      <div class="card"><h3>Lot record</h3><div class="meta"><code>db.lots</code> — one row per print run</div>
+        <ul class="fields">
+          <li class="hot">lotId</li><li>workflowId</li><li>geneticCode</li><li class="hot">cultivar</li><li class="hot">notation</li>
+          <li class="hot">destination</li><li class="hot">source</li><li class="hot">sub</li><li>qty</li><li>status</li>
+          <li>flushNumber</li><li>wetWeight</li><li>gramWeight</li><li>potencyRef</li><li>sourceLots[]</li><li>bodySlots</li>
+        </ul></div>
+      <div class="card"><h3>Lineage edge</h3><div class="meta"><code>db.lineage</code> — captured on every print</div>
+        <ul class="fields"><li>parent</li><li>child</li><li>createdAt</li></ul>
+        <div class="meta" style="margin-top:8px">Graph <code>tree()</code> API exists — but no lineage-tree UI is wired.</div></div>
+      <div class="card"><h3>Config <code>cfg</code></h3><div class="meta">registries &amp; settings</div>
+        <ul class="fields"><li>prefix (SL)</li><li>codes[]</li><li>grainTypes</li><li>ingestTypes</li><li>agarFormulas</li><li>customTaxa</li><li>fieldVis</li><li>transferRules</li></ul>
+        <div class="meta" style="margin-top:8px">Defaults: grain RYE/OATS/MILLET · agar MEA/PDYA/MYPA/RBA/WBA · ingest SP/SS/LI/GT/AP/SN/CT · vessels JAR/10mL/20mL/BAG.</div></div>
+    </div>
+  </section>
+
+  <!-- PERSISTENCE -->
+  <section id="persistence">
+    <div class="shead"><h2>Persistence &amp; auth</h2><span class="k"><code>db.js</code> · local-first + cloud</span></div>
+    <div class="grid g-3">
+      <div class="card"><h3>localStorage <span class="tag built">source of truth</span></h3><div class="meta">Per-user namespaced keys <code>ql_u:&lt;user&gt;:&lt;slot&gt;</code>. Slots: cfg, counters, form, genetics, lot_records, lineage. Legacy flat keys imported once, then backup.</div></div>
+      <div class="card"><h3>Supabase KV sync <span class="tag built">built</span></h3><div class="meta">Postgres table <code>ql_store</code> (<code>user_id / slot / data / updated_at</code>), debounced push + pull-on-login. Synced: cfg, counters, genetics, lots, lineage — <b>form is device-local</b>.</div></div>
+      <div class="card"><h3>Supabase Auth <span class="tag built">built</span></h3><div class="meta">Synthetic email <code>&lt;user&gt;@quicklabel.app</code>; per-user login, token refresh, force / self-serve (<code>claim_password</code>) reset; RLS on <code>auth.uid</code>.</div></div>
+    </div>
+  </section>
+
+  <!-- CAPABILITIES -->
+  <section id="capabilities">
+    <div class="shead"><h2>Capabilities</h2><span class="k">built vs. absent</span></div>
+    <div class="cols2">
+      <div class="card">
+        <h3 style="margin-bottom:8px">Shipping today</h3>
+        <ul class="clean built">
+          <li><b>9 label workflows</b> across the full cultivation chain</li>
+          <li><b>Genetics catalog</b> with CRUD, search, and edit modal</li>
+          <li><b>CSV / paste import</b> with column mapping + new/update/skip preview</li>
+          <li><b>Inventory view</b> — filter lots by type, reprint from a row</li>
+          <li><b>Reprint</b> any stored lot by ID</li>
+          <li><b>Lineage edges</b> captured on every print</li>
+          <li><b>Per-user login</b> + cross-device Supabase sync</li>
+          <li><b>PNG export &amp; share sheet</b> at 300 DPI</li>
+          <li><b>Live layout tuning</b> panel; standard/simple label modes</li>
+          <li><b>Mobile</b> slide-up preview + swipe</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:8px">Not built</h3>
+        <ul class="clean none">
+          <li>Real <b>QR / barcode</b> encoding (space reserved only)</li>
+          <li><b>Lineage / progeny tree</b> UI</li>
+          <li><b>PDF export</b>; direct-to-printer / ZPL</li>
+          <li><b>Lot lifecycle status</b> + consumption tracking</li>
+          <li><b>Per-lot event log</b>; lot-history export</li>
+          <li>Castellani / Slant <b>storage-media</b> workflows</li>
+          <li>Substrate registry / <b>recipe builder</b></li>
+          <li>Homogenized (<code>ML</code>) / Product (<code>PL</code>) lots</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUGS -->
+  <section id="bugs">
+    <div class="shead"><h2>Known bugs &amp; footguns</h2><span class="k">documented, not fixed</span></div>
+    <div class="callout bug">
+      <h3>⚠︎ Carry these into the port</h3>
+      <ol>
+        <li><b>Inventory prefix mismatch.</b> The inventory filters use badges <code>GS</code> (grain) and <code>AP</code> (agar), but those workflows mint <code>GL-</code> and <code>AL-</code> — so grain &amp; agar lots never match their own filter chips.</li>
+        <li><b>Print page size is hardcoded.</b> <code>@page</code> is fixed at 2.25×1.25 in regardless of the selected printer, so the Merryhome/D11 prints at the wrong page size.</li>
+        <li><code>COMPLEX_INGEST_TYPES</code> is declared but effectively unused; pre-prefix lot counters are orphaned (no migration).</li>
+        <li><code>cfg.codes</code> ⇄ <code>genetics</code> is kept in sync bidirectionally on every login — two sources of one catalog to reconcile when porting.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- PORTABILITY -->
+  <section id="port">
+    <div class="shead"><h2>Portability verdict</h2><span class="k">what moves, what gets rebuilt</span></div>
+    <table class="tbl">
+      <thead><tr><th>Piece</th><th>Verdict</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><b>Label engine</b><br><span class="mono">renderLabel · LABEL_TEMPLATES · renderBodySlot</span></td><td><span class="v port">Portable as-is</span></td><td>Pure <code>d</code>→SVG string building. Only <code>fit()</code> needs a live DOM (or a shim / precomputed text widths).</td></tr>
+        <tr><td><b>Templates</b></td><td><span class="v port">Portable</span></td><td>Plain JS/data. Hardcoded to two mushroom label stocks; add sizes as needed.</td></tr>
+        <tr><td><b>Barcode / QR</b></td><td><span class="v fresh">Build fresh</span></td><td>Only a reserved box exists — drop an encoder into it.</td></tr>
+        <tr><td><b>Print pipeline</b></td><td><span class="v rebuild">Rebuild</span></td><td><code>window.print()</code> / <code>@page</code> / Web Share / canvas are browser-only. Server PDF or ZPL is net-new.</td></tr>
+        <tr><td><b>Persistence / auth</b></td><td><span class="v rebuild">Discard</span></td><td>localStorage + Supabase-KV + synthetic-email auth is orthogonal to a Prisma/Postgres platform. Reuse only the field shapes.</td></tr>
+      </tbody>
+    </table>
+    <p class="lead" style="margin-top:16px">The domain <b>is</b> a mushroom grower model — genetics, lot codes, lineage, counters, free-text potency map straight across.
+      Keep the SVG render/template/fit layer, swap the data source to your entities, add QR into the reserved box, and replace the print/export layer.</p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>QuickLabel feature map · generated 2026-07-01 from <code>quicklabel.html</code> + <code>db.js</code>.</span>
+    <span>Companion to <code>FUNCTIONALITY.md</code> — the written source of truth.</span>
+  </div>
+</footer>
+
+</body>
+</html>

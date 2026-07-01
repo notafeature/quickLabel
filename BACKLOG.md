@@ -7,6 +7,9 @@ is a commitment — it's a record of intent.
 Read `PRD.md`, `PRD-genetics-tracking.md`, and `PRD-data-model.md` for
 the full design context behind these items.
 
+> **Audited 2026-07-01.** For what actually ships today (vs. this backlog of
+> intent), see **`FUNCTIONALITY.md`** — the authoritative current-state map.
+
 ---
 
 ## Harvest / Post-Harvest
@@ -63,8 +66,10 @@ multiple workflows are actively pulling from shared source lots.
 ## Source Field
 
 ### Structured source lookup (blocking once multiple workflows are active)
-Source is free text today. When HL-, BL-, LC-, AL-, GL- lots all exist
-in the system, the source field should resolve against real lot IDs.
+A shared source-lot picker card already exists, but source is still
+free text in most workflows. When HL-, BL-, LC-, AL-, GL- lots all exist
+in the system, the source field should resolve against real lot IDs
+everywhere.
 - Source input becomes a searchable lot-ID picker (same pattern as the
   current source-lot-pick card, but universal across all workflows)
 - Source type tag (`AR`, `LC`, `GR`, `BL`, etc.) per PRD §16
@@ -112,12 +117,14 @@ design is undecided — candidates:
 - Full lot data encoded in the QR (no server needed, but large)
 Blocked on: deciding whether a hosted backend re-enters the picture.
 
-### Multiple label templates
-Today there's one template (`grain-spawn-9x5` for the Dymo 2.25×1.25").
-A larger label (e.g. 4×2") would expand the body budget and allow more
-fields. Needs:
-- Template registry extension
-- Printer ↔ template pairing UI
+### Multiple label templates (partially addressed)
+Today there are two templates: `grain-spawn-9x5` (DYMO 30334, 2.25×1.25")
+and `d11-strip` (Merryhome/D11, 14×35 mm), across two printers. The
+multi-template plumbing exists; more sizes are still wanted. A larger
+label (e.g. 4×2") would expand the body budget and allow more fields.
+Still needs:
+- More template registry entries
+- A fuller printer ↔ template pairing UI
 - Per-workflow template override
 
 ### Direct-to-printer (bypass browser dialog)
@@ -179,8 +186,9 @@ prefix decision (open question in PRD-data-model §9.1).
 
 ### Import / export of lot history
 CSV export of the full lot table and lineage graph for backup /
-migration. Currently only genetics have import. Lots are locked in
-localStorage.
+migration. Currently only genetics have CSV import. Lots live in
+`localStorage` (now also mirrored to the Supabase KV store), but there's
+no user-facing CSV import/export for them yet.
 
 ---
 
