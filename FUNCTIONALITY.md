@@ -36,7 +36,7 @@ Domain: psilocybin ("actives") + gourmet/functional mushrooms. No cannabis anywh
 | `quicklabel-portable.html` | ~4,787 | **OLDER, reduced snapshot** with `db.js` inlined. Only 5 workflows (ingest, agar-plate, liquid-culture, grain-spawn, generate-batch); **lacks** harvest-lot, retail-units, swab-collection, reprint, and the Inventory view. Hosted on GitHub Pages. Lags the main app — do not treat as current. |
 | `backend/server.py` | 7 | FastAPI **health-check stub** (`GET /api/health`). Stores nothing. |
 | `frontend/server.js` | 24 | 24-line Node static server that serves `quicklabel.html`. |
-| `.static/index.html` | — | static placeholder. |
+| `.static/index.html` | — | **Dangling symlink** → `/app/quicklabel.html` (a leftover from the old container layout; the target doesn't exist at repo root). Not load-bearing for the port. |
 
 Docs: `PRD.md`, `PRD-genetics-tracking.md`, `PRD-data-model.md` (design intent, some future);
 `memory/PRD.md`, `HANDOFF.md`, `BACKLOG.md`, `CHANGELOG.md`, `WORK_LOG.md` (history/backlog);
@@ -279,10 +279,14 @@ customTaxa:{actives:{},gourmet:{}}, fieldVis:{source:true,filial:true,clone:true
 - `DEFAULT_INGEST_TYPES`: SP=Spore Print, SS=Spore Swab, LI=Liquid Culture, GT=Gill/Tissue,
   AP=Agar Plate/Wedge, SN=Slant, CT=Castellani Tube.
 - `DEFAULT_AGAR_FORMULAS`: MEA, PDYA, MYPA, RBA, WBA.
-- `DEFAULT_VESSEL_TYPES`: JAR, 10mL, 20mL, BAG.
+- `DEFAULT_VESSEL_TYPES`: JAR (Bulk Jar), 10mL/20mL (syringes), BAG (Filter Patch Bag).
+  **Vessel types are a code constant, not part of `cfg`** — not user-editable (unlike grain/ingest/agar).
 - `DEFAULT_TRANSFER_RULES`: `allowOverride, agarToAgar, lcToLC, grainToGrain = true`;
-  `agarToLC, agarToGrain, grainToBulk = false`. (Persisted + shown in Settings, but **not** consumed
-  by any auto-advance engine — declarative only.)
+  `agarToLC, agarToGrain, grainToBulk = false`. **Persisted + shown in Settings, but never read by any
+  print or validation path — declarative only.**
+- `cfg.codes` is a **derived cache** of the genetics catalog; `genetics` is authoritative
+  (`loadStorage` rebuilds `cfg.codes` from genetics on every load, and `syncGeneticsAndCfg` keeps the
+  two in a union on login).
 
 ---
 
@@ -372,11 +376,21 @@ callers.
    `WORKFLOWS`). Real bug.
 2. **Print `@page` is hardcoded** to `2.25in 1.25in` (DYMO) regardless of the selected printer
    (`666`). Printing on the Merryhome/D11 uses the wrong page size through the browser dialog.
-3. `COMPLEX_INGEST_TYPES = {AP,LI,SN,CT,GT}` is declared (`1794`) but effectively unused (media type
-   no longer gates lineage).
-4. Pre-prefix lot counters from an earlier version are orphaned (no migration).
-5. `cfg.codes` ⇄ `genetics` bidirectional sync runs every login — a deliberate consistency shim, but
-   two sources of the same catalog to keep in mind when porting.
+3. **Ingest `IG` fallback** — if the ingest media type is unset/unmatched, lot IDs use `IG-…`, which
+   no `IV_TYPES` badge recognizes either (compounds bug #1).
+4. **Transfer rules never enforced** — `cfg.transferRules` is fully wired into Settings + persisted,
+   but no print/validation path reads it.
+5. **`dryWeight`** is read by the inventory detail (`4481`) but **never written** by any print path —
+   always blank (a future field).
+6. `COMPLEX_INGEST_TYPES = {AP,LI,SN,CT,GT}` is declared (`1794`) but effectively unused (media type
+   no longer gates lineage). Pre-prefix lot counters from an earlier version are orphaned (no migration).
+7. **Counters vs records diverge** — counters (`…:lots`) and lot records (`…:lot_records`) are
+   independent stores: resetting a counter doesn't touch records, and records can be created without
+   advancing a counter (the per-swab loop does this).
+8. **`AUTH_EPOCH = '2026-06-06-pw2'`** — bumping this constant force-logs-out every device once on next
+   load.
+9. `cfg.codes` ⇄ `genetics` bidirectional sync runs every login — a deliberate consistency shim, but
+   two representations of one catalog to reconcile when porting (genetics is authoritative).
 
 ---
 
