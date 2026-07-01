@@ -3,6 +3,18 @@
 
 ---
 
+> ## ⚠️ SUPERSEDED — NEVER IMPLEMENTED (audit note, 2026-07-01)
+>
+> **Do not treat this document as a description of the app. It is an old proposal that was never built as written.** It specifies a **MongoDB + FastAPI** backend with `REACT_APP_BACKEND_URL`/nginx. That plan was **rejected** and never shipped.
+>
+> **What actually shipped instead:** the app persists to per-user `localStorage` (`ql_u:<user>:<slot>`) mirrored to a **Supabase (Postgres) key/value table** (`ql_store`, columns `user_id / slot / data / updated_at`), with **Supabase Auth** (synthetic `<user>@quicklabel.app`). There is **no MongoDB, no FastAPI data API, no React, no nginx**. The only "backend" file in the repo is `backend/server.py` — a 7-line FastAPI health-check stub that stores nothing.
+>
+> **Also note:** every `/app/...` path below reflects an old container layout; this repo lives at its root (`quicklabel.html`, `db.js`, `backend/server.py`, …).
+>
+> For the real, current implementation see **`FUNCTIONALITY.md`** (authoritative current-state map) and the source of truth, **`db.js`**. This file is retained only as historical design context.
+
+---
+
 ## OBJECTIVE
 
 Build a persistence backend for the QuickLabel genetics-tracking app.

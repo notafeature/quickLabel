@@ -1,21 +1,35 @@
 # QuickLabel — Memory / Session Log
 
 **App:** Single-file HTML label printer for mushroom cultivation tracking  
-**File:** `/app/quicklabel.html`  
-**Stack:** Vanilla JS, SVG, localStorage — no backend, no build step  
-**Printer:** DYMO LabelWriter 30334 (2.25 × 1.25 in)  
-**Full PRDs:** `/app/PRD.md` (core) · `/app/PRD-genetics-tracking.md` (pre-grain)
+**File:** `quicklabel.html`  
+**Stack:** Vanilla JS, SVG; localStorage + Supabase (Postgres KV sync + Auth); no build step  
+**Printer:** DYMO LabelWriter 30334 (2.25 × 1.25 in) and Merryhome/D11 (14 × 35 mm)  
+**Full PRDs:** `PRD.md` (core) · `PRD-genetics-tracking.md` (pre-grain)
+
+---
+
+> ## Implementation status — as of 2026-07-01
+>
+> _Added during a documentation-accuracy audit; the summary above and the workflow table now reflect the shipping code. The dated "What Was Built" sections below remain point-in-time history._
+>
+> - **Workflows (9):** Ingest · Agar Plate (`AL`) · Liquid Culture (`LC`) · Grain Spawn (`GL`) · Generate a Batch (`BL`) · Harvest Lot (`HL`) · Retail Units (`RU`) · Swab (`SW`) · Reprint. Lot ID = `PREFIX-CODE-YYMMDD-NN`.
+> - **Templates/printers:** `grain-spawn-9x5` (DYMO 30334, 2.25×1.25 in) and `d11-strip` (Merryhome/D11, 14×35 mm).
+> - **Persistence:** per-user `localStorage` (`ql_u:<user>:<slot>`) mirrored to Supabase Postgres KV (`ql_store`) with Supabase Auth (`<user>@quicklabel.app`). Legacy keys `ql_cfg`/`ql_lots`/`ql_form` are import-once backups.
+> - **Also built:** CSV/paste genetics import, inventory view, live layout "Fiddle" panel, per-user login, lineage edges per print. **Not built:** lineage-tree UI, real QR (reserve only), PDF export.
 
 ---
 
 ## Architecture
 
-Single HTML file. All state in `localStorage`:
-- `ql_cfg` — settings (prefix, codes, grain types, ingest types, agar formulas, fieldVis)
-- `ql_lots` — lot ID counters keyed `[PREFIX]_[CODE]_[YYMMDD]`
-- `ql_form` — form field state restored on reload
+Single HTML file (+ `db.js`). State lives in per-user namespaced `localStorage` keys `ql_u:<user>:<slot>` (slots: `cfg`, `lots` [= counters], `form`, `genetics`, `lot_records`, `lineage`), mirrored to the Supabase Postgres KV table `ql_store`:
+- `cfg` — settings (prefix, codes, grain types, ingest types, agar formulas, fieldVis)
+- `lots` — lot ID counters keyed `[PREFIX]_[CODE]_[YYMMDD]`
+- `form` — form field state restored on reload
+- `genetics` / `lot_records` / `lineage` — genetics registry, per-lot records, lineage edges
 
-SVG label template: `grain-spawn-9x5` (shared by all workflows, different data per workflow).
+LEGACY keys `ql_cfg` / `ql_lots` / `ql_form` are imported once per user, then kept as backup.
+
+SVG label templates (two): `grain-spawn-9x5` (DYMO 30334) and `d11-strip` (Merryhome/D11) — each shared across workflows, different data per workflow.
 
 ---
 
@@ -27,7 +41,11 @@ SVG label template: `grain-spawn-9x5` (shared by all workflows, different data p
 | Create Agar Plate | CREATE AGAR PLATE ▾ | AL | Agar Formula |
 | Create Liquid Culture | CREATE LIQUID CULTURE ▾ | LC | Vessel Type |
 | Make Grain Spawn | MAKE GRAIN SPAWN ▾ | GL | Grain Type |
-| Generate a Batch | (disabled) | BL | — deferred — |
+| Generate a Batch | GENERATE A BATCH ▾ | BL | Batch (enabled) |
+| Record Harvest Lot | RECORD HARVEST LOT ▾ | HL | Harvest details |
+| Print Retail Units | PRINT RETAIL UNITS ▾ | RU | Retail unit details |
+| Swab Collection | SWAB COLLECTION ▾ | SW | Swab source |
+| Reprint from ID | REPRINT ▾ | — | Existing lot ID lookup |
 | Create Storage Media | (disabled) | — | — deferred — |
 
 ---
@@ -69,7 +87,7 @@ SVG label template: `grain-spawn-9x5` (shared by all workflows, different data p
 
 ## What Was Built (Session 2026-02-01)
 
-- New PRD: `/app/PRD-genetics-tracking.md` — full genetics tracking spec
+- New PRD: `PRD-genetics-tracking.md` — full genetics tracking spec
 - Workflow selector dropdown in header (clickable workflow tag → dropdown)
 - 3 new pre-grain workflows: Ingest New Genetic, Create Agar Plate, Create Liquid Culture
 - Notation line added to SVG template (own line between lot ID and source line)
@@ -78,7 +96,7 @@ SVG label template: `grain-spawn-9x5` (shared by all workflows, different data p
 - Agar Formulas CRUD in settings
 - Vessel type datalist for LC workflow
 - Form state persistence extended for all new workflow fields
-- 100% test pass rate (16 automated tests)
+- 100% test pass rate (16 automated tests) (current repo carries one headless batch-logic test, test_reports/batch_logic_test.js)
 
 ---
 

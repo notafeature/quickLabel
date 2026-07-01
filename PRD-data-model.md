@@ -3,7 +3,9 @@
 **Version:** 0.1 (draft)
 **Last updated:** 2026-05-18
 **Status:** Design only. No schema, no code, no UI. Canonical spec for downstream layers.
-**Parent docs:** `/app/PRD.md`, `/app/PRD-genetics-tracking.md`
+**Parent docs:** `PRD.md`, `PRD-genetics-tracking.md`
+
+> **Implementation status — as of 2026-07-01 (audit).** This remains a design-only Layer-1 spec: none of the entities, events, or the `remaining`/lifecycle model below are implemented. The shipping app (`db.js`) persists JSON blobs in per-user `localStorage` mirrored to a Supabase key/value table (`ql_store`) — it does **not** implement this relational model. The cross-cutting registries noted as "already exists" (grain types, agar formulas, ingest types) do exist in the app's settings (`cfg`). Treat this file as the target model for a future data layer, not a description of current storage.
 
 ---
 
@@ -27,16 +29,20 @@ harvests, and drying.
 
 ### 1.2 Out of scope (v1)
 
-Homogenization. Product lots. Retail SKUs. Costs. Operator
-authentication / RBAC. Cloud sync. Space-designer UI. Printer harness
-beyond what `quicklabel.html` already does. KPI dashboards. Sublot
-trees for grain lots (deferred per PRD §15). The model must *support*
-these later; we just don't build them yet.
+Homogenization. Product lots. Retail SKUs [note: a Retail Units label
+workflow has since shipped in the app]. Costs. Operator
+authentication / RBAC [note: the label app has since shipped Supabase
+cloud sync + auth; this Layer-1 model is still unimplemented]. Cloud
+sync [note: the label app has since shipped Supabase cloud sync + auth;
+this Layer-1 model is still unimplemented]. Space-designer UI. Printer
+harness beyond what `quicklabel.html` already does. KPI dashboards.
+Sublot trees for grain lots (deferred per PRD §15). The model must
+*support* these later; we just don't build them yet.
 
 ### 1.3 Reading order
 
-Read `/app/PRD.md` §2 (conceptual model), §6 (lot identity), §17
-(workflow architecture) and `/app/PRD-genetics-tracking.md` for the
+Read `PRD.md` §2 (conceptual model), §6 (lot identity), §17
+(workflow architecture) and `PRD-genetics-tracking.md` for the
 upstream chain. This file does not redefine concepts those documents
 already cover — lot ID format, lineage notation, workflow definitions
 are referenced, not duplicated.

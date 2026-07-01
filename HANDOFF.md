@@ -4,15 +4,23 @@ This document is the cold-start brief for the next person (or agent) to
 touch this codebase. Read this first, then `WORK_LOG.md` for the detailed
 trail, then `PRD.md` / `PRD-genetics-tracking.md` for product intent.
 
+> **Audited 2026-07-01.** For the authoritative, exhaustive current-state map
+> (every workflow, field, lot format, the label-engine contract, exact stored
+> data shapes, the `db.js` API, auth/sync, and known bugs), see
+> **`FUNCTIONALITY.md`** — that file is the source of truth for a port.
+
 ---
 
 ## What this is
 
-QuickLabel is a single-page, browser-only lab tool for printing genetics
-labels for mushroom cultivation. It's intentionally local — no backend,
-no auth provider, no hosted dependencies. State lives in the browser's
-`localStorage`. The PRD calls it: *"single user, personal tool, closed
-environment."*
+QuickLabel is a single-page lab tool for printing genetics labels for
+mushroom cultivation. It's local-**first**: state lives in per-user-
+namespaced `localStorage` (`ql_u:<user>:<slot>`) and is **also** synced
+to a Supabase Postgres key/value store (`ql_store`), with per-user login
+via Supabase Auth. It runs fine offline from `localStorage`; the cloud
+mirror provides sync and a per-user account. The PRD's original framing —
+*"single user, personal tool, closed environment"* — still describes the
+day-to-day feel.
 
 The repository ships with two infrastructure stubs (`backend/server.py`,
 `frontend/server.js`) that exist **only** so the Emergent Kubernetes
@@ -26,10 +34,13 @@ Path-1 (the architecture chosen this session) keeps everything in
 
 | Path | What it is |
 |---|---|
-| `quicklabel.html` | The entire UI + business logic. ~3200 lines. One inline `<script>`. |
-| `db.js` | The async data layer over `localStorage`. All persistence flows through here. |
+| `quicklabel.html` | The entire UI + business logic. ~5,140 lines. One inline `<script>`. |
+| `db.js` | The async data layer over `localStorage`, now also mirroring to a Supabase Postgres KV store. All persistence flows through here. |
 | `PRD.md` | Original PRD — workflow model, taxonomy, lot ID format, layout intent. |
 | `PRD-genetics-tracking.md` | Detailed genetics-catalog spec. |
+| `PRD-data-model.md` | Detailed entity / event data-model spec. |
+| `batch-labels.html` | Standalone batch-label sheet (separate from the main app). |
+| `quicklabel-portable.html` | Older, reduced single-file snapshot (5 workflows; no inventory/harvest/retail/swab/reprint). Lags `quicklabel.html`. |
 | `WORK_LOG.md` | Dated narrative of every change made in this session. **Read top-down for context.** |
 | `CHANGELOG.md` | High-level user-facing changelog (pre-existing). |
 | `backend/`, `frontend/` | **Do not modify.** Preview-environment plumbing only. |
@@ -43,7 +54,7 @@ Path-1 (the architecture chosen this session) keeps everything in
 Async API exposed on `window.db`:
 
 ```
-db.session.{login, logout, currentUser, isLoggedIn, hasLegacyData, purgeLegacy}
+db.session.{login, logout, currentUser, isLoggedIn, hasLegacyData, purgeLegacy, refresh, mustChangePassword, changePassword, claimPassword}
 db.genetics.{list, get, create, update, remove, archive}
 db.lots.{list, get, create, byPrefix, nextNumber, _loadCounters, _saveCounters}
 db.lineage.{addEdge, parentsOf, childrenOf, tree}
@@ -51,9 +62,10 @@ db.config.{get, set}
 db.form.{save, restore}
 ```
 
-Every method returns a `Promise`. Internally everything is synchronous
-`localStorage` access; the async surface is deliberate so the adapter can
-be swapped for IndexedDB or a real backend without touching call sites.
+Every method returns a `Promise`. Reads/writes are synchronous
+`localStorage` access; writes are additionally mirrored (queued/pushed)
+to the Supabase KV store. The async surface is deliberate so the adapter
+can be swapped or extended without touching call sites.
 
 ### Per-user namespacing
 
@@ -82,9 +94,10 @@ delete it, point all `cfg.codes` readers at `db.genetics.list()`, gone.
 
 ### Label rendering
 
-`quicklabel.html` defines a `LABEL_TEMPLATES['grain-spawn-9x5']` template
-keyed on a Dymo 2.25 × 1.25 in / viewBox 900 × 500 layout. The render
-function has two paths:
+`quicklabel.html` defines two entries in `LABEL_TEMPLATES`:
+`grain-spawn-9x5` (DYMO 30334, 2.25 × 1.25 in / viewBox 900 × 500 layout)
+and `d11-strip` (Merryhome/D11, 14 × 35 mm), across two printers. The
+render function has two paths:
 
 - **Slot path** (used by the Ingest workflow). The caller produces
   `d.bodySlots = [{kind, text, [source]}, …]` plus a structured
@@ -163,6 +176,13 @@ spin up only in the Emergent preview to keep its router happy.
 - **Lot-record + lineage capture** on every print run via `db.lots.create`
   and `db.lineage.addEdge` (free-text edges until the source field is
   structured — see Open Issues).
+- **Record Harvest Lot (HL), Print Retail Units (RU), Swab Collection (SW),
+  and Reprint** workflows (added alongside the earlier Ingest / Agar Plate /
+  Liquid Culture / Grain Spawn / Generate a Batch set).
+- **Inventory view** — browse recorded lots, filterable by prefix.
+- **Shared source-lot picker** — select a real source lot across workflows.
+- **Supabase login + cloud sync** — per-user account and localStorage
+  mirroring to the `ql_store` KV table.
 
 ---
 
@@ -191,9 +211,10 @@ These are deliberate omissions, not bugs.
    genus field with empty species. The auto-migration deliberately does
    not split them to avoid surprise mutations. Fix per-record via the
    edit modal.
-6. **Single label template** (`grain-spawn-9x5`). Larger / smaller labels
-   are planned. The slot model is per-template; adding a new template
-   inherits its own budget without changing logic.
+6. **Two label templates** (`grain-spawn-9x5` for DYMO, `d11-strip` for
+   Merryhome/D11). More sizes are still wanted. The slot model is
+   per-template; adding a new template inherits its own budget without
+   changing logic.
 7. **Origin Date** is part of the data model (`ingestData.originDate`)
    but no UI surfaces it currently. The toggle was removed because
    nothing useful was rendered on the label. Re-introduce when the QR
@@ -223,9 +244,10 @@ resolving before more code lands:
 4. **Source field structure.** Free-text vs. type-tag (per PRD §16) vs.
    real foreign-key lookup. Becomes urgent the moment a second workflow
    (LC, Agar) starts producing real lot IDs the next ingest can reference.
-5. **Multiple label templates.** A larger label size would expand the
-   body budget and the QR-reserve options. Probably needs a printer-and-
-   template selector UI even when there's just one combo.
+5. **More label templates.** Two templates ship today (`grain-spawn-9x5`,
+   `d11-strip`); additional sizes would expand the body budget and the
+   QR-reserve options. Probably needs a fuller printer-and-template
+   selector UI as more combos are added.
 
 ---
 
@@ -237,8 +259,10 @@ resolving before more code lands:
 - **Opt-in toggle pattern** for new label fields: checkbox → wrap div →
   `onIngestSectionToggle(name)` → label slot or footer position. Always
   enforce the slot budget.
-- **No backend, no auth, no hosted dependencies** unless and until the
-  PRD's "blue sky" section §15 starts being implemented.
+- **Local-first, with cloud sync.** State always lives in `localStorage`
+  first; it is mirrored to the Supabase KV store and gated by Supabase
+  Auth (per-user login). New persistent state rides the same `db.*` path
+  so it inherits both the namespacing and the sync.
 - **Lot ID is never compromised** — body lines below it can shrink or
   drop; the lot ID's font/position never moves.
 

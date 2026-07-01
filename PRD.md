@@ -1,8 +1,22 @@
 # QuickLabel — Product Requirements Document
 
 **Version:** 1.0
-**Last updated:** 2026-05-10
+**Last updated:** 2026-07-01
 **Audience:** the author (single user, personal tool, closed environment).
+
+---
+
+> ## Implementation status — as of 2026-07-01
+>
+> _Added during a documentation-accuracy audit. Records what the shipping code (`quicklabel.html` + `db.js`, at repo root) actually does today, so the design/roadmap sections below can be read against reality. Sections marked "future", "deferred", "out of scope", or "blue sky" remain intentional roadmap, not current state._
+>
+> - **App:** single-file `quicklabel.html` (~5,140 lines) + `db.js`; no build step. `batch-labels.html` is a standalone sheet; `quicklabel-portable.html` is an **older, reduced** snapshot (5 workflows, no inventory).
+> - **Workflows (9):** Ingest · Create Agar Plate (`AL`) · Create Liquid Culture (`LC`) · Make Grain Spawn (`GL`) · Generate a Batch (`BL`) · Record Harvest Lot (`HL`) · Print Retail Units (`RU`) · Swab Collection (`SW`) · Reprint. Lot ID = `PREFIX-CODE-YYMMDD-NN`.
+> - **Label engine:** hand-written SVG strings; two templates — `grain-spawn-9x5` (DYMO 30334, 2.25×1.25 in) and `d11-strip` (Merryhome/D11, 14×35 mm) — across two printers. Live layout-tuning ("Fiddle") panel.
+> - **QR:** reserved placeholder box only; no encoder yet.
+> - **Output:** browser `window.print()` + 300-DPI PNG export / Web Share. No PDF, no ZPL.
+> - **Persistence:** per-user `localStorage` (`ql_u:<user>:<slot>`) mirrored to a **Supabase** Postgres KV table (`ql_store`), with **Supabase Auth** (synthetic `<user>@quicklabel.app`). Synced slots: cfg, counters, genetics, lots, lineage (form is device-local).
+> - **Also built:** genetics catalog + CSV/paste import; inventory view; per-user login; lineage edges captured on every print. **Not yet built:** lineage-tree UI, real QR, PDF export, lot-status/consumption tracking.
 
 ---
 
@@ -37,8 +51,9 @@ Every state-change label captures four things:
 4. **Where it came from** — the originating state, and that state's ID if one
    exists.
 
-Each state has its own lot-ID format. Today, only one state is in scope:
-**grain spawn**, producing **grain lots**.
+Each state has its own lot-ID format. Multiple states are now in scope
+(see the Workflows table below); **grain spawn**, producing **grain lots**,
+is the default.
 
 ### Workflows
 
@@ -46,17 +61,20 @@ A **workflow** is a named state change. Every label is one workflow event.
 The workflow fixes the destination state, the lot type, and the lot-ID
 format. The user picks a workflow, then fills in the rest.
 
-Today's release implements one workflow:
+The app now implements **nine workflows**, selected via a real workflow
+dropdown in the header (default: Make Grain Spawn):
 
 | Workflow | Destination | Lot type | In scope? |
 |----------|-------------|----------|-----------|
+| **Ingest** | Received material | Ingest Lot | Yes |
+| **Create Agar Plate** | Agar plate | Agar Lot | Yes |
+| **Create Liquid Culture** | Liquid Culture | LC Lot | Yes |
 | **Make Grain Spawn** | Grain Spawn | Grain Lot | Yes |
-| Spawn-to-Bulk | Bulk substrate | Batch | No |
-| Spore → Agar | Agar plate | Agar Lot | No |
-| LC → Agar | Agar plate | Agar Lot | No |
-| Agar → Agar (transfer) | Agar plate | Agar Lot | No |
-| Make Liquid Culture | Liquid Culture | LC Lot | No |
-| Harvest | Fruiting body | Harvest Lot | No |
+| **Generate a Batch** | Bulk substrate | Batch | Yes |
+| **Record Harvest Lot** | Fruiting body | Harvest Lot | Yes |
+| **Print Retail Units** | Retail unit | Retail Unit | Yes |
+| **Swab Collection** | Swab | Swab Lot | Yes |
+| **Reprint** | (re-emits an existing lot) | — | Yes |
 | Homogenize | Processed product | Homogenized Lot | No |
 
 The destination state is **not** user-selected on the form — it is implied
@@ -183,14 +201,19 @@ label will depend on the workflow, not on the form.
 
 ### Grain Lot ID
 
-`[GeneticCode]-[YYMMDD]-[NN]`
+`[Prefix]-[GeneticCode]-[YYMMDD]-[NN]`
 
+- `[Prefix]` — workflow-derived lot prefix (grain spawn = `GL`); see §16.
 - `[GeneticCode]` — e.g. `SL192`
 - `[YYMMDD]` — initiation date, two-digit year first
-- `[NN]` — two-digit sequence, scoped to (genetic code, date). Resets each day per code.
+- `[NN]` — two-digit sequence, scoped to (prefix, genetic code, date). Resets each day per code.
   Allows up to 99 grain-lot initiations per code per day.
 
-Example: `SL192-260510-03`.
+Example: `GL-SL192-260510-03`.
+
+(This section was originally written with a bare `[GeneticCode]-[YYMMDD]-[NN]`
+form; it has been reconciled with §16 — every lot is now prefixed
+`PREFIX-CODE-YYMMDD-NN`, the prefix chosen per workflow.)
 
 ### Originating state ("source")
 
@@ -275,7 +298,7 @@ Indicative zoning:
 │  ENIGMA                                │  Cultivar full-width, auto-shrink
 │  Psilocybe cubensis           [ACTIVE] │  Genus species italic · chip
 │  ─────                                 │  Rule
-│  SL192-260510-03                       │  L1: Lot ID alone (core)
+│  GL-SL192-260510-03                    │  L1: Lot ID alone (core)
 │  F1.C1_A.T3                            │  L2: Lineage alone
 │  Grain Spawn  |  Src: Agar SL188.F1.T2 │  L3: Destination | Source
 │  Grain: RYE — Rye berries              │  L4: Grain type (with desc)
@@ -312,18 +335,21 @@ for labeling.
 - Direct-to-printer (Dymo Connect REST or equivalent) is desired but not
   required. If direct printing fails or is unavailable, the user falls
   back to the browser dialog without losing the in-progress label.
-- Today's hardware target is the Dymo LabelWriter family with media
-  30334 (2.25" × 1.25"). The product does not assume Dymo long-term;
-  printer support is meant to broaden over time.
+- Today's default hardware target is the Dymo LabelWriter family with media
+  30334 (2.25" × 1.25"), template `grain-spawn-9x5`. A second printer is now
+  supported: the Merryhome/D11 (14 × 35 mm strip, template `d11-strip`). Both
+  are registered in `PRINTERS` (`dymo-30334`, `merryhome-d11`). The product
+  does not assume Dymo long-term; printer support is meant to broaden over
+  time.
 
 ---
 
 ## 12. Form Behavior
 
 - The form is flat. There is no "Advanced" section.
-- The app header carries a **workflow tag** showing which workflow is
-  active (today: `Make Grain Spawn`). The tag is a placeholder for a
-  future workflow selector.
+- The app header carries a **workflow selector** dropdown that switches
+  which of the nine workflows is active (default: `Make Grain Spawn`). It
+  fixes the destination state, lot type, and lot-ID prefix for the run.
 - **Genetic code** is the first form field. Picking or typing a saved code
   populates genus, species, and cultivar. The auto-populated fields
   remain editable for one-off labels.
@@ -348,15 +374,23 @@ for labeling.
 ## 13. Out of Scope (this release)
 
 - States other than grain spawn (agar, LC, batch, harvest, homogenized).
+  _(Since shipped: agar, LC, batch, harvest, ingest, retail, swab workflows
+  are now built; homogenized/product remain unbuilt.)_
 - Lot expansion / sublot tree.
 - Field validation, mandatory fields, format enforcement.
-- Multi-user / multi-lab / hosted backend.
+- Multi-user / multi-lab / hosted backend. _(Partially shipped 2026-06 via
+  Supabase: per-user Supabase Auth + Postgres KV cloud sync. Multi-lab/room
+  hierarchy still not built.)_
 - Direct-to-printer integration (parked, browser print is the path).
 - Multi-printer routing, room/printer selection, network printers.
-- Print history, audit log, reprint workflows.
+- Print history, audit log, reprint workflows. _(Reprint workflow now built;
+  history/audit log still not.)_
 - Compliance fields, operator tracking, vendor registry.
-- Substrate inventory, recipe builder, QR/barcodes.
+- Substrate inventory, recipe builder, QR/barcodes. _(QR/barcodes remain
+  reserve-only — placeholder box, no encoder.)_
 - Print-to-WIP pipeline.
+- Cloud sync of settings/data. _(Partially shipped 2026-06 via Supabase KV.)_
+- Bulk-add of codes from CSV / paste. _(Now built — CSV/paste import exists.)_
 
 ---
 
@@ -385,7 +419,9 @@ influence the current code.
 ### Product surface
 
 - Hosted web app with identity persistence (closed environment, not real
-  auth). Eventually real auth via Synergy SSO.
+  auth). Eventually real auth via Synergy SSO. _(Shipped in part: per-user
+  identity persistence now exists via Supabase Auth — not "Synergy SSO", but
+  real per-user login + cloud sync.)_
 - Multi-tenant: Lab → Users → Rooms → Printers. Users print from any of
   their lab's printers in any room.
 - Print-to-WIP: a printed label opens a tracked work-in-progress entry in
@@ -413,7 +449,8 @@ influence the current code.
 - Operator tracking, compliance fields, audit log, print history,
   reprints.
 - QR codes / barcode scanning for substrate and lot lookup.
-- Bulk-add of cultivars, codes, grain types from CSV / paste.
+- Bulk-add of cultivars, codes, grain types from CSV / paste. _(Shipped:
+  CSV/paste bulk import of genetic codes is now built.)_
 
 ### Hardware
 
@@ -453,14 +490,21 @@ e.g. `GL-SL189-260511-03`. Prefix is workflow-derived
 (`WORKFLOWS[id].lotPrefix`), so future workflows declare their own:
 
 ```
-GL-SL189-260511-03   ← Grain spawn lot (current)
-LL-SL189-260511-03   ← Liquid Culture lot
-AL-SL189-260511-03   ← Agar plate lot (more "plate ID" than lot)
-BL-SL189-260511-03   ← Batch (spawn-to-bulk) lot
-HL-SL189-260511-03   ← Harvest lot
-ML-SL189-260511-03   ← Homogenized / mixed lot
-PL-SL189-260511-03   ← Product lot (post-test parted-out)
+GL-SL189-260511-03   ← Grain spawn lot (implemented)
+LC-SL189-260511-03   ← Liquid Culture lot (implemented; code uses LC, not LL)
+AL-SL189-260511-03   ← Agar plate lot (implemented; more "plate ID" than lot)
+BL-SL189-260511-03   ← Batch (generate-a-batch) lot (implemented)
+HL-SL189-260511-03   ← Harvest lot (implemented)
+RU-SL189-260511-03   ← Retail unit (implemented)
+SW-SL189-260511-03   ← Swab collection (implemented)
+IG-SL189-260511-03   ← Ingest lot (implemented; default media-type code)
+ML-SL189-260511-03   ← Homogenized / mixed lot (UNBUILT)
+PL-SL189-260511-03   ← Product lot, post-test parted-out (UNBUILT)
 ```
+
+Note: Liquid Culture's prefix is `LC` in code (this doc originally said `LL`).
+`HL` (Harvest), `RU` (Retail), and `SW` (Swab) are all implemented; `ML`
+(homogenized) and `PL` (product) remain unbuilt.
 
 `lotCounters` is now keyed `<prefix>_<code>_<YYMMDD>`, so sequences are
 per-workflow per-genetic per-day. Existing pre-prefix counters in
@@ -471,23 +515,24 @@ localStorage are orphaned (single-user dev tool, no migration needed).
 ## 16b. Genetics Tracking Expansion
 
 A separate PRD covers the pre-grain tracking layer:
-**`/app/PRD-genetics-tracking.md`**
+**`PRD-genetics-tracking.md`**
 
 Contents: Ingest workflow (spore prints, swabs, LC, tissue, agar plates received),
 Agar Plate workflow, Liquid Culture workflow, filial/transfer conventions, lot ID
 formats for all pre-grain states, field visibility customization, Genetics Tracker
 module design (future), storage media (Castellani, slant), open questions.
 
-As of 2026-02-01, the workflow selector and the three pre-grain workflows
-(Ingest, Agar Plate, Liquid Culture) are implemented in `quicklabel.html`.
+As of 2026-07-01, nine workflows are implemented in `quicklabel.html`
+(Ingest, Agar Plate, Liquid Culture, Grain Spawn, Generate a Batch, Harvest
+Lot, Retail Units, Swab, Reprint).
 
 ---
 
 ## 17. Workflow Architecture (forward plan)
 
-A **workflow** is a state-change event being labeled. Today the app has one
-workflow hard-wired (`grain-spawn`); the architecture is in place to add
-more. Each workflow owns four things:
+A **workflow** is a state-change event being labeled. The workflow
+architecture below is now in use across nine workflows (selected via the
+header dropdown; default `grain-spawn`). Each workflow owns four things:
 
 1. **A header label** (what shows next to the QuickLabel logo when active).
 2. **A destination state** (what the labeled thing now is).
