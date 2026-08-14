@@ -238,6 +238,7 @@
   }
   async function refreshSession() {
     const t = loadToken();
+    if (t && t.access_token === 'offline') return true;   // emergency offline session
     if (!t || !t.refresh_token) return false;
     try {
       const r = await sbAuthFetch('token?grant_type=refresh_token', { refresh_token: t.refresh_token });
@@ -395,7 +396,19 @@
       const u = String(name || '').trim();   // keep exact case (e.g. "pSi:L")
       if (!u) return { ok: false, reason: 'empty' };
       if (!String(password || '')) return { ok: false, reason: 'empty_pass' };
-      const res = (mode === 'signup') ? await signUp(u, String(password)) : await signIn(u, String(password));
+      let res;
+      try {
+        res = (mode === 'signup') ? await signUp(u, String(password)) : await signIn(u, String(password));
+      } catch (_) {
+        // Supabase unreachable (network error) — emergency offline entry.
+        // The user's data lives locally under their namespace; let them in
+        // on it. Password can't be verified offline; anyone at this device
+        // could already read localStorage, so nothing new is exposed. A real
+        // login (and sync) happens next time Supabase answers.
+        localStorage.setItem(USER_KEY, u);
+        saveToken({ access_token: 'offline', refresh_token: '', username: u, uid: '', expires_at: 0 });
+        res = { ok: true, isNew: false, offline: true };
+      }
       if (!res.ok) return res;                 // { reason: taken|bad_creds|weak_pass|... }
       const imp = importLegacyForUser(u);       // session already persisted by signUp/signIn
       syncGeneticsAndCfg();
