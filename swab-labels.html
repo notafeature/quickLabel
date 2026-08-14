@@ -84,10 +84,10 @@
 
   <div class="grid">
     <label class="fld"><span>Date</span><input type="date" id="g-date"></label>
-    <label class="fld"><span>Swabs</span><input class="num" id="qty" type="number" min="1" max="99" value="1"></label>
+    <label class="fld"><span>Swabs</span><input class="num" id="qty" type="number" min="1" max="99" value="10"></label>
     <label class="fld"><span>Start #</span><input class="num" id="start" type="number" min="1" max="99" value="1"></label>
     <label class="fld chk"><input type="checkbox" id="bag"> <span>Add bag label</span></label>
-    <button class="btn" id="printBtn" onclick="window.print()" disabled>Print</button>
+    <button class="btn" id="printBtn" onclick="doPrint()" disabled>Print</button>
     <button class="btn secondary" id="saveBtn" onclick="saveAllPng()" disabled>Save PNG</button>
     <button class="btn secondary" id="shareBtn" onclick="shareAllPng()" style="display:none" disabled>Share</button>
   </div>
@@ -277,6 +277,38 @@ const TPL = LABEL_TEMPLATES['grain-spawn-9x5'];
 const pad2 = n => String(n).padStart(2,'0');
 const toYYMMDD = iso => { if (!iso) return ''; const [y,m,d] = iso.split('-'); return `${y.slice(2)}${m}${d}`; };
 const $ = id => document.getElementById(id);
+
+/* ── series counters: numbering keeps running across prints, per code+date,
+   stored in this browser. Print SW-…-01…10 today, the next run of the same
+   genetic starts at 11 automatically. Start # stays editable to override. ── */
+const CTR_KEY = 'ql_swab_counters';
+function loadCtrs() { try { return JSON.parse(localStorage.getItem(CTR_KEY) || '{}'); } catch (_) { return {}; } }
+function saveCtrs(c) { try { localStorage.setItem(CTR_KEY, JSON.stringify(c)); } catch (_) {} }
+function ctrKey() {
+  const code = $('code').value.trim().toUpperCase();
+  const ymd  = toYYMMDD($('g-date').value);
+  return code && ymd ? code + '|' + ymd : '';
+}
+function syncStartFromSeries() {
+  const k = ctrKey();
+  if (k) $('start').value = (loadCtrs()[k] || 0) + 1;
+}
+function commitSeries() {
+  const k = ctrKey();
+  if (!k) return;
+  const start = Math.max(1, parseInt($('start').value, 10) || 1);
+  const qty   = Math.max(1, Math.min(99, parseInt($('qty').value, 10) || 1));
+  const c = loadCtrs();
+  c[k] = Math.max(c[k] || 0, start + qty - 1);
+  saveCtrs(c);
+  syncStartFromSeries();
+  render();
+}
+function doPrint() {
+  window.print();     // prints the labels as currently rendered
+  commitSeries();     // then advances the series for the next run
+}
+const trunc = (s, n) => { s = String(s || '').trim(); return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s; };
 
 /* ── genetics library ──
    Primary source: your QuickLabel library in localStorage (ql_u:<user>:genetics),
@@ -509,6 +541,9 @@ function applyPick(q) {
   $('origin').value   = firstStr(hit.originator, hit.origin, ing.originator, ing.origin, hit.vendor);
   $('family').value   = firstStr(hit.family, ing.family);
   $('notation').value = firstStr(hit.notation, ing.notation);
+  // Notes ride the label footer — truncated to what fits; full text shows below.
+  $('notes').value    = trunc(firstStr(hit.notes, ing.notes), 48);
+  syncStartFromSeries();
   const info = [];
   if (hit.vendor) info.push('Vendor: ' + hit.vendor);
   if (hit.family) info.push('Family: ' + hit.family);
@@ -621,12 +656,15 @@ async function shareBlobs(items) {
   for (const it of items) await saveBlob(it.blob, it.name);   // fallback: download
 }
 async function saveAllPng() {
-  for (const it of LAST) { await saveBlob(await svgToPng(it.svg), it.name); await new Promise(r => setTimeout(r, 150)); }
+  const items = LAST.slice();
+  for (const it of items) { await saveBlob(await svgToPng(it.svg), it.name); await new Promise(r => setTimeout(r, 150)); }
+  commitSeries();   // exporting the run counts as printing it
 }
 async function shareAllPng() {
   const items = [];
   for (const it of LAST) items.push({ blob: await svgToPng(it.svg), name: it.name });
   await shareBlobs(items);
+  commitSeries();
 }
 function fileName(lab) {
   return (lab.d.lotId + '_' + lab.kind).replace(/[^\w.-]+/g, '_').replace(/_+/g, '_').replace(/_$/, '') + '.png';
@@ -684,6 +722,8 @@ function render() {
   ['cultivar','code','genus','species','cat','notation','origin','family','source','notes',
    'g-date','qty','start','bag']
     .forEach(id => { $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
+  $('code').addEventListener('input', syncStartFromSeries);
+  $('g-date').addEventListener('change', syncStartFromSeries);
   if (SHARE_OK) $('shareBtn').style.display = '';
   render();
 })();
