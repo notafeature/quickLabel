@@ -3,45 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Spore Swab Labels</title>
+<title>Spore Swab Label</title>
 <style>
   :root { --green:#16a34a; --muted:#666; --border:#d8d8d8; }
   * { box-sizing: border-box; }
   body { font-family: -apple-system, Helvetica, Arial, sans-serif; margin: 0; background:#f4f5f7; color:#111; }
 
-  /* ── control panel (screen only) ── */
-  .panel { padding: 18px 22px; background:#fff; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:5; }
-  .panel h1 { font-size: 18px; margin: 0 0 4px; }
-  .panel p  { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
-  .globals { display:flex; gap:18px; flex-wrap:wrap; align-items:flex-end; margin-bottom:14px; }
+  .panel { padding: 20px 22px; background:#fff; border-bottom:1px solid var(--border); }
+  .panel h1 { font-size: 18px; margin: 0 0 12px; }
+  .grid { display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; }
+  .grid + .grid { margin-top: 12px; }
   .fld { display:flex; flex-direction:column; gap:4px; font-size:12px; }
   .fld span { color: var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; font-size:10px; }
-  input, select { padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:13px; }
+  input, select { padding:9px 10px; border:1px solid var(--border); border-radius:6px; font-size:15px; background:#fff; color:#111; }
   input.code { width:110px; font-family:'SF Mono',Menlo,Consolas,monospace; text-transform:uppercase; }
-  input.num { width:54px; text-align:center; }
-  table { border-collapse:collapse; width:100%; font-size:13px; }
-  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid #eee; }
-  th { font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); }
-  tr.need input.code { border-color:#e11d48; background:#fff1f3; }
-  .btn { padding:9px 18px; border:0; border-radius:7px; background:var(--green); color:#fff; font-weight:700; font-size:14px; cursor:pointer; }
-  .btn.secondary { background:#374151; }
-  .btn.small { padding:6px 12px; font-size:12px; }
-  .count { font-size:12px; color:var(--muted); margin-left:10px; }
-  .libnote { font-size:12px; color:var(--green); font-weight:600; }
+  input.num { width:64px; text-align:center; }
+  .btn { padding:11px 22px; border:0; border-radius:7px; background:var(--green); color:#fff; font-weight:700; font-size:16px; cursor:pointer; }
+  .btn.secondary { background:#374151; font-size:13px; padding:9px 14px; }
+  .btn:disabled { opacity:.4; cursor:default; }
+  .hint { margin:10px 0 0; color:var(--muted); font-size:12px; }
+  .libnote { font-size:12px; color:var(--green); font-weight:600; margin-left:8px; }
+  .chk { flex-direction:row !important; align-items:center; gap:6px; }
+  .chk span { text-transform:none !important; font-size:12px !important; letter-spacing:0 !important; }
 
-  /* ── label sheet ── */
   .sheet { padding: 20px; display:flex; flex-wrap:wrap; gap:18px; }
   .label-card { background:#fff; border:1px solid var(--border); border-radius:8px; padding:8px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
-  .label-card.flag { outline:2px solid #e11d48; outline-offset:2px; }
   .cap { font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:600; }
   .cap b { color:#111; }
-  .label-host { width:3.6in; height:2in; }            /* on-screen, scaled up 1.6x */
+  .label-host { width:3.6in; height:2in; }
   .label-host > svg { display:block; width:3.6in; height:2in; }
   .cardbar { display:flex; gap:6px; margin-top:8px; }
   .cardbar button { padding:5px 10px; font-size:11px; font-weight:600; border:1px solid var(--border);
     border-radius:6px; background:#fff; cursor:pointer; }
   .cardbar button.share { background:var(--green); color:#fff; border-color:var(--green); }
-  .cardbar button:disabled { opacity:.5; cursor:default; }
 
   @media print {
     .panel { display:none !important; }
@@ -62,41 +56,51 @@
 <body>
 
 <div class="panel">
-  <h1>Spore Swab Labels</h1>
-  <p>Standalone swab-collection labels — no login, no cloud, works offline. Fill a line per genetic, then
-     <b>Print</b> → DYMO LabelWriter (2.25″ × 1.25″). Margins <b>None</b>, Scale <b>100%</b>, Background graphics <b>On</b>.</p>
+  <h1>Spore Swab Label</h1>
 
-  <div class="globals">
-    <label class="fld"><span>Event date</span><input type="date" id="g-date"></label>
-    <label class="fld"><span>Genus</span><input id="g-genus" style="width:110px" value="Psilocybe"></label>
-    <label class="fld"><span>Category</span><select id="g-cat"><option value="actives">Actives</option><option value="gourmet">Gourmet</option></select></label>
-    <button class="btn" onclick="window.print()">Print all</button>
-    <button class="btn secondary" onclick="saveAllPng()">Save all PNGs</button>
-    <button class="btn secondary" id="shareAllBtn" onclick="shareAllPng()" style="display:none">Share all</button>
-    <span class="count" id="count"></span>
+  <div class="grid">
+    <label class="fld"><span>Find genetic</span>
+      <input id="pick" list="codes-dl" style="min-width:260px" placeholder="Type code or cultivar…">
+    </label>
     <span class="libnote" id="libnote"></span>
   </div>
-  <p style="margin-top:0;color:var(--muted);font-size:12px">
-    <b>Phone + Bluetooth label maker?</b> Use <b>Share</b> on a label (or Share all) to send the PNG straight to
-    Messages / AirDrop / your printer app. On desktop, <b>Save PNGs</b> then text/AirDrop them to your phone.</p>
-  <p style="margin-top:0;color:var(--muted);font-size:12px">
-    Lot IDs run <b>SW-CODE-YYMMDD-NN</b> starting at <b>Start #</b>. If you already printed swabs for this
-    code today (in the app or here), bump Start # so numbers don't collide — this page can't see the app's counters.</p>
 
-  <table>
-    <thead><tr>
-      <th>Cultivar</th><th>Genetic code</th><th>Species</th><th>Swabs</th><th>Start #</th><th>Bag label</th><th>Source lot (optional)</th><th>Notes</th>
-    </tr></thead>
-    <tbody id="rows"></tbody>
-  </table>
-  <div style="margin-top:10px"><button class="btn secondary small" onclick="addRow()">+ Add line</button></div>
+  <div class="grid">
+    <label class="fld"><span>Cultivar</span><input id="cultivar" style="width:200px" placeholder="e.g. Enigma"></label>
+    <label class="fld"><span>Code</span><input class="code" id="code" placeholder="SL___"></label>
+    <label class="fld"><span>Genus</span><input id="genus" style="width:110px" value="Psilocybe"></label>
+    <label class="fld"><span>Species</span><input id="species" style="width:150px" value="cubensis"></label>
+    <label class="fld"><span>Category</span><select id="cat"><option value="actives">Actives</option><option value="gourmet">Gourmet</option></select></label>
+  </div>
+
+  <div class="grid">
+    <label class="fld"><span>Lineage notation</span><input id="notation" style="width:130px" placeholder="F1.C0.T2"></label>
+    <label class="fld"><span>Origin</span><input id="origin" style="width:180px" placeholder="e.g. Sporeworks"></label>
+    <label class="fld"><span>Family</span><input id="family" style="width:150px" placeholder="optional"></label>
+    <label class="fld"><span>Source lot</span><input id="source" style="width:190px" placeholder="HL-…"></label>
+    <label class="fld"><span>Comment</span><input id="notes" style="width:200px" placeholder="prints bottom-right"></label>
+  </div>
+
+  <div class="grid">
+    <label class="fld"><span>Date</span><input type="date" id="g-date"></label>
+    <label class="fld"><span>Swabs</span><input class="num" id="qty" type="number" min="1" max="99" value="1"></label>
+    <label class="fld"><span>Start #</span><input class="num" id="start" type="number" min="1" max="99" value="1"></label>
+    <label class="fld chk"><input type="checkbox" id="bag"> <span>Add bag label</span></label>
+    <button class="btn" id="printBtn" onclick="window.print()" disabled>Print</button>
+    <button class="btn secondary" id="saveBtn" onclick="saveAllPng()" disabled>Save PNG</button>
+    <button class="btn secondary" id="shareBtn" onclick="shareAllPng()" style="display:none" disabled>Share</button>
+  </div>
+
+  <p class="hint">Prints <b>2.25″ × 1.25″</b> (DYMO LabelWriter): margins <b>None</b>, scale <b>100%</b>, background graphics <b>On</b>.
+     Phone + Bluetooth label maker → <b>Share</b> / <b>Save PNG</b>.
+     Lot IDs run <b>SW-CODE-YYMMDD-NN</b> from Start # — bump it if you already printed swabs for this genetic today; this page can't see the app's counters.</p>
   <datalist id="codes-dl"></datalist>
 </div>
 
 <div class="sheet" id="sheet"></div>
 
 <script>
-/* ── label renderer: copied verbatim from quicklabel.html so output matches ── */
+/* ── label renderer: copied from quicklabel.html (bodySlots path) so output matches ── */
 const CHIP_COLORS = {
   actives: { fill: '#dcfce7', text: '#14532d' },
   gourmet: { fill: '#cffafe', text: '#164e63' }
@@ -114,6 +118,39 @@ function fitText(textEl, maxLen) {
   }
 }
 const fmtDate = iso => { if (!iso) return ''; const [y,m,d] = iso.split('-'); return `${m}.${d}.${y.slice(2)}`; };
+
+// One body line for the slot-based layout. `slot` is {kind, text, [source]};
+// kinds: 'notation', 'destination', 'origin', 'family'.
+function renderBodySlot(slot, L, y, maxW, monoFam, fs) {
+  if (!slot || !slot.text) return '';
+  switch (slot.kind) {
+    case 'notation':
+      return `<text class="lbl-notation" x="${L.padL}" y="${y}"
+              font-size="${fs}" font-family="${monoFam}" fill="#555">${svgEsc(slot.text)}</text>`;
+    case 'destination': {
+      const src = slot.source && slot.source.trim();
+      if (!src) {
+        return `<text x="${L.padL}" y="${y}" font-size="${fs}" fill="#000">${svgEsc(slot.text)}</text>`;
+      }
+      return `<text x="${L.padL}" y="${y}" font-size="${fs}" fill="#000">
+              <tspan>${svgEsc(slot.text)}</tspan>
+              <tspan dx="14">|</tspan>
+              <tspan dx="14" font-size="${L.dimFS}" fill="#555">Src:</tspan>
+              <tspan class="lbl-src" dx="8" font-family="${monoFam}">${svgEsc(src)}</tspan>
+            </text>`;
+    }
+    case 'origin':
+    case 'family': {
+      const label = { origin: 'Origin:', family: 'Fam:' }[slot.kind];
+      return `<text x="${L.padL}" y="${y}" font-size="${fs}" fill="#000">
+              <tspan font-size="${Math.round(fs * 0.85)}" fill="#555">${label}</tspan>
+              <tspan class="lbl-${slot.kind}" dx="10" font-family="${monoFam}">${svgEsc(slot.text)}</tspan>
+            </text>`;
+    }
+    default:
+      return `<text x="${L.padL}" y="${y}" font-size="${fs}" fill="#000">${svgEsc(slot.text)}</text>`;
+  }
+}
 
 const LABEL_TEMPLATES = {
   'grain-spawn-9x5': {
@@ -153,30 +190,32 @@ const LABEL_TEMPLATES = {
 
       const qrX = VB.w - L.padR - L.qrSize;
       const qrY = ruleY + L.qrGap;
+      const qrBandTop = qrY;
+      const qrBandBot = qrY + L.qrSize;
 
+      const slots = Array.isArray(d.bodySlots) ? d.bodySlots : null;
+      const bodyStartY = lotY + L.lotNotationGap;
       const bodyEls = [];
-      // legacy flat-field path (notation / destination+source / media:sub)
-      const notationY  = lotY + L.lotNotationGap;
-      const srcY       = d.notation ? notationY + L.notationSrcGap : lotY + L.lotSourceGap;
-      const grainY     = srcY + L.lineGap;
-      const destLabel  = d.destination || '';
-      if (d.notation) bodyEls.push(`<text class="lbl-notation" x="${L.padL}" y="${notationY}"
-            font-size="${L.lineFS}" font-family="${monoFam}" fill="#555">${svgEsc(d.notation)}</text>`);
-      if (destLabel || d.source) bodyEls.push(`<text x="${L.padL}" y="${srcY}" font-size="${L.lineFS}" fill="#000">
-            ${destLabel ? svgEsc(destLabel) : ''}
-            ${destLabel && d.source ? `<tspan dx="12">|</tspan>` : ''}
-            ${d.source ? `<tspan dx="12" font-size="${L.dimFS}">Src:</tspan>` : ''}
-            ${d.source ? `<tspan class="lbl-src" dx="8" font-family="${monoFam}">${svgEsc(d.source)}</tspan>` : ''}
-          </text>`);
-      const mediaLabel = d.mediaLabel || 'Media';
-      if (d.sub) bodyEls.push(`<text x="${L.padL}" y="${grainY}" font-size="${L.lineFS}" fill="#000">
-            <tspan>${svgEsc(mediaLabel)}:</tspan><tspan class="lbl-grain" dx="10">${svgEsc(d.sub)}</tspan>
-          </text>`);
+      if (slots) {
+        let cursorY = bodyStartY;
+        for (let i = 0; i < slots.length; i++) {
+          const isSmall = i >= 2;
+          const fs   = isSmall ? L.lineFSSmall : L.lineFS;
+          const step = i === 0 ? 0 : (isSmall ? Math.round(L.lineGap * 0.82) : L.lineGap);
+          cursorY += step;
+          const clampQR = cursorY >= qrBandTop - L.lineGap * 0.4 && cursorY <= qrBandBot;
+          const rightX  = clampQR ? qrX - 12 : VB.w - L.padR;
+          const maxW    = rightX - L.padL;
+          bodyEls.push(renderBodySlot(slots[i], L, cursorY, maxW, monoFam, fs));
+        }
+      }
 
-      const footer = { left: d.date || '', center: '', right: d.notes || '' };
+      const footer = d.footer || { left: d.date || '', center: '', right: d.notes || '' };
       const footerEls = [];
       if (footer.left) footerEls.push(`<text x="${L.padL}" y="${bottomY}"
             font-size="${L.dateFS}" font-family="${monoFam}" fill="#000">${svgEsc(fmtDate(footer.left))}</text>`);
+      if (footer.center) footerEls.push(`<text x="${VB.w/2}" y="${bottomY}"
+            font-size="${L.notesFS}" text-anchor="middle" fill="#000">${svgEsc(footer.center)}</text>`);
       if (footer.right) footerEls.push(`<text class="lbl-notes" x="${VB.w-L.padR}" y="${bottomY}"
             font-size="${L.notesFS}" font-style="italic" text-anchor="end" fill="#000">${svgEsc(footer.right)}</text>`);
 
@@ -225,7 +264,8 @@ const LABEL_TEMPLATES = {
       fitText(svgEl.querySelector('.lbl-lot'),      contentW);
       fitText(svgEl.querySelector('.lbl-notation'), contentW);
       fitText(svgEl.querySelector('.lbl-src'),      contentW * 0.72);
-      fitText(svgEl.querySelector('.lbl-grain'),    contentW * 0.78);
+      fitText(svgEl.querySelector('.lbl-origin'),   contentW * 0.72);
+      fitText(svgEl.querySelector('.lbl-family'),   contentW * 0.72);
       fitText(svgEl.querySelector('.lbl-notes'),    contentW * 0.55);
     }
   }
@@ -235,12 +275,24 @@ const TPL = LABEL_TEMPLATES['grain-spawn-9x5'];
 /* ── helpers ── */
 const pad2 = n => String(n).padStart(2,'0');
 const toYYMMDD = iso => { if (!iso) return ''; const [y,m,d] = iso.split('-'); return `${y.slice(2)}${m}${d}`; };
+const $ = id => document.getElementById(id);
 
-/* ── local genetics library (best-effort, same-origin as the app only) ──
-   Reads every ql_u:<user>:genetics key so codes auto-fill cultivar/species/cat.
-   When this page is opened elsewhere (or the library is empty) everything
-   still works — you just type the fields yourself. */
-const LIB = {};
+/* ── genetics library ──
+   Primary source: your QuickLabel library in localStorage (ql_u:<user>:genetics),
+   visible when this page runs on the same origin as the app. Fallback: the
+   known genetics below, so the picker is never empty. Everything stays
+   editable — the picker only pre-fills the fields. */
+const FALLBACK = [
+  { cultivar:'Cabo Amarillo',              species:'cubensis',         code:'SL193', genus:'Psilocybe', cat:'actives' },
+  { cultivar:'Enigma',                     species:'cubensis',         code:'SL192', genus:'Psilocybe', cat:'actives' },
+  { cultivar:'Green Cap Ochraceocentrata', species:'cubensis',         code:'SL199', genus:'Psilocybe', cat:'actives' },
+  { cultivar:'Iceberg',                    species:'cubensis',         code:'SL194', genus:'Psilocybe', cat:'actives' },
+  { cultivar:'Machine Elf',                species:'cubensis',         code:'SL187', genus:'Psilocybe', cat:'actives' },
+  { cultivar:'MFH Ochra',                  species:'ochraceocentrata', code:'SL188', genus:'Psilocybe', cat:'actives' },
+  { cultivar:'Rusty Whyte',                species:'cubensis',         code:'SL190', genus:'Psilocybe', cat:'actives' },
+];
+const LIB = {};        // code → record
+let libFromApp = false;
 (function loadLibrary() {
   try {
     for (let i = 0; i < localStorage.length; i++) {
@@ -249,90 +301,93 @@ const LIB = {};
       let arr = []; try { arr = JSON.parse(localStorage.getItem(k)) || []; } catch (_) {}
       for (const g of arr) {
         const code = String((g && g.code) || '').trim().toUpperCase();
-        if (code && !LIB[code]) LIB[code] = g;
+        if (code && !LIB[code]) { LIB[code] = g; libFromApp = true; }
       }
     }
   } catch (_) {}
+  if (!libFromApp) for (const g of FALLBACK) LIB[g.code] = g;
   const codes = Object.keys(LIB).sort();
-  if (codes.length) {
-    document.getElementById('codes-dl').innerHTML =
-      codes.map(c => `<option value="${svgEsc(c)}">${svgEsc(LIB[c].cultivar || '')}</option>`).join('');
-    document.getElementById('libnote').textContent = `${codes.length} genetics loaded from your local library ✓`;
-  }
+  $('codes-dl').innerHTML = codes.map(c =>
+    `<option value="${svgEsc(c)}">${svgEsc(LIB[c].cultivar || '')}</option>`).join('');
+  $('libnote').textContent = libFromApp
+    ? `${codes.length} genetics loaded from your QuickLabel library ✓`
+    : `App library not visible from this page — pick from ${codes.length} known or type the details below.`;
 })();
 
-/* ── rows ── */
-const ROWS = [];
-function blankRow() { return { cultivar:'', code:'', species:'cubensis', qty:4, start:1, bag:true, source:'', notes:'' }; }
-
-function rowHtml(r, i) {
-  return `
-    <tr class="${r.code.trim() ? '' : 'need'}" id="row-${i}">
-      <td><input style="width:170px" data-i="${i}" data-f="cultivar" value="${svgEsc(r.cultivar)}" placeholder="e.g. Enigma"></td>
-      <td><input class="code" data-i="${i}" data-f="code" list="codes-dl" value="${svgEsc(r.code)}" placeholder="SL___"></td>
-      <td><input style="width:130px" data-i="${i}" data-f="species" value="${svgEsc(r.species)}"></td>
-      <td><input class="num" data-i="${i}" data-f="qty"   type="number" min="1" max="99" value="${r.qty}"></td>
-      <td><input class="num" data-i="${i}" data-f="start" type="number" min="1" max="99" value="${r.start}"></td>
-      <td style="text-align:center"><input type="checkbox" data-i="${i}" data-f="bag" ${r.bag ? 'checked' : ''}></td>
-      <td><input style="width:170px" data-i="${i}" data-f="source" value="${svgEsc(r.source)}" placeholder="HL-…"></td>
-      <td><input style="width:140px" data-i="${i}" data-f="notes" value="${svgEsc(r.notes)}"></td>
-    </tr>`;
+function firstStr() {   // first non-empty string among the arguments
+  for (const v of arguments) if (typeof v === 'string' && v.trim()) return v.trim();
+  return '';
 }
-function buildPanel() {
-  const tb = document.getElementById('rows');
-  tb.innerHTML = ROWS.map(rowHtml).join('');
-  tb.querySelectorAll('input').forEach(el => el.addEventListener('input', onEdit));
-}
-function addRow() { ROWS.push(blankRow()); buildPanel(); render(); }
-function onEdit(e) {
-  const i = +e.target.dataset.i, f = e.target.dataset.f;
-  let v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-  if (f === 'qty')   v = Math.max(1, Math.min(99, parseInt(v,10) || 1));
-  if (f === 'start') v = Math.max(1, Math.min(99, parseInt(v,10) || 1));
-  if (f === 'code') {
-    v = String(v).toUpperCase();
-    const hit = LIB[v.trim()];
-    if (hit) {   // auto-fill from the local library
-      const row = document.getElementById('row-'+i);
-      if (hit.cultivar && !ROWS[i].cultivar) { ROWS[i].cultivar = hit.cultivar; row.querySelector('[data-f="cultivar"]').value = hit.cultivar; }
-      if (hit.species) { ROWS[i].species = hit.species; row.querySelector('[data-f="species"]').value = hit.species; }
-      if (hit.genus)   document.getElementById('g-genus').value = hit.genus;
-      if (hit.cat)     document.getElementById('g-cat').value = hit.cat === 'actives' ? 'actives' : 'gourmet';
-    }
+function applyPick(q) {
+  q = String(q || '').trim().toUpperCase();
+  let hit = LIB[q];
+  if (!hit) {   // try cultivar match
+    const codes = Object.keys(LIB);
+    const c = codes.find(k => String(LIB[k].cultivar || '').toUpperCase() === q)
+         || codes.find(k => q.length >= 3 && String(LIB[k].cultivar || '').toUpperCase().startsWith(q));
+    if (c) hit = LIB[c];
   }
-  ROWS[i][f] = v;
-  if (f === 'code') document.getElementById('row-'+i).classList.toggle('need', !String(v).trim());
+  if (!hit) return;
+  const ing = (hit.ingestData && typeof hit.ingestData === 'object') ? hit.ingestData : {};
+  $('code').value     = String(hit.code || '').toUpperCase();
+  $('cultivar').value = hit.cultivar || '';
+  if (hit.genus)   $('genus').value   = hit.genus;
+  if (hit.species) $('species').value = hit.species;
+  if (hit.cat)     $('cat').value     = hit.cat === 'actives' ? 'actives' : 'gourmet';
+  const origin = firstStr(hit.originator, hit.origin, ing.originator, ing.origin);
+  const family = firstStr(hit.family, ing.family);
+  const notation = firstStr(hit.notation, ing.notation);
+  if (origin)   $('origin').value   = origin;
+  if (family)   $('family').value   = family;
+  if (notation) $('notation').value = notation;
   render();
 }
 
-/* ── expand rows → labels (mirrors buildSwabLabelData/buildSwabBagLabelData) ── */
 function buildLabels() {
-  const date  = document.getElementById('g-date').value;
-  const genus = document.getElementById('g-genus').value.trim();
-  const cat   = document.getElementById('g-cat').value;
-  const ymd   = toYYMMDD(date);
+  const code = $('code').value.trim().toUpperCase();
+  const cultivar = $('cultivar').value.trim();
+  if (!code && !cultivar) return [];
+  const C      = code || 'SL___';
+  const date   = $('g-date').value;
+  const ymd    = toYYMMDD(date);
+  const qty    = Math.max(1, Math.min(99, parseInt($('qty').value, 10) || 1));
+  const start  = Math.max(1, Math.min(99, parseInt($('start').value, 10) || 1));
+  const source   = $('source').value.trim();
+  const notes    = $('notes').value.trim();
+  const origin   = $('origin').value.trim();
+  const family   = $('family').value.trim();
+  const notation = $('notation').value.trim();
+
+  const base = {
+    cat: $('cat').value, genus: $('genus').value.trim(),
+    species: $('species').value.trim(), cultivar,
+  };
+  // Body slots ordered like the app: lineage → destination(+source) → origin → family.
+  const slotsFor = (destination, extra) => {
+    const s = [];
+    if (notation) s.push({ kind: 'notation', text: notation });
+    s.push({ kind: 'destination', text: destination, source });
+    if (extra) s.push(extra);
+    if (origin) s.push({ kind: 'origin', text: origin });
+    if (family) s.push({ kind: 'family', text: family });
+    return s.slice(0, 4);   // label fits 4 body lines
+  };
+  const footer = { left: date, center: '', right: notes };
+
+  const firstId = `SW-${C}-${ymd}-${pad2(start)}`;
   const out = [];
-  for (const r of ROWS) {
-    const code = String(r.code).trim().toUpperCase();
-    const need = !code;
-    const C = code || 'SL___';
-    const first = r.start, last = r.start + r.qty - 1;
-    const firstId = `SW-${C}-${ymd}-${pad2(first)}`;
-    const base = { cat, genus, species: (r.species||'').trim(), cultivar: r.cultivar.trim(),
-                   source: r.source.trim(), notes: r.notes.trim(), date };
-    if (r.bag) {
-      out.push({
-        kind: `${r.cultivar || C} — swab bag ×${r.qty}`, need,
-        d: { ...base, lotId: firstId, destination: `Swab Bag ×${r.qty}`,
-             notation: r.qty > 1 ? `${firstId} → ${pad2(last)}` : '', sub: '' }
-      });
-    }
-    for (let n = first; n <= last; n++) {
-      out.push({
-        kind: `${r.cultivar || C} — swab ${pad2(n)}`, need,
-        d: { ...base, lotId: `SW-${C}-${ymd}-${pad2(n)}`, destination: 'Swab', notation: '', sub: '' }
-      });
-    }
+  if ($('bag').checked) {
+    const range = qty > 1 ? { kind: 'info', text: `${firstId} → ${pad2(start + qty - 1)}` } : null;
+    out.push({
+      kind: `${cultivar || C} — swab bag ×${qty}`,
+      d: { ...base, lotId: firstId, bodySlots: slotsFor(`Swab Bag ×${qty}`, range), footer }
+    });
+  }
+  for (let n = start; n < start + qty; n++) {
+    out.push({
+      kind: `${cultivar || C} — swab ${pad2(n)}`,
+      d: { ...base, lotId: `SW-${C}-${ymd}-${pad2(n)}`, bodySlots: slotsFor('Swab'), footer }
+    });
   }
   return out;
 }
@@ -341,14 +396,12 @@ function buildLabels() {
 const SHARE_OK = typeof navigator !== 'undefined' && !!navigator.share;
 let LAST = [];   // [{ svg, name }] for the currently-rendered labels
 
-// Rasterize one (already-fitted) label SVG to a crisp PNG blob.
 function svgToPng(svgEl, dpi = 300) {
   return new Promise((resolve, reject) => {
     const w = Math.round(2.25 * dpi), h = Math.round(1.25 * dpi);
     const clone = svgEl.cloneNode(true);
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     clone.setAttribute('width', w); clone.setAttribute('height', h);
-    // drop the dashed QR-reserve marker from exports
     clone.querySelectorAll('.lbl-qr-reserve').forEach(n => n.remove());
     const xml = new XMLSerializer().serializeToString(clone);
     const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
@@ -364,7 +417,20 @@ function svgToPng(svgEl, dpi = 300) {
     img.src = url;
   });
 }
-function saveBlob(blob, name) {
+// When hosted as a claude.ai artifact the sandbox blocks direct downloads;
+// saves go through the viewer's confirmation prompt instead. In a normal
+// browser window.claude is undefined and the anchor path runs as usual.
+let DL = null;
+const DL_READY = (async () => {
+  try { if (window.claude && claude.use) DL = await claude.use('downloads'); } catch (_) {}
+})();
+async function saveBlob(blob, name) {
+  await DL_READY;
+  if (DL) {
+    try { await DL.save({ filename: name, data: blob }); }
+    catch (e) { if (e && e.code !== 'declined') console.warn('save failed', e); }
+    return;
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
@@ -378,10 +444,10 @@ async function shareBlobs(items) {
       return;
     }
   } catch (e) { if (e && e.name === 'AbortError') return; }   // user cancelled
-  items.forEach(it => saveBlob(it.blob, it.name));            // fallback: download
+  for (const it of items) await saveBlob(it.blob, it.name);   // fallback: download
 }
 async function saveAllPng() {
-  for (const it of LAST) { saveBlob(await svgToPng(it.svg), it.name); await new Promise(r => setTimeout(r, 150)); }
+  for (const it of LAST) { await saveBlob(await svgToPng(it.svg), it.name); await new Promise(r => setTimeout(r, 150)); }
 }
 async function shareAllPng() {
   const items = [];
@@ -394,16 +460,20 @@ function fileName(lab) {
 
 function render() {
   const labels = buildLabels();
-  const sheet = document.getElementById('sheet');
+  const ready = labels.length > 0;
+  $('printBtn').disabled = !ready;
+  $('saveBtn').disabled  = !ready;
+  $('shareBtn').disabled = !ready;
+  const sheet = $('sheet');
   sheet.innerHTML = '';
   LAST = [];
   const svgs = [];
   for (const lab of labels) {
     const card = document.createElement('div');
-    card.className = 'label-card' + (lab.need ? ' flag' : '');
+    card.className = 'label-card';
     const cap = document.createElement('div');
     cap.className = 'cap';
-    cap.innerHTML = `<b>${svgEsc(lab.d.lotId)}</b> — ${svgEsc(lab.kind)}${lab.need ? '  ⚠ needs code' : ''}`;
+    cap.innerHTML = `<b>${svgEsc(lab.d.lotId)}</b> — ${svgEsc(lab.kind)}`;
     const host = document.createElement('div');
     host.className = 'label-host';
     host.innerHTML = TPL.render(lab.d);
@@ -430,24 +500,19 @@ function render() {
   // Fit ONLY after the SVGs are in the live DOM — getComputedTextLength()
   // returns 0 for detached nodes.
   for (const svg of svgs) TPL.fit(svg);
-  const need = labels.filter(l => l.need).length;
-  document.getElementById('count').textContent =
-    `${labels.length} labels` + (need ? ` · ${need} need a genetic code` : (labels.length ? ' · all codes set ✓' : ''));
 }
 
-(function initDate() {
+(function initUI() {
   const d = new Date();
-  document.getElementById('g-date').value =
-    `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  document.getElementById('g-date').addEventListener('input', render);
-  document.getElementById('g-genus').addEventListener('input', render);
-  document.getElementById('g-cat').addEventListener('input', render);
+  $('g-date').value = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  $('pick').addEventListener('input',  e => applyPick(e.target.value));
+  $('pick').addEventListener('change', e => applyPick(e.target.value));
+  ['cultivar','code','genus','species','cat','notation','origin','family','source','notes',
+   'g-date','qty','start','bag']
+    .forEach(id => { $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
+  if (SHARE_OK) $('shareBtn').style.display = '';
+  render();
 })();
-
-ROWS.push(blankRow());
-buildPanel();
-if (SHARE_OK) document.getElementById('shareAllBtn').style.display = '';
-render();
 </script>
 </body>
 </html>
