@@ -52,11 +52,12 @@
     .label-host > svg { width:2.25in !important; height:1.25in !important; }
   }
 </style>
+<style id="pageRot"></style>
 </head>
 <body>
 
 <div class="panel">
-  <h1>Spore Swab Label <span style="font-size:11px;color:var(--muted);font-weight:600">v3</span></h1>
+  <h1>Spore Swab Label <span style="font-size:11px;color:var(--muted);font-weight:600">v4</span></h1>
 
   <div class="grid">
     <label class="fld"><span>Find genetic</span>
@@ -87,14 +88,16 @@
     <label class="fld"><span>Swabs</span><input class="num" id="qty" type="number" min="1" max="99" value="10"></label>
     <label class="fld"><span>Start #</span><input class="num" id="start" type="number" min="1" max="99" value="1"></label>
     <label class="fld chk"><input type="checkbox" id="bag"> <span>Add bag label</span></label>
+    <label class="fld chk"><input type="checkbox" id="rot"> <span>Rotate 90° (labels come out sideways?)</span></label>
     <button class="btn" id="printBtn" onclick="doPrint()" disabled>Print</button>
     <button class="btn secondary" id="saveBtn" onclick="saveAllPng()" disabled>Save PNG</button>
     <button class="btn secondary" id="shareBtn" onclick="shareAllPng()" style="display:none" disabled>Share</button>
   </div>
 
-  <p class="hint">Prints <b>2.25″ × 1.25″</b> (DYMO LabelWriter): margins <b>None</b>, scale <b>100%</b>, background graphics <b>On</b>.
-     Phone + Bluetooth label maker → <b>Share</b> / <b>Save PNG</b>.
-     Lot IDs run <b>SW-CODE-YYMMDD-NN</b> from Start # — bump it if you already printed swabs for this genetic today; this page can't see the app's counters.</p>
+  <p class="hint"><b>Printing:</b> use the browser's own print dialog — do NOT click "Print using system dialog…" (it drops custom label sizes; that's when nothing comes out).
+     In the dialog: Destination <b>DYMO LabelWriter</b> · More settings → Paper size <b>2.25 × 1.25 (30334)</b> · Margins <b>None</b> · Scale <b>100</b> · Background graphics <b>On</b>.
+     Label prints sideways on your stock? Tick <b>Rotate 90°</b> above and print again.
+     Phone + Bluetooth label maker → <b>Share</b> / <b>Save PNG</b>. Lot IDs run <b>SW-CODE-YYMMDD-NN</b> from Start #.</p>
   <datalist id="codes-dl"></datalist>
 </div>
 
@@ -302,13 +305,52 @@ function commitSeries() {
   c[k] = Math.max(c[k] || 0, start + qty - 1);
   saveCtrs(c);
   syncStartFromSeries();
+  saveForm();
   render();
 }
 function doPrint() {
   window.print();     // prints the labels as currently rendered
   commitSeries();     // then advances the series for the next run
 }
+
+/* ── rotated printing: some DYMO drivers only accept the label as a
+   portrait 1.25×2.25 page. The toggle flips @page and rotates each
+   label 90° in print output only; the on-screen preview is unchanged. ── */
+function applyRot() {
+  const on = $('rot').checked;
+  try { localStorage.setItem('ql_swab_rot', on ? '1' : ''); } catch (_) {}
+  document.body.classList.toggle('rot', on);
+  document.getElementById('pageRot').textContent = on ? [
+    '@media print {',
+    '  @page { size: 1.25in 2.25in; margin: 0; }',
+    '  body.rot .label-host { width: 1.25in !important; height: 2.25in !important; }',
+    '  body.rot .label-host > svg { width: 2.25in !important; height: 1.25in !important;',
+    '    transform: rotate(90deg) translateY(-100%); transform-origin: top left; }',
+    '}',
+  ].join('\n') : '';
+}
 const trunc = (s, n) => { s = String(s || '').trim(); return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s; };
+
+/* ── form persistence: every field survives closing/reopening the file,
+   so nothing ever has to be typed twice. ── */
+const FORM_KEY = 'ql_swab_form';
+const FORM_IDS = ['pick','cultivar','code','genus','species','cat','notation','origin','family',
+                  'source','notes','g-date','qty','start','bag','rot'];
+function saveForm() {
+  const o = {};
+  for (const id of FORM_IDS) { const el = $(id); o[id] = el.type === 'checkbox' ? el.checked : el.value; }
+  try { localStorage.setItem(FORM_KEY, JSON.stringify(o)); } catch (_) {}
+}
+function restoreForm() {
+  let o = null;
+  try { o = JSON.parse(localStorage.getItem(FORM_KEY) || 'null'); } catch (_) {}
+  if (!o) return;
+  for (const id of FORM_IDS) {
+    const el = $(id);
+    if (!(id in o)) continue;
+    if (el.type === 'checkbox') el.checked = !!o[id]; else el.value = o[id];
+  }
+}
 
 /* ── genetics library ──
    Primary source: your QuickLabel library in localStorage (ql_u:<user>:genetics),
@@ -549,6 +591,7 @@ function applyPick(q) {
   if (hit.family) info.push('Family: ' + hit.family);
   if (hit.notes)  info.push(hit.notes);
   $('pickinfo').textContent = info.length ? `${hit.code} — ${hit.cultivar || ''} · ${info.join(' · ')}` : '';
+  saveForm();
   render();
 }
 
@@ -717,13 +760,19 @@ function render() {
 (function initUI() {
   const d = new Date();
   $('g-date').value = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  restoreForm();   // bring back everything from last time
   $('pick').addEventListener('input',  e => applyPick(e.target.value));
   $('pick').addEventListener('change', e => applyPick(e.target.value));
   ['cultivar','code','genus','species','cat','notation','origin','family','source','notes',
    'g-date','qty','start','bag']
-    .forEach(id => { $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
+    .forEach(id => {
+      $(id).addEventListener('input',  () => { saveForm(); render(); });
+      $(id).addEventListener('change', () => { saveForm(); render(); });
+    });
   $('code').addEventListener('input', syncStartFromSeries);
   $('g-date').addEventListener('change', syncStartFromSeries);
+  applyRot();
+  $('rot').addEventListener('change', () => { applyRot(); saveForm(); });
   if (SHARE_OK) $('shareBtn').style.display = '';
   render();
 })();
