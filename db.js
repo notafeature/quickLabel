@@ -242,8 +242,14 @@
     try {
       const r = await sbAuthFetch('token?grant_type=refresh_token', { refresh_token: t.refresh_token });
       if (r.ok && r.data && r.data.access_token) { persistSession(t.username, r.data); return true; }
-    } catch (_) {}
-    return false;
+      // Supabase answered but couldn't refresh. Only a definitive rejection
+      // (4xx: revoked/invalid refresh token) invalidates the session; a 5xx
+      // means Supabase itself is broken — keep the cached session so the app
+      // stays usable offline and sync retries later.
+      return r.status >= 500;
+    } catch (_) {
+      return true;   // network unreachable → proceed on cached token
+    }
   }
   // Force-password-change flag: an admin sets a `force_pw` row for the user;
   // the app makes them set a new password on next sign-in, then clears it.
